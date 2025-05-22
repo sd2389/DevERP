@@ -1,0 +1,26 @@
+{% block content %}
+  <h1>Design Management</h1>
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>#</th><th>Design No</th><th>Name</th><th>Active?</th><th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for d in designs %}
+      <tr>
+        <td>{{ forloop.counter }}</td>
+        <td>{{ d.design_no }}</td>
+        <td>{{ d.name }}</td>
+        <td>{{ d.is_active|yesno:"Yes,No" }}</td>
+        <td>
+          <a href="{% url 'adminside:toggle_design' d.pk %}"
+             class="btn btn-sm {% if d.is_active %}btn-danger{% else %}btn-success{% endif %}">
+            {% if d.is_active %}Deactivate{% else %}Activate{% endif %}
+          </a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

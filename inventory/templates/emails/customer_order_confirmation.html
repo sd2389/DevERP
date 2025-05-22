@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Order Confirmation - {{ order.order_id }}</title>
+    <style>
+        /* Base styles */
+        body {
+            background-color: #f6f6f6;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-size: 14px;
+            line-height: 1.5;
+            margin: 0;
+            padding: 0;
+            -ms-text-size-adjust: 100%;
+            -webkit-text-size-adjust: 100%;
+            color: #333333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #ffffff;
+        }
+        .header {
+            background-color: #ffffff;
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid #eeeeee;
+        }
+        .footer {
+            margin-top: 20px;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #666666;
+        }
+        .content {
+            padding: 20px;
+        }
+        .btn {
+            display: inline-block;
+            font-weight: 600;
+            text-decoration: none;
+            background-color: #0d6efd;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .btn-primary {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+            color: white;
+        }
+        h1, h2, h3, h4 {
+            color: #333333;
+            margin-top: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        th {
+            text-align: left;
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-bottom: 1px solid #dddddd;
+        }
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #eeeeee;
+        }
+        .item-type {
+            display: inline-block;
+            padding: 2px 6px;
+            font-size: 10px;
+            font-weight: bold;
+            border-radius: 3px;
+            color: white;
+            margin-right: 5px;
+        }
+        .stock {
+            background-color: #28a745;
+        }
+        .memo {
+            background-color: #fd7e14;
+        }
+        .custom {
+            background-color: #6f42c1;
+        }
+        .summary-table {
+            width: 100%;
+            margin-top: 20px;
+        }
+        .summary-table td {
+            padding: 5px;
+        }
+        .text-right {
+            text-align: right;
+        }
+        .total-row {
+            font-weight: 700;
+            font-size: 16px;
+            border-top: 2px solid #dddddd;
+        }
+        .order-details {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+        .address-block {
+            margin-bottom: 20px;
+        }
+        .note {
+            padding: 15px;
+            background-color: #fff3cd;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 4px solid #ffc107;
+        }
+        @media only screen and (max-width: 620px) {
+            .container {
+                width: 100% !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="https://www.devjewels.com/logo.png" alt="DevJewels Logo" style="max-width: 200px;">
+            <h1>Order Confirmation</h1>
+        </div>
+        
+        <div class="content">
+            <p>Dear {{ order.customer.name }},</p>
+            
+            <p>Thank you for your order! We're pleased to confirm that your order has been received and is being processed.</p>
+            
+            <div class="order-details">
+                <p><strong>Order Number:</strong> {{ order.order_id }}</p>
+                <p><strong>Order Date:</strong> {{ order.date|date:"F j, Y, g:i a" }}</p>
+                <p><strong>Order Status:</strong> {{ order.status }}</p>
+            </div>
+            
+            <h3>Order Summary</h3>
+            
+            <!-- Stock Items -->
+            {% if order.items.stock %}
+            <h4>In Stock Items</h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Details</th>
+                        <th>Price</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in order.items.stock %}
+                    <tr>
+                        <td>
+                            <span class="item-type stock">Stock</span>
+                            {{ item.design_no }}
+                        </td>
+                        <td>
+                            Job: {{ item.job_no }}<br>
+                            Metal: {{ item.metal_type }} {{ item.metal_quality }} {{ item.metal_color }}<br>
+                            Size: {{ item.size|default:"N/A" }}
+                        </td>
+                        <td>${{ item.price|floatformat:2 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% endif %}
+            
+            <!-- Memo Items -->
+            {% if order.items.memo %}
+            <h4>Memo Request Items</h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Details</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in order.items.memo %}
+                    <tr>
+                        <td>
+                            <span class="item-type memo">Memo</span>
+                            {{ item.design_no }}
+                        </td>
+                        <td>
+                            Job: {{ item.job_no }}<br>
+                            Requested: {{ item.requested_at|date:"F j, Y" }}
+                        </td>
+                        <td>Pending Availability</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <div class="note">
+                <p><strong>Note:</strong> Memo request items are currently on memo with other customers. We'll notify you when they become available.</p>
+            </div>
+            {% endif %}
+            
+            <!-- Custom Items -->
+            {% if order.items.custom %}
+            <h4>Custom Order Items</h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Specifications</th>
+                        <th>Quantity</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in order.items.custom %}
+                    <tr>
+                        <td>
+                            <span class="item-type custom">Custom</span>
+                            {{ item.design_no }}
+                        </td>
+                        <td>
+                            Metal: {{ item.metal_type }} {{ item.metal_quality }} {{ item.metal_color }}<br>
+                            Diamond: {{ item.diamond_quality }}-{{ item.diamond_color }}<br>
+                            Size: {{ item.size }}
+                            {% if item.remarks %}<br>Note: {{ item.remarks }}{% endif %}
+                        </td>
+                        <td>{{ item.qty|default:"1" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <div class="note">
+                <p><strong>Note:</strong> Custom orders are made to your specifications and will require additional production time. We'll keep you updated on the progress.</p>
+            </div>
+            {% endif %}
+            
+            <!-- Order Totals -->
+            <table class="summary-table">
+                <tr>
+                    <td>Subtotal:</td>
+                    <td class="text-right">${{ order.payment.subtotal|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                    <td>Shipping ({{ order.payment.shipping_method|default:"Standard" }}):</td>
+                    <td class="text-right">${{ order.payment.shipping|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                    <td>Tax:</td>
+                    <td class="text-right">${{ order.payment.tax|floatformat:2 }}</td>
+                </tr>
+                {% if order.payment.discount > 0 %}
+                <tr>
+                    <td>Discount:</td>
+                    <td class="text-right">-${{ order.payment.discount|floatformat:2 }}</td>
+                </tr>
+                {% endif %}
+                <tr class="total-row">
+                    <td>Total:</td>
+                    <td class="text-right">${{ order.payment.total|floatformat:2 }}</td>
+                </tr>
+            </table>
+            
+            <!-- Shipping Information -->
+            <h3>Shipping Information</h3>
+            <div class="address-block">
+                <p>
+                    {{ order.customer.name }}<br>
+                    {% with address=order.shipping_address %}
+                        {{ address.line1 }}<br>
+                        {% if address.line2 %}{{ address.line2 }}<br>{% endif %}
+                        {{ address.city }}, {{ address.state }} {{ address.postal_code }}<br>
+                        {{ address.country }}
+                    {% endwith %}
+                </p>
+            </div>
+            
+            <!-- View Order Button -->
+            <div style="text-align: center;">
+                <a href="https://www.devjewels.com/orders/{{ order.order_id }}" class="btn btn-primary">View Your Order</a>
+            </div>
+            
+            <p>If you have any questions about your order, please contact our customer service team at <a href="mailto:support@devjewels.com">support@devjewels.com</a> or call us at (123) 456-7890.</p>
+            
+            <p>Thank you for shopping with DevJewels!</p>
+            
+            <p>Sincerely,<br>The DevJewels Team</p>
+        </div>
+        
+        <div class="footer">
+            <p>&copy; 2025 DevJewels. All rights reserved.</p>
+            <p>123 Jewelry Lane, Diamond District, NY 10001</p>
+            <p>
+                <a href="https://www.devjewels.com/terms">Terms of Service</a> |
+                <a href="https://www.devjewels.com/privacy">Privacy Policy</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

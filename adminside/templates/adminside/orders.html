@@ -1,0 +1,1610 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>DevERP Admin - Order Management</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    /* Sidebar styling */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 100;
+      padding: 48px 0 0;
+      box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+      background-color: #f8f9fa;
+    }
+
+    .sidebar-sticky {
+      position: relative;
+      top: 0;
+      height: calc(100vh - 48px);
+      padding-top: 0.5rem;
+      overflow-x: hidden;
+      overflow-y: auto;
+    }
+
+    .sidebar .nav-link {
+      font-weight: 500;
+      color: #333;
+      padding: 0.75rem 1rem;
+    }
+
+    .sidebar .nav-link.active {
+      color: #0d6efd;
+    }
+
+    .sidebar .nav-link:hover {
+      color: #0a58ca;
+      background-color: #e9ecef;
+    }
+
+    .sidebar .nav-link .bi {
+      margin-right: 0.5rem;
+    }
+
+    /* Main content */
+    .main-content {
+      margin-left: 240px;
+      padding: 2rem;
+    }
+
+    @media (max-width: 767.98px) {
+      .sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+        padding: 0;
+      }
+
+      .main-content {
+        margin-left: 0;
+      }
+    }
+
+    /* Order status badges */
+    .status-badge {
+      font-size: 0.85rem;
+      padding: 0.35em 0.65em;
+    }
+
+    .status-Pending {
+      background-color: #6c757d;
+      color: white;
+    }
+
+    .status-In-Process {
+      background-color: #fd7e14;
+      color: white;
+    }
+
+    .status-Completed {
+      background-color: #198754;
+      color: white;
+    }
+
+    .status-Cancelled {
+      background-color: #dc3545;
+      color: white;
+    }
+
+    /* Action buttons */
+    .action-buttons .btn {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.85rem;
+    }
+
+    /* Card styles */
+    .orders-card {
+      border-radius: 0.5rem;
+      overflow: hidden;
+      box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+      border: none;
+    }
+
+    .card-header {
+      background-color: #f8f9fa;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+    }
+
+    /* Table styles */
+    .table-responsive {
+      overflow-x: auto;
+    }
+
+    .table th {
+      background-color: #f8f9fa;
+      font-weight: 600;
+    }
+
+    .table td {
+      vertical-align: middle;
+    }
+
+    /* Item type badges */
+    .item-type-badge {
+      font-size: 0.7rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 3px;
+      margin-right: 0.25rem;
+    }
+
+    .item-stock {
+      background-color: #28a745;
+      color: white;
+    }
+
+    .item-memo {
+      background-color: #fd7e14;
+      color: white;
+    }
+
+    .item-custom {
+      background-color: #6f42c1;
+      color: white;
+    }
+
+    /* Search and filter form */
+    .filter-form .form-control,
+    .filter-form .form-select {
+      font-size: 0.9rem;
+      padding: 0.375rem 0.75rem;
+    }
+
+    /* Status dropdown styling */
+    .status-select {
+      min-width: 140px;
+      font-size: 0.85rem;
+    }
+
+    /* Status badge styling */
+    .badge.bg-success {
+      background-color: #198754 !important;
+    }
+
+    .badge.bg-warning {
+      background-color: #fd7e14 !important;
+    }
+
+    .badge.bg-danger {
+      background-color: #dc3545 !important;
+    }
+
+    .badge.bg-info {
+      background-color: #0dcaf0 !important;
+    }
+
+    .badge.bg-secondary {
+      background-color: #6c757d !important;
+    }
+
+    /* Responsive adjustments for tables on small screens */
+    @media (max-width: 767.98px) {
+      .table-responsive {
+        overflow-x: auto;
+      }
+
+      .modal-dialog {
+        margin: 0.5rem;
+      }
+    }
+
+    .cursor-pointer {
+      cursor: pointer;
+    }
+
+    .product-thumbnail:hover {
+      transform: scale(1.05);
+      transition: transform 0.2s ease;
+      box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Sidebar -->
+  <div class="sidebar col-md-3 col-lg-2 d-md-block">
+    <div class="sidebar-sticky">
+      <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+        <span>Management</span>
+      </h6>
+      <ul class="nav flex-column">
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'adminside:dashboard' %}">
+            <i class="bi bi-speedometer2"></i> Dashboard
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link active" href="{% url 'adminside:orders' %}">
+            <i class="bi bi-box"></i> Orders
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'adminside:inventory' %}">
+            <i class="bi bi-grid"></i> Inventory
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'adminside:customers' %}">
+            <i class="bi bi-people"></i> Customers
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'adminside:reports' %}">
+            <i class="bi bi-graph-up"></i> Reports
+          </a>
+        </li>
+      </ul>
+
+      <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+        <span>Settings</span>
+      </h6>
+      <ul class="nav flex-column">
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'adminside:settings' %}">
+            <i class="bi bi-gear"></i> System Settings
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'adminside:users' %}">
+            <i class="bi bi-person-gear"></i> User Management
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'logout' %}">
+            <i class="bi bi-box-arrow-right"></i> Logout
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+      <h1 class="h2"><i class="bi bi-box me-2"></i>Order Management</h1>
+      <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+          <button type="button" class="btn btn-sm btn-outline-secondary">Export</button>
+          <button type="button" class="btn btn-sm btn-outline-secondary">Print</button>
+        </div>
+        <button type="button" class="btn btn-sm btn-primary">
+          <i class="bi bi-plus me-1"></i> New Order
+        </button>
+      </div>
+    </div>
+
+    <!-- Filters and Search -->
+    <div class="card orders-card mb-4">
+      <div class="card-header py-3">
+        <h5 class="mb-0"><i class="bi bi-funnel me-2"></i>Filters & Search</h5>
+      </div>
+      <div class="card-body">
+        <form class="filter-form">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label for="searchOrder" class="form-label">Search</label>
+              <input type="text" class="form-control" id="searchOrder" placeholder="Order ID or customer name">
+            </div>
+            <div class="col-md-3">
+              <label for="statusFilter" class="form-label">Status</label>
+              <select class="form-select" id="statusFilter">
+                <option value="">All Statuses</option>
+                <option value="Pending">Pending</option>
+                <option value="In Process">In Process</option>
+                <option value="Completed">Completed</option>
+                <option value="Cancelled">Cancelled</option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label for="dateFilter" class="form-label">Date Range</label>
+              <select class="form-select" id="dateFilter">
+                <option value="all">All Time</option>
+                <option value="today">Today</option>
+                <option value="yesterday">Yesterday</option>
+                <option value="thisWeek">This Week</option>
+                <option value="thisMonth">This Month</option>
+                <option value="custom">Custom Range</option>
+              </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+              <button type="button" class="btn btn-primary w-100" id="applyFilters">
+                <i class="bi bi-search me-1"></i> Search
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Orders List -->
+    <div class="card orders-card">
+      <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="bi bi-list me-2"></i>Orders List</h5>
+        <div class="small text-muted">Showing <span id="orderCount">0</span> orders</div>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead>
+              <tr>
+                <th scope="col">Sr No.</th>
+                <th scope="col">Order ID</th>
+                <th scope="col">Date</th>
+                <th scope="col">Customer</th>
+                <th scope="col">Items</th>
+                <th scope="col">Total</th>
+                <th scope="col">Status</th>
+                <th scope="col">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="ordersTableBody">
+              <!-- Orders will be populated here by JavaScript -->
+              <tr>
+                <td colspan="7" class="text-center py-4">Loading orders...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="d-flex justify-content-between align-items-center p-3 border-top">
+          <div class="small text-muted">
+            Showing <span id="currentRange">1-10</span> of <span id="totalOrders">0</span> orders
+          </div>
+          <nav aria-label="Orders pagination">
+            <ul class="pagination pagination-sm mb-0">
+              <li class="page-item disabled">
+                <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
+              </li>
+              <li class="page-item active" aria-current="page">
+                <a class="page-link" href="#">1</a>
+              </li>
+              <li class="page-item"><a class="page-link" href="#">2</a></li>
+              <li class="page-item"><a class="page-link" href="#">3</a></li>
+              <li class="page-item">
+                <a class="page-link" href="#">Next</a>
+              </li>
+            </ul>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Order Details Modal -->
+  <div class="modal fade" id="orderDetailsModal" tabindex="-1" aria-labelledby="orderDetailsModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="orderDetailsModalLabel">Order Details</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <h6 class="border-bottom pb-2 mb-3">Order Information</h6>
+              <div class="row mb-2">
+                <div class="col-4 text-muted">Order ID:</div>
+                <div class="col-8 fw-bold" id="modalOrderId">ORD12345</div>
+              </div>
+              <div class="row mb-2">
+                <div class="col-4 text-muted">Date:</div>
+                <div class="col-8" id="modalOrderDate">April 15, 2023</div>
+              </div>
+              <div class="row mb-2">
+                <div class="col-4 text-muted">Status:</div>
+                <div class="col-8" id="modalOrderStatus">
+                  <span class="badge status-badge status-Pending">Pending</span>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <h6 class="border-bottom pb-2 mb-3">Customer Information</h6>
+              <div class="row mb-2">
+                <div class="col-4 text-muted">Name:</div>
+                <div class="col-8" id="modalCustomerName">John Doe</div>
+              </div>
+              <div class="row mb-2">
+                <div class="col-4 text-muted">Email:</div>
+                <div class="col-8" id="modalCustomerEmail">john.doe@example.com</div>
+              </div>
+              <div class="row mb-2">
+                <div class="col-4 text-muted">Phone:</div>
+                <div class="col-8" id="modalCustomerPhone">(123) 456-7890</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Order Items Tabs -->
+          <ul class="nav nav-tabs" id="orderItemsTab" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active" id="stockItems-tab" data-bs-toggle="tab"
+                data-bs-target="#stockItems-tab-pane" type="button" role="tab" aria-controls="stockItems-tab-pane"
+                aria-selected="true">In Stock Items</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="memoItems-tab" data-bs-toggle="tab" data-bs-target="#memoItems-tab-pane"
+                type="button" role="tab" aria-controls="memoItems-tab-pane" aria-selected="false">Memo Requests</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="customItems-tab" data-bs-toggle="tab" data-bs-target="#customItems-tab-pane"
+                type="button" role="tab" aria-controls="customItems-tab-pane" aria-selected="false">Custom
+                Orders</button>
+            </li>
+          </ul>
+          <div class="tab-content pt-3" id="orderItemsTabContent">
+            <!-- Stock Items Tab -->
+            <div class="tab-pane fade show active" id="stockItems-tab-pane" role="tabpanel"
+              aria-labelledby="stockItems-tab" tabindex="0">
+              <div class="table-responsive">
+                <table class="table table-sm">
+                  <thead>
+                    <tr>
+                      <th>Sr No.</th>
+                      <th>Design No.</th>
+                      <th>Job No.</th>
+                      <th>Metal Info</th>
+                      <th>Size</th>
+                      <th>Price</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="stockItemsTableBody">
+                    <!-- Stock items will be populated here -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Memo Requests Tab -->
+            <div class="tab-pane fade" id="memoItems-tab-pane" role="tabpanel" aria-labelledby="memoItems-tab"
+              tabindex="0">
+              <div class="table-responsive">
+                <table class="table table-sm">
+                  <thead>
+                    <tr>
+                      <th>Sr No.</th>
+                      <th>Design No.</th>
+                      <th>Job No.</th>
+                      <th>Request Date</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="memoItemsTableBody">
+                    <!-- Memo items will be populated here -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Custom Orders Tab -->
+            <div class="tab-pane fade" id="customItems-tab-pane" role="tabpanel" aria-labelledby="customItems-tab"
+              tabindex="0">
+              <div class="table-responsive">
+                <table class="table table-sm">
+                  <thead>
+                    <tr>
+                      <th>Sr No.</th>
+                      <th>Design No.</th>
+                      <th>Specifications</th>
+                      <th>Quantity</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="customItemsTableBody">
+                    <!-- Custom items will be populated here -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Order Totals -->
+          <div class="row mt-4">
+            <div class="col-md-6">
+              <h6 class="border-bottom pb-2 mb-3">Shipping Address</h6>
+              <address id="modalShippingAddress">
+                John Doe<br>
+                123 Main St<br>
+                Apt 4B<br>
+                New York, NY 10001<br>
+                United States
+              </address>
+            </div>
+            <div class="col-md-6">
+              <h6 class="border-bottom pb-2 mb-3">Order Summary</h6>
+              <div class="table-responsive">
+                <table class="table table-sm">
+                  <tbody>
+                    <tr>
+                      <th>Subtotal:</th>
+                      <td class="text-end" id="modalSubtotal">$1,200.00</td>
+                    </tr>
+                    <tr>
+                      <th>Shipping:</th>
+                      <td class="text-end" id="modalShipping">$9.99</td>
+                    </tr>
+                    <tr>
+                      <th>Tax:</th>
+                      <td class="text-end" id="modalTax">$96.00</td>
+                    </tr>
+                    <tr id="modalDiscountRow">
+                      <th>Discount:</th>
+                      <td class="text-end text-success" id="modalDiscount">-$50.00</td>
+                    </tr>
+                    <tr>
+                      <th>Total:</th>
+                      <td class="text-end fw-bold fs-5" id="modalTotal">$1,255.99</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+          <div class="dropdown d-inline-block">
+            <button class="btn btn-primary dropdown-toggle" type="button" id="updateStatusDropdown"
+              data-bs-toggle="dropdown" aria-expanded="false">
+              Update All Items
+            </button>
+            <ul class="dropdown-menu" aria-labelledby="updateStatusDropdown">
+              <li><button class="dropdown-item" data-status="Pending" type="button">Set All to Pending</button></li>
+              <li><button class="dropdown-item" data-status="In Process" type="button">Set All to In Process</button>
+              </li>
+              <li><button class="dropdown-item" data-status="Completed" type="button">Set All to Completed</button></li>
+              <li>
+                <hr class="dropdown-divider">
+              </li>
+              <li><button class="dropdown-item text-danger" data-status="Cancelled" type="button">Cancel Entire
+                  Order</button>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+
+  <!-- Image Preview Modal -->
+  <div class="modal fade" id="imagePreviewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="imagePreviewTitle">Design Preview</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body text-center">
+          <img id="previewImage" src="" alt="Product Preview" class="img-fluid" style="max-height: 70vh;">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Toast Notification -->
+  <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1050">
+    <div id="adminToast" class="toast align-items-center text-white bg-success" role="alert" aria-live="assertive"
+      aria-atomic="true">
+      <div class="d-flex">
+        <div class="toast-body">
+          <i class="bi bi-check-circle-fill me-2"></i>
+          <span id="toastMessage">Operation completed successfully.</span>
+        </div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+          aria-label="Close"></button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Constants
+const ORDER_TYPES = {
+  STOCK: 'stock',
+  MEMO: 'memo',
+  CUSTOM: 'custom'
+};
+
+const ORDER_STATUS = {
+  PENDING: 'Pending',
+  IN_PROCESS: 'In Process',
+  COMPLETED: 'Completed',
+  CANCELLED: 'Cancelled'
+};
+
+// Item status constants
+const ITEM_STATUS = {
+  PENDING: 'Pending',
+  IN_PROCESS: 'In Process',
+  READY_TO_SHIP: 'Ready to Ship',
+  COMPLETED: 'Completed',
+  CANCELLED: 'Cancelled',
+  ON_HOLD: 'On Hold',
+  // Memo-specific statuses
+  REQUESTED: 'Requested',
+  AVAILABLE: 'Available',
+  UNAVAILABLE: 'Unavailable',
+  // Custom-specific statuses
+  DESIGNING: 'Designing',
+  IN_PRODUCTION: 'In Production',
+  QUALITY_CHECK: 'Quality Check'
+};
+
+// Local storage key for orders
+const STORAGE_KEY_ORDERS = 'customer_orders';
+
+// Helper function to safely retrieve data from localStorage
+function getStorageData(key, defaultValue = []) {
+  try {
+    const data = localStorage.getItem(key);
+    return data ? JSON.parse(data) : defaultValue;
+  } catch (error) {
+    console.error(`Error retrieving data from ${key}:`, error);
+    return defaultValue;
+  }
+}
+
+// Helper function to safely save data to localStorage
+function setStorageData(key, data) {
+  try {
+    localStorage.setItem(key, JSON.stringify(data));
+    return true;
+  } catch (error) {
+    console.error(`Error saving data to ${key}:`, error);
+    return false;
+  }
+}
+
+// Format date for display
+function formatDate(dateString, options = {}) {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    ...options
+  });
+}
+
+// Format currency
+function formatCurrency(amount) {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(parseFloat(amount) || 0);
+}
+
+// Show toast notification
+function showToast(message, type = 'success') {
+  const toast = document.getElementById('adminToast');
+  const toastBody = toast.querySelector('.toast-body');
+  const messageSpan = document.getElementById('toastMessage');
+
+  // Set message content
+  messageSpan.textContent = message;
+
+  // Set toast color based on type
+  toast.classList.remove('bg-success', 'bg-danger', 'bg-warning', 'bg-info');
+
+  // Add icon based on type
+  let icon = toastBody.querySelector('i');
+  if (!icon) {
+    icon = document.createElement('i');
+    icon.classList.add('bi', 'me-2');
+    toastBody.insertBefore(icon, messageSpan);
+  }
+
+  // Reset icon classes
+  icon.className = 'bi me-2';
+
+  switch (type) {
+    case 'success':
+      toast.classList.add('bg-success');
+      icon.classList.add('bi-check-circle-fill');
+      break;
+    case 'danger':
+      toast.classList.add('bg-danger');
+      icon.classList.add('bi-exclamation-triangle-fill');
+      break;
+    case 'warning':
+      toast.classList.add('bg-warning');
+      toast.classList.add('text-dark');
+      icon.classList.add('bi-exclamation-circle-fill');
+      break;
+    case 'info':
+      toast.classList.add('bg-info');
+      icon.classList.add('bi-info-circle-fill');
+      break;
+  }
+
+  // Show the toast
+  const bsToast = new bootstrap.Toast(toast);
+  bsToast.show();
+}
+
+// Determine overall order status based on item statuses
+function determineOrderStatus(order) {
+  // Count items by status
+  const allItems = [
+    ...(order.items.stock || []),
+    ...(order.items.memo || []),
+    ...(order.items.custom || [])
+  ];
+
+  if (allItems.length === 0) return ORDER_STATUS.PENDING;
+
+  // If any item is cancelled, but not all
+  const cancelledCount = allItems.filter(item =>
+    item.status === ITEM_STATUS.CANCELLED ||
+    item.item_status === ITEM_STATUS.CANCELLED
+  ).length;
+
+  // If all items are cancelled
+  if (cancelledCount === allItems.length) {
+    return ORDER_STATUS.CANCELLED;
+  }
+
+  // If all items are completed
+  const completedCount = allItems.filter(item =>
+    item.status === ITEM_STATUS.COMPLETED ||
+    item.item_status === ITEM_STATUS.COMPLETED ||
+    item.status === ITEM_STATUS.AVAILABLE ||
+    item.item_status === ITEM_STATUS.AVAILABLE
+  ).length;
+
+  if (completedCount === allItems.length) {
+    return ORDER_STATUS.COMPLETED;
+  }
+
+  // If any item is in process
+  const inProcessCount = allItems.filter(item =>
+    item.status === ITEM_STATUS.IN_PROCESS ||
+    item.item_status === ITEM_STATUS.IN_PROCESS ||
+    item.status === ITEM_STATUS.DESIGNING ||
+    item.item_status === ITEM_STATUS.DESIGNING ||
+    item.status === ITEM_STATUS.IN_PRODUCTION ||
+    item.item_status === ITEM_STATUS.IN_PRODUCTION ||
+    item.status === ITEM_STATUS.QUALITY_CHECK ||
+    item.item_status === ITEM_STATUS.QUALITY_CHECK ||
+    item.status === ITEM_STATUS.READY_TO_SHIP ||
+    item.item_status === ITEM_STATUS.READY_TO_SHIP
+  ).length;
+
+  if (inProcessCount > 0) {
+    return ORDER_STATUS.IN_PROCESS;
+  }
+
+  // Default to pending
+  return ORDER_STATUS.PENDING;
+}
+
+// Function to sync admin order changes to customer orders
+function syncCustomerOrders(adminOrders) {
+  try {
+    const customerOrders = JSON.parse(localStorage.getItem("customer_orders") || "[]");
+    let updated = false;
+
+    // For each admin order, update the corresponding customer order
+    adminOrders.forEach(adminOrder => {
+      const customerOrderIndex = customerOrders.findIndex(o => o.order_id === adminOrder.order_id);
+      if (customerOrderIndex !== -1) {
+        // Update the status and other fields that need to be synced
+        customerOrders[customerOrderIndex].status = adminOrder.status;
+
+        // Sync each item's status
+        if (adminOrder.items.stock && customerOrders[customerOrderIndex].items.stock) {
+          adminOrder.items.stock.forEach((adminItem, idx) => {
+            if (idx < customerOrders[customerOrderIndex].items.stock.length) {
+              customerOrders[customerOrderIndex].items.stock[idx].item_status = adminItem.item_status;
+              customerOrders[customerOrderIndex].items.stock[idx].status_updated_at = adminItem.status_updated_at;
+              // Add item_type if not present (for customer view)
+              customerOrders[customerOrderIndex].items.stock[idx].item_type = 'stock';
+            }
+          });
+        }
+
+        if (adminOrder.items.memo && customerOrders[customerOrderIndex].items.memo) {
+          adminOrder.items.memo.forEach((adminItem, idx) => {
+            if (idx < customerOrders[customerOrderIndex].items.memo.length) {
+              customerOrders[customerOrderIndex].items.memo[idx].item_status = adminItem.item_status;
+              customerOrders[customerOrderIndex].items.memo[idx].status_updated_at = adminItem.status_updated_at;
+              // Add item_type if not present (for customer view)
+              customerOrders[customerOrderIndex].items.memo[idx].item_type = 'memo';
+            }
+          });
+        }
+
+        if (adminOrder.items.custom && customerOrders[customerOrderIndex].items.custom) {
+          adminOrder.items.custom.forEach((adminItem, idx) => {
+            if (idx < customerOrders[customerOrderIndex].items.custom.length) {
+              customerOrders[customerOrderIndex].items.custom[idx].item_status = adminItem.item_status;
+              customerOrders[customerOrderIndex].items.custom[idx].status_updated_at = adminItem.status_updated_at;
+              // Add item_type if not present (for customer view)
+              customerOrders[customerOrderIndex].items.custom[idx].item_type = 'custom';
+            }
+          });
+        }
+
+        // Update timestamps
+        customerOrders[customerOrderIndex].updated_at = adminOrder.updated_at;
+        updated = true;
+      }
+    });
+
+    // Save updated customer orders if any changes were made
+    if (updated) {
+      localStorage.setItem("customer_orders", JSON.stringify(customerOrders));
+      console.log('Customer orders updated successfully');
+    }
+  } catch (error) {
+    console.error('Error syncing customer orders:', error);
+  }
+}
+
+// Load all orders
+function loadOrders() {
+  console.log("Loading orders from localStorage...");
+  const orders = getStorageData(STORAGE_KEY_ORDERS, []);
+  const tableBody = document.getElementById('ordersTableBody');
+
+  // Update order count
+  document.getElementById('orderCount').textContent = orders.length;
+  document.getElementById('totalOrders').textContent = orders.length;
+
+  // Update current range (assuming 10 per page)
+  const end = Math.min(10, orders.length);
+  document.getElementById('currentRange').textContent = `1-${end}`;
+
+  // Clear table
+  tableBody.innerHTML = '';
+
+  if (orders.length === 0) {
+    tableBody.innerHTML = '<tr><td colspan="8" class="text-center py-4">No orders found</td></tr>';
+    return;
+  }
+
+  // Applying filters if any
+  let filteredOrders = [...orders];
+  const statusFilter = document.getElementById('statusFilter').value;
+  const searchTerm = document.getElementById('searchOrder').value.toLowerCase();
+
+  if (statusFilter) {
+    filteredOrders = filteredOrders.filter(order => order.status === statusFilter);
+  }
+
+  if (searchTerm) {
+    filteredOrders = filteredOrders.filter(order =>
+      order.order_id.toLowerCase().includes(searchTerm) ||
+      (order.customer && order.customer.name && order.customer.name.toLowerCase().includes(searchTerm))
+    );
+  }
+
+  console.log(`Found ${filteredOrders.length} orders after filtering`);
+
+  // Sort orders by date (newest first)
+  filteredOrders.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  // Create table rows
+  filteredOrders.forEach((order, index) => {
+    // Count items by type
+    const stockCount = order.items.stock?.length || 0;
+    const memoCount = order.items.memo?.length || 0;
+    const customCount = order.items.custom?.length || 0;
+    const totalItems = stockCount + memoCount + customCount;
+
+    // Create item badges HTML
+    let itemBadgesHtml = '';
+    if (stockCount > 0) {
+      itemBadgesHtml += `<span class="item-type-badge item-stock">${stockCount} Stock</span>`;
+    }
+    if (memoCount > 0) {
+      itemBadgesHtml += `<span class="item-type-badge item-memo">${memoCount} Memo</span>`;
+    }
+    if (customCount > 0) {
+      itemBadgesHtml += `<span class="item-type-badge item-custom">${customCount} Custom</span>`;
+    }
+
+    // Create status badge based on order status
+    const statusClass = `status-${order.status.replace(/\s+/g, '-')}`;
+    const statusBadge = `<span class="badge status-badge ${statusClass}">${order.status}</span>`;
+
+    // Create row HTML
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${index + 1}</td>
+      <td>${order.order_id}</td>
+      <td>${formatDate(order.date)}</td>
+      <td>${order.customer?.name || 'Customer'}</td>
+      <td>${itemBadgesHtml}</td>
+      <td>${formatCurrency(order.payment?.total || 0)}</td>
+      <td>${statusBadge}</td>
+      <td class="action-buttons">
+        <button class="btn btn-sm btn-outline-primary" onclick="viewOrderDetails('${order.order_id}')">
+          <i class="bi bi-eye"></i>
+        </button>
+        <div class="btn-group">
+          <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><button class="dropdown-item" onclick="viewOrderDetails('${order.order_id}')">View Details</button></li>
+            <li><button class="dropdown-item" onclick="printOrder('${order.order_id}')">Print</button></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><button class="dropdown-item text-danger" onclick="confirmDeleteOrder('${order.order_id}')">Delete</button></li>
+          </ul>
+        </div>
+      </td>
+    `;
+
+    tableBody.appendChild(row);
+  });
+
+  console.log("Orders loaded successfully");
+}
+
+// Create status dropdown HTML
+function createStatusDropdown(itemType, currentStatus, orderId, itemId) {
+  // Determine available statuses based on item type
+  let statuses = [];
+
+  switch (itemType) {
+    case ORDER_TYPES.STOCK:
+      statuses = [
+        ITEM_STATUS.PENDING,
+        ITEM_STATUS.IN_PROCESS,
+        ITEM_STATUS.READY_TO_SHIP,
+        ITEM_STATUS.COMPLETED,
+        ITEM_STATUS.ON_HOLD,
+        ITEM_STATUS.CANCELLED
+      ];
+      break;
+    case ORDER_TYPES.MEMO:
+      statuses = [
+        ITEM_STATUS.REQUESTED,
+        ITEM_STATUS.AVAILABLE,
+        ITEM_STATUS.UNAVAILABLE,
+        ITEM_STATUS.CANCELLED
+      ];
+      break;
+    case ORDER_TYPES.CUSTOM:
+      statuses = [
+        ITEM_STATUS.PENDING,
+        ITEM_STATUS.DESIGNING,
+        ITEM_STATUS.IN_PRODUCTION,
+        ITEM_STATUS.QUALITY_CHECK,
+        ITEM_STATUS.COMPLETED,
+        ITEM_STATUS.CANCELLED
+      ];
+      break;
+  }
+
+  // Create select element
+  let html = `<select class="form-select form-select-sm status-select" onchange="updateItemStatus('${orderId}', '${itemType}', '${itemId}', this.value)">`;
+
+  // Add options
+  statuses.forEach(status => {
+    const selected = status === currentStatus ? 'selected' : '';
+    html += `<option value="${status}" ${selected}>${status}</option>`;
+  });
+
+  html += `</select>`;
+  return html;
+}
+
+// Get badge HTML for status
+function getStatusBadge(status, itemType) {
+  let badgeClass = '';
+
+  // Determine badge color based on status
+  switch (status) {
+    case ITEM_STATUS.COMPLETED:
+    case ITEM_STATUS.AVAILABLE:
+      badgeClass = 'bg-success';
+      break;
+    case ITEM_STATUS.IN_PROCESS:
+    case ITEM_STATUS.READY_TO_SHIP:
+    case ITEM_STATUS.DESIGNING:
+    case ITEM_STATUS.IN_PRODUCTION:
+    case ITEM_STATUS.QUALITY_CHECK:
+      badgeClass = 'bg-warning text-dark';
+      break;
+    case ITEM_STATUS.CANCELLED:
+    case ITEM_STATUS.UNAVAILABLE:
+      badgeClass = 'bg-danger';
+      break;
+    case ITEM_STATUS.ON_HOLD:
+      badgeClass = 'bg-secondary';
+      break;
+    case ITEM_STATUS.PENDING:
+    case ITEM_STATUS.REQUESTED:
+    default:
+      badgeClass = 'bg-info';
+  }
+
+  return `<span class="badge ${badgeClass}">${status}</span>`;
+}
+
+// View order details with proper modal handling
+function viewOrderDetails(orderId) {
+  console.log(`Viewing details for order: ${orderId}`);
+  const orders = getStorageData(STORAGE_KEY_ORDERS, []);
+  const order = orders.find(o => o.order_id === orderId);
+
+  if (!order) {
+    showToast('Order not found', 'danger');
+    return;
+  }
+
+  // Properly handle the modal
+  const modalElement = document.getElementById('orderDetailsModal');
+  const existingModal = bootstrap.Modal.getInstance(modalElement);
+
+  // If modal already exists, dispose it first to prevent backdrop issues
+  if (existingModal) {
+    existingModal.dispose();
+  }
+
+  // Remove any lingering backdrops (fixes the darkening issue)
+  document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+    backdrop.parentNode.removeChild(backdrop);
+  });
+
+  // Reset modal content and body classes
+  document.body.classList.remove('modal-open');
+  document.body.style.overflow = '';
+  document.body.style.paddingRight = '';
+
+  // Set basic order information
+  document.getElementById('modalOrderId').textContent = order.order_id;
+  document.getElementById('modalOrderDate').textContent = formatDate(order.date);
+
+  // Set order status badge
+  const statusBadge = document.createElement('span');
+  statusBadge.className = `badge status-badge status-${order.status.replace(/\s+/g, '-')}`;
+  statusBadge.textContent = order.status;
+  document.getElementById('modalOrderStatus').innerHTML = '';
+  document.getElementById('modalOrderStatus').appendChild(statusBadge);
+
+  // Set customer information
+  document.getElementById('modalCustomerName').textContent = order.customer?.name || 'John Doe';
+  document.getElementById('modalCustomerEmail').textContent = order.customer?.email || 'john.doe@example.com';
+  document.getElementById('modalCustomerPhone').textContent = order.customer?.phone || '(123) 456-7890';
+
+  // Set shipping address
+  const shippingAddress = order.shipping_address || {};
+  document.getElementById('modalShippingAddress').innerHTML = `
+    ${order.customer?.name || 'John Doe'}<br>
+    ${shippingAddress.line1 || '123 Main St'}<br>
+    ${shippingAddress.line2 ? shippingAddress.line2 + '<br>' : ''}
+    ${shippingAddress.city || 'New York'}, ${shippingAddress.state || 'NY'} ${shippingAddress.postal_code || '10001'}<br>
+    ${shippingAddress.country || 'United States'}
+  `;
+
+  // Set financial details
+  const payment = order.payment || {};
+  document.getElementById('modalSubtotal').textContent = formatCurrency(payment.subtotal || 0);
+  document.getElementById('modalShipping').textContent = formatCurrency(payment.shipping || 0);
+  document.getElementById('modalTax').textContent = formatCurrency(payment.tax || 0);
+
+  // Handle discount
+  if (payment.discount && payment.discount > 0) {
+    document.getElementById('modalDiscount').textContent = formatCurrency(-payment.discount);
+    document.getElementById('modalDiscountRow').style.display = '';
+  } else {
+    document.getElementById('modalDiscountRow').style.display = 'none';
+  }
+
+  document.getElementById('modalTotal').textContent = formatCurrency(payment.total || 0);
+
+  // Update all item tables
+  updateStockItemsTable(order);
+  updateMemoItemsTable(order);
+  updateCustomItemsTable(order);
+
+  // Set up status update dropdown for entire order
+  const statusDropdown = document.querySelectorAll('.dropdown-item[data-status]');
+  statusDropdown.forEach(item => {
+    item.addEventListener('click', function () {
+      const newStatus = this.getAttribute('data-status');
+      updateOrderStatus(order.order_id, newStatus);
+    });
+  });
+
+  // Create and show the modal
+  const modal = new bootstrap.Modal(modalElement);
+  modal.show();
+  
+  // Setup image error handling
+  setupImageErrorHandling();
+}
+
+// fallback for missing images
+function setupImageErrorHandling() {
+  // Select all images in the modal that may need fallback handling
+  const modalImages = document.querySelectorAll('#orderDetailsModal img');
+
+  // Set up error handling for each image
+  modalImages.forEach(img => {
+    img.onerror = function () {
+      // Replace with placeholder if image fails to load
+      this.src = '/static/inventory/placeholder.jpg';
+      // Prevent infinite error loop
+      this.onerror = null;
+    };
+  });
+}
+
+// Helper functions to update the tables in the modal
+function updateStockItemsTable(order) {
+  const stockItemsBody = document.getElementById('stockItemsTableBody');
+  stockItemsBody.innerHTML = '';
+
+  if (order.items.stock && order.items.stock.length > 0) {
+    order.items.stock.forEach((item, index) => {
+      // Get item status or set default
+      const itemStatus = item.item_status || ITEM_STATUS.PENDING;
+      // Get image URL
+      const imgUrl = `https://dev-jewels.s3.us-east-2.amazonaws.com/products/${item.design_no}/White/D_${item.design_no}-1.jpg`;
+
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${index + 1}</td>
+        <td>
+          <div class="d-flex align-items-center">
+            <div class="product-img-container me-2" style="width: 60px; height: 60px;">
+              <img src="${imgUrl}" class="img-fluid rounded cursor-pointer product-thumbnail" 
+                   alt="${item.design_no}" data-design-no="${item.design_no}"
+                   style="width: 100%; height: 100%; object-fit: contain;" 
+                   onerror="this.src='{% static 'inventory/placeholder.jpg' %}'"
+                   onclick="openImagePreview(this.src, '${item.design_no}')">
+            </div>
+            <div>${item.design_no}</div>
+          </div>
+        </td>
+        <td>${item.job_no}</td>
+        <td>${item.metal_type || 'N/A'} ${item.metal_quality || ''} ${item.metal_color || ''}</td>
+        <td>${item.size || 'N/A'}</td>
+        <td>${formatCurrency(parseFloat(item.price) || 0)}</td>
+        <td>${createStatusDropdown(ORDER_TYPES.STOCK, itemStatus, order.order_id, item.job_no)}</td>
+      `;
+      stockItemsBody.appendChild(row);
+    });
+  } else {
+    stockItemsBody.innerHTML = '<tr><td colspan="7" class="text-center py-3">No in-stock items in this order</td></tr>';
+  }
+}
+
+function updateMemoItemsTable(order) {
+  const memoItemsBody = document.getElementById('memoItemsTableBody');
+  memoItemsBody.innerHTML = '';
+
+  if (order.items.memo && order.items.memo.length > 0) {
+    order.items.memo.forEach((item, index) => {
+      // Get item status or set default
+      const itemStatus = item.item_status || ITEM_STATUS.REQUESTED;
+      // Get image URL
+      const imgUrl = `https://dev-jewels.s3.us-east-2.amazonaws.com/products/${item.design_no}/White/D_${item.design_no}-1.jpg`;
+
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${index + 1}</td>
+        <td>
+          <div class="d-flex align-items-center">
+            <div class="product-img-container me-2" style="width: 60px; height: 60px;">
+              <img src="${imgUrl}" class="img-fluid rounded cursor-pointer product-thumbnail" 
+                   alt="${item.design_no}" data-design-no="${item.design_no}"
+                   style="width: 100%; height: 100%; object-fit: contain;" 
+                   onerror="this.src='{% static 'inventory/placeholder.jpg' %}'"
+                   onclick="openImagePreview(this.src, '${item.design_no}')">
+            </div>
+            <div>${item.design_no}</div>
+          </div>
+        </td>
+        <td>${item.job_no}</td>
+        <td>${formatDate(item.requested_at || item.added_at)}</td>
+        <td>${createStatusDropdown(ORDER_TYPES.MEMO, itemStatus, order.order_id, item.job_no)}</td>
+      `;
+      memoItemsBody.appendChild(row);
+    });
+  } else {
+    memoItemsBody.innerHTML = '<tr><td colspan="5" class="text-center py-3">No memo requests in this order</td></tr>';
+  }
+}
+
+function updateCustomItemsTable(order) {
+  const customItemsBody = document.getElementById('customItemsTableBody');
+  customItemsBody.innerHTML = '';
+
+  if (order.items.custom && order.items.custom.length > 0) {
+    order.items.custom.forEach((item, index) => {
+      // Get item status or set default
+      const itemStatus = item.item_status || ITEM_STATUS.PENDING;
+      // Get image URL
+      const imgUrl = `https://dev-jewels.s3.us-east-2.amazonaws.com/products/${item.design_no}/White/D_${item.design_no}-1.jpg`;
+
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${index + 1}</td>
+        <td>
+          <div class="d-flex align-items-center">
+            <div class="product-img-container me-2" style="width: 60px; height: 60px;">
+              <img src="${imgUrl}" class="img-fluid rounded cursor-pointer product-thumbnail" 
+                   alt="${item.design_no}" data-design-no="${item.design_no}"
+                   style="width: 100%; height: 100%; object-fit: contain;" 
+                   onerror="this.src='{% static 'inventory/placeholder.jpg' %}'"
+                   onclick="openImagePreview(this.src, '${item.design_no}')">
+            </div>
+            <div>${item.design_no}</div>
+          </div>
+        </td>
+        <td>
+          <strong>Metal:</strong> ${item.metal_type} ${item.metal_quality} ${item.metal_color}<br>
+          <strong>Diamond:</strong> ${item.diamond_quality}-${item.diamond_color}<br>
+          <strong>Size:</strong> ${item.size}
+          ${item.remarks ? `<br><strong>Note:</strong> ${item.remarks}` : ''}
+        </td>
+        <td>${item.qty || 1}</td>
+        <td>${createStatusDropdown(ORDER_TYPES.CUSTOM, itemStatus, order.order_id, item.order_id)}</td>
+      `;
+      customItemsBody.appendChild(row);
+    });
+  } else {
+    customItemsBody.innerHTML = '<tr><td colspan="5" class="text-center py-3">No custom orders in this order</td></tr>';
+  }
+}
+
+// Function to open image preview
+function openImagePreview(imgSrc, designNo) {
+  // Get the modal elements
+  const modal = document.getElementById('imagePreviewModal');
+  const modalImage = document.getElementById('previewImage');
+  const modalTitle = document.getElementById('imagePreviewTitle');
+
+  // Set the image source and title
+  modalImage.src = imgSrc;
+  modalTitle.textContent = `Design Preview: ${designNo}`;
+
+  // Ensure there are no existing modal instances
+  const existingModal = bootstrap.Modal.getInstance(modal);
+  if (existingModal) {
+    existingModal.dispose();
+  }
+
+  // Remove any lingering backdrops
+  document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+    backdrop.parentNode.removeChild(backdrop);
+  });
+
+  // Create and show a new modal
+  const imageModal = new bootstrap.Modal(modal);
+  imageModal.show();
+
+  // Handle image loading error
+  modalImage.onerror = function () {
+    this.src = '{% static "inventory/placeholder.jpg" %}';
+    modalTitle.textContent = `Design Preview: ${designNo} (Image Not Available)`;
+  };
+
+  // Prevent event propagation to the order details modal
+  modal.addEventListener('click', function (event) {
+    event.stopPropagation();
+  });
+}
+
+// Update individual item status without closing modal
+function updateItemStatus(orderId, itemType, itemId, newStatus) {
+  console.log(`Updating item status - Order: ${orderId}, Type: ${itemType}, Item: ${itemId}, New Status: ${newStatus}`);
+  
+  try {
+    // Get orders from localStorage
+    const orders = getStorageData(STORAGE_KEY_ORDERS, []);
+    const orderIndex = orders.findIndex(o => o.order_id === orderId);
+    
+    if (orderIndex === -1) {
+      showToast('Order not found', 'danger');
+      return false;
+    }
+    
+    // Get the order
+    const order = orders[orderIndex];
+    
+    // Find the item based on its type and ID
+    let itemFound = false;
+    
+    if (itemType === ORDER_TYPES.STOCK && order.items.stock) {
+      const itemIndex = order.items.stock.findIndex(item => item.job_no === itemId);
+      if (itemIndex !== -1) {
+        // Update item status
+        order.items.stock[itemIndex].item_status = newStatus;
+        // Add timestamp for status change
+        order.items.stock[itemIndex].status_updated_at = new Date().toISOString();
+        // Add item_type if not present (for customer view)
+        order.items.stock[itemIndex].item_type = 'stock';
+        itemFound = true;
+      }
+    } else if (itemType === ORDER_TYPES.MEMO && order.items.memo) {
+      const itemIndex = order.items.memo.findIndex(item => item.job_no === itemId);
+      if (itemIndex !== -1) {
+        // Update item status
+        order.items.memo[itemIndex].item_status = newStatus;
+        // Add timestamp for status change
+        order.items.memo[itemIndex].status_updated_at = new Date().toISOString();
+        // Add item_type if not present (for customer view)
+        order.items.memo[itemIndex].item_type = 'memo';
+        itemFound = true;
+      }
+    } else if (itemType === ORDER_TYPES.CUSTOM && order.items.custom) {
+      const itemIndex = order.items.custom.findIndex(item => item.order_id === itemId);
+      if (itemIndex !== -1) {
+        // Update item status
+        order.items.custom[itemIndex].item_status = newStatus;
+        // Add timestamp for status change
+        order.items.custom[itemIndex].status_updated_at = new Date().toISOString();
+        // Add item_type if not present (for customer view)
+        order.items.custom[itemIndex].item_type = 'custom';
+        itemFound = true;
+      }
+    }
+    
+    if (!itemFound) {
+      showToast(`Item not found in order ${orderId}`, 'warning');
+      return false;
+    }
+    
+    // Recalculate overall order status based on item statuses
+    const previousStatus = order.status;
+    order.status = determineOrderStatus(order);
+    
+    // Update last modified timestamp
+    order.updated_at = new Date().toISOString();
+    
+    // Save updated orders back to localStorage
+    orders[orderIndex] = order;
+    setStorageData(STORAGE_KEY_ORDERS, orders);
+    
+    // Also update the customer_orders in localStorage to sync changes
+    syncCustomerOrders(orders);
+    
+    // Update the order status in the modal if it has changed
+    if (previousStatus !== order.status) {
+      // Update the status badge in the modal
+      const statusBadge = document.createElement('span');
+      statusBadge.className = `badge status-badge status-${order.status.replace(/\s+/g, '-')}`;
+      statusBadge.textContent = order.status;
+      document.getElementById('modalOrderStatus').innerHTML = '';
+      document.getElementById('modalOrderStatus').appendChild(statusBadge);
+    }
+    
+    // Show success message
+    showToast(`Item status updated to ${newStatus}`, 'success');
+    
+    // Update the relevant table based on item type
+    if (itemType === ORDER_TYPES.STOCK) {
+      updateStockItemsTable(order);
+    } else if (itemType === ORDER_TYPES.MEMO) {
+      updateMemoItemsTable(order);
+    } else if (itemType === ORDER_TYPES.CUSTOM) {
+      updateCustomItemsTable(order);
+    }
+    
+    // Reload orders list to reflect the updated status in the background
+    loadOrders();
+    
+    return true;
+  } catch (error) {
+    console.error('Error updating item status:', error);
+    showToast('Error updating item status', 'danger');
+    return false;
+  }
+}
+
+// Update order status (all items at once)
+function updateOrderStatus(orderId, newStatus) {
+  console.log(`Updating overall order status - Order: ${orderId}, New Status: ${newStatus}`);
+
+  try {
+    // Get orders from localStorage
+    const orders = getStorageData(STORAGE_KEY_ORDERS, []);
+    const orderIndex = orders.findIndex(o => o.order_id === orderId);
+
+    if (orderIndex === -1) {
+      showToast('Order not found', 'danger');
+      return false;
+    }
+
+    // Get the order
+    const order = orders[orderIndex];
+
+    // Update order status
+    order.status = newStatus;
+
+    // Add timestamp for the status change
+    if (newStatus === ORDER_STATUS.IN_PROCESS) {
+      order.processed_at = new Date().toISOString();
+    } else if (newStatus === ORDER_STATUS.COMPLETED) {
+      order.completed_at = new Date().toISOString();
+    } else if (newStatus === ORDER_STATUS.CANCELLED) {
+      order.cancelled_at = new Date().toISOString();
+    }
+
+    // Update last modified timestamp
+    order.updated_at = new Date().toISOString();
+
+    // Map order status to appropriate item statuses
+    let stockItemStatus, memoItemStatus, customItemStatus;
+
+    switch (newStatus) {
+      case ORDER_STATUS.PENDING:
+        stockItemStatus = ITEM_STATUS.PENDING;
+        memoItemStatus = ITEM_STATUS.REQUESTED;
+        customItemStatus = ITEM_STATUS.PENDING;
+        break;
+      case ORDER_STATUS.IN_PROCESS:
+        stockItemStatus = ITEM_STATUS.IN_PROCESS;
+        memoItemStatus = ITEM_STATUS.REQUESTED;
+        customItemStatus = ITEM_STATUS.IN_PRODUCTION;
+        break;
+      case ORDER_STATUS.COMPLETED:
+        stockItemStatus = ITEM_STATUS.COMPLETED;
+        memoItemStatus = ITEM_STATUS.AVAILABLE;
+        customItemStatus = ITEM_STATUS.COMPLETED;
+        break;
+      case ORDER_STATUS.CANCELLED:
+        stockItemStatus = ITEM_STATUS.CANCELLED;
+        memoItemStatus = ITEM_STATUS.CANCELLED;
+        customItemStatus = ITEM_STATUS.CANCELLED;
+        break;
+    }
+
+    // Update all item statuses
+    if (order.items.stock) {
+      order.items.stock.forEach(item => {
+        item.item_status = stockItemStatus;
+        item.status_updated_at = order.updated_at;
+        item.item_type = 'stock'; // Add item_type for customer view
+      });
+    }
+
+    if (order.items.memo) {
+      order.items.memo.forEach(item => {
+        item.item_status = memoItemStatus;
+        item.status_updated_at = order.updated_at;
+        item.item_type = 'memo'; // Add item_type for customer view
+      });
+    }
+
+    if (order.items.custom) {
+      order.items.custom.forEach(item => {
+        item.item_status = customItemStatus;
+        item.status_updated_at = order.updated_at;
+        item.item_type = 'custom'; // Add item_type for customer view
+      });
+    }
+
+    // Save back to localStorage
+    orders[orderIndex] = order;
+    setStorageData(STORAGE_KEY_ORDERS, orders);
+
+    // Also update the customer_orders in localStorage to sync changes
+    syncCustomerOrders(orders);
+
+    // Update the modal UI to reflect all the changes:
+    
+    // 1. Update the status badge in the modal
+    const statusBadge = document.createElement('span');
+    statusBadge.className = `badge status-badge status-${order.status.replace(/\s+/g, '-')}`;
+    statusBadge.textContent = order.status;
+    document.getElementById('modalOrderStatus').innerHTML = '';
+    document.getElementById('modalOrderStatus').appendChild(statusBadge);
+
+    // 2. Update the stock items table
+    updateStockItemsTable(order);
+
+    // 3. Update the memo items table
+    updateMemoItemsTable(order);
+
+    // 4. Update the custom items table
+    updateCustomItemsTable(order);
+
+    // Show success message
+    showToast(`Order ${orderId} status updated to ${newStatus}`, 'success');
+
+    // Reload orders list in the background
+    loadOrders();
+
+    return true;
+  } catch (error) {
+    console.error('Error updating order status:', error);
+    showToast('Error updating order status', 'danger');
+    return false;
+  }
+}
+
+// Print order
+function printOrder(orderId) {
+  console.log(`Printing order: ${orderId}`);
+  // For demo purposes
+  showToast(`Printing order ${orderId}`, 'info');
+}
+
+// Confirm delete order
+function confirmDeleteOrder(orderId) {
+  if (confirm(`Are you sure you want to delete order ${orderId}? This action cannot be undone.`)) {
+    console.log(`Deleting order: ${orderId}`);
+
+    // In a real app, this would call the API
+    // For demo purposes, we'll update localStorage directly
+    const orders = getStorageData(STORAGE_KEY_ORDERS, []);
+    const updatedOrders = orders.filter(o => o.order_id !== orderId);
+    setStorageData(STORAGE_KEY_ORDERS, updatedOrders);
+
+    showToast(`Order ${orderId} has been deleted`, 'warning');
+    loadOrders();
+  }
+}
+
+// Apply filters
+function applyFilters() {
+  console.log("Applying filters to orders");
+  loadOrders();  // This function now includes filter logic
+}
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function () {
+  console.log("DOM loaded, initializing orders page");
+
+  // Load initial orders
+  loadOrders();
+
+  // Set up filter form
+  document.getElementById('applyFilters').addEventListener('click', applyFilters);
+
+  // Add event listeners for filter inputs
+  document.getElementById('searchOrder').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') {
+      applyFilters();
+    }
+  });
+
+  document.getElementById('statusFilter').addEventListener('change', function () {
+    applyFilters();
+  });
+
+  document.getElementById('dateFilter').addEventListener('change', function () {
+    applyFilters();
+  });
+
+  console.log("Orders page initialized");
+});
+
+// Make functions globally accessible
+window.loadOrders = loadOrders;
+window.viewOrderDetails = viewOrderDetails;
+window.updateItemStatus = updateItemStatus;
+window.updateOrderStatus = updateOrderStatus;
+window.printOrder = printOrder;
+window.confirmDeleteOrder = confirmDeleteOrder;
+window.openImagePreview = openImagePreview;
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,90 @@
+/* === Wishlist Specific Styles === */
+
+/* Table Styles */
+#wishlist-table {
+    margin-bottom: 0;
+  }
+  
+  #wishlist-table th {
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02rem;
+    background-color: #f8f9fa;
+    border-top: none;
+    padding: 0.75rem;
+  }
+  
+  #wishlist-table td {
+    padding: 0.75rem;
+    vertical-align: middle;
+  }
+  
+  #wishlist-table img.img-thumbnail {
+    height: 60px;
+    width: auto;
+    cursor: pointer;
+    transition: transform 0.2s;
+    object-fit: contain;
+    background-color: white;
+  }
+  
+  #wishlist-table img.img-thumbnail:hover {
+    transform: scale(1.1);
+  }
+  
+  /* Animation for row removal */
+  .fade-out {
+    animation: fadeOut 0.3s ease forwards;
+    pointer-events: none;
+  }
+  
+  @keyframes fadeOut {
+    from { opacity: 1; transform: translateX(0); }
+    to { opacity: 0; transform: translateX(10px); }
+  }
+  
+  /* Empty state */
+  .card-body.py-5 {
+    padding-top: 4rem !important;
+    padding-bottom: 4rem !important;
+  }
+  
+  .card-body.py-5 i {
+    font-size: 3rem;
+    opacity: 0.5;
+    display: block;
+    margin-bottom: 1rem;
+  }
+  
+  /* Loading animation for images */
+  .lazy {
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  
+  .lazy.loaded {
+    opacity: 1;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    #wishlist-table .btn-group .btn {
+      padding: 0.25rem 0.4rem;
+      font-size: 0.75rem;
+    }
+    
+    #wishlist-table th {
+      font-size: 0.8rem;
+    }
+    
+    #wishlist-table td {
+      padding: 0.5rem;
+    }
+  }
+  
+  @media (max-width: 576px) {
+    #wishlist-table img.img-thumbnail {
+      height: 40px;
+    }
+  }

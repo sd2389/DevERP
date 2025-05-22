@@ -1,0 +1,28 @@
+{% load static %}
+
+{% block title %}Error - DevERP{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card shadow-sm">
+        <div class="card-body text-center py-5">
+          <i class="bi bi-exclamation-triangle text-danger" style="font-size: 3rem;"></i>
+          <h2 class="mt-3 mb-4">An Error Occurred</h2>
+          
+          <div class="alert alert-danger">
+            <p>{{ error }}</p>
+          </div>
+          
+          <p class="mb-4">Please try again or contact the system administrator if the problem persists.</p>
+          
+          <a href="{% url 'inventory:inventory' %}" class="btn btn-primary">
+            <i class="bi bi-arrow-left me-2"></i> Return to Inventory
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

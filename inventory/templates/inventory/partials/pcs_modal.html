@@ -1,0 +1,277 @@
+{# pcs_modal.html - reusable modal partial #}
+
+<div class="modal fade" id="modal-{{ counter }}" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <!-- Header -->
+      <div class="modal-header">
+        <h5 class="modal-title">Design: {{ prod.design_no }}</h5>
+        <div class="ms-auto">
+          <button
+            class="btn btn-outline-danger me-2"
+            onclick="toggleWishlist('{{ prod.design_no }}', '{{ prod.in_stock_jobs.0.job_no|default:'' }}')">
+            <i class="bi bi-heart"></i> Wishlist
+          </button>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+      </div>
+
+      <div class="modal-body">
+        <!-- Number of pcs badges -->
+        <div class="d-flex justify-content-center mb-4">
+          <span class="status-circle in-stock me-2">{{ prod.in_stock_jobs|length }}</span>
+          <span class="status-circle on-memo">{{ prod.memo_jobs|length }}</span>
+        </div>
+
+        <!-- In Stock Section -->
+        {% if prod.in_stock_jobs %}
+        <h6 class="text-center mb-3">
+          <i class="bi bi-check-circle-fill text-success me-1"></i>In Stock
+        </h6>
+        <div class="table-responsive mb-5">
+          <table class="table table-bordered">
+            <thead class="table-light">
+              <tr class="text-center">
+                <th>Select</th>
+                <th>Job No</th>
+                <th>Metal</th>
+                <th>Quality</th>
+                <th>Color</th>
+                <th>Diamond Quality</th>
+                <th>Diamond Color</th>
+                <th>GWT</th>
+                <th>DWT</th>
+                <th>Size</th>
+                <th>Price</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for job in prod.in_stock_jobs %}
+              <tr class="text-center">
+                <td>
+                  <input
+                    type="checkbox"
+                    class="form-check-input job-checkbox"
+                    data-design="{{ prod.design_no }}"
+                    data-job_no="{{ job.job_no }}"
+                    data-price="{{ job.discounted_price }}">
+                </td>
+                <td>{{ job.job_no }}</td>
+                <td>{{ job.metal_type }}</td>
+                <td>{{ job.metal_quality }}</td>
+                <td>{{ job.metal_color }}</td>
+                <td>{{ job.diamond_quality|default:"VVS-VS" }}</td>
+                <td>{{ job.diamond_color|default:"D-E-F" }}</td>
+                <td>{{ job.gwt }}</td>
+                <td>{{ job.dwt }}</td>
+                <td>{{ job.size }}</td>
+                <td>${{ job.discounted_price }}</td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="11" class="text-center py-3">No items in stock</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% endif %}
+
+        <!-- Memo Section -->
+        {% if prod.memo_jobs %}
+        <h6 class="text-center mb-3">
+          <i class="bi bi-bookmark-fill text-warning me-1"></i>On Memo with Others
+        </h6>
+        <div class="table-responsive mb-5">
+          <table class="table table-bordered">
+            <thead class="table-light">
+              <tr class="text-center">
+                <th>Request</th>
+                <th>Job No</th>
+                <th>Metal</th>
+                <th>Quality</th>
+                <th>Color</th>
+                <th>Diamond Quality</th>
+                <th>Diamond Color</th>
+                <th>GWT</th>
+                <th>DWT</th>
+                <th>Size</th>
+                <th>Price</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for job in prod.memo_jobs %}
+              <tr class="text-center">
+                <td>
+                  <input
+                    type="checkbox"
+                    class="form-check-input memo-checkbox"
+                    data-design="{{ prod.design_no }}"
+                    data-job_no="{{ job.job_no }}">
+                </td>
+                <td>{{ job.job_no }}</td>
+                <td>{{ job.metal_type }}</td>
+                <td>{{ job.metal_quality }}</td>
+                <td>{{ job.metal_color }}</td>
+                <td>{{ job.diamond_quality|default:"VVS-VS" }}</td>
+                <td>{{ job.diamond_color|default:"D-E-F" }}</td>
+                <td>{{ job.gwt }}</td>
+                <td>{{ job.dwt }}</td>
+                <td>{{ job.size }}</td>
+                <td>${{ job.discounted_price }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          <div class="text-end mt-3">
+            <button class="btn btn-warning request-selected-memo-btn">
+              <i class="bi bi-bookmark-plus me-1"></i> Request Selected Items
+            </button>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Custom Order Section -->
+        <h6 class="text-center mb-3">
+          <i class="bi bi-tools me-1"></i>Custom Order
+        </h6>
+        <div class="table-responsive mb-3">
+          <table class="table table-bordered" id="customOrderTable-{{ counter }}">
+            <thead class="table-light">
+              <tr class="text-center">
+                <th>Serial No.</th>
+                <th>Metal Type</th>
+                <th>Quality</th>
+                <th>Color</th>
+                <th>Diamond Quality</th>
+                <th>Diamond Color</th>
+                <th>Size (in)</th>
+                <th>Number of Pcs</th>
+                <th>Remarks</th>
+                <th>Remove</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Rows added via JS -->
+            </tbody>
+          </table>
+          <button
+            class="btn btn-outline-primary btn-sm mt-2"
+            onclick="addCustomRow('{{ counter }}', '{{ prod.design_no }}')">
+            <i class="bi bi-plus-lg"></i> Add Row
+          </button>
+        </div>
+      </div>
+
+      <div class="modal-footer justify-content-between">
+        <button
+          class="btn btn-outline-secondary"
+          data-bs-dismiss="modal">
+          <i class="bi bi-x-lg"></i> Cancel
+        </button>
+        <button
+          class="btn btn-dark"
+          onclick="addToCart('{{ prod.design_no }}', '{{ counter }}')">
+          <i class="bi bi-cart-plus"></i> Add to Cart
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // static/inventory/js/pcs_modal.js
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Toggle a job on/off in the wishlist
+  window.toggleWishlist = (designNo, jobNo) => {
+    const key = 'wishlist';
+    let list = JSON.parse(localStorage.getItem(key) || '[]');
+    const idx = list.findIndex(x => x.design_no === designNo && x.job_no === jobNo);
+    if (idx > -1) list.splice(idx, 1);
+    else list.push({ design_no: designNo, job_no: jobNo });
+    localStorage.setItem(key, JSON.stringify(list));
+  };
+
+  // Add a new custom‑order row
+  window.addCustomRow = (counter, designNo) => {
+    const tbody = document.querySelector(`#customOrderTable-${counter} tbody`);
+    const rowIndex = tbody.children.length + 1;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="text-center">${rowIndex}</td>
+      <td><input name="custom[${designNo}][${rowIndex}][metal_type]" class="form-control"/></td>
+      <td><input name="custom[${designNo}][${rowIndex}][metal_quality]" class="form-control"/></td>
+      <td><input name="custom[${designNo}][${rowIndex}][metal_color]" class="form-control"/></td>
+      <td><input name="custom[${designNo}][${rowIndex}][diamond_quality]" class="form-control"/></td>
+      <td><input name="custom[${designNo}][${rowIndex}][diamond_color]" class="form-control"/></td>
+      <td><input name="custom[${designNo}][${rowIndex}][size]" class="form-control"/></td>
+      <td><input name="custom[${designNo}][${rowIndex}][pcs]" type="number" min="1" class="form-control"/></td>
+      <td><input name="custom[${designNo}][${rowIndex}][remarks]" class="form-control"/></td>
+      <td class="text-center">
+        <button type="button" class="btn btn-sm btn-outline-danger remove-row">
+          <i class="bi bi-trash"></i>
+        </button>
+      </td>`;
+    tbody.appendChild(tr);
+  };
+
+  // Delegate remove‑row, memo requests, and add‑to‑cart
+  document.body.addEventListener('click', e => {
+    // Remove a custom‑order row
+    if (e.target.closest('.remove-row')) {
+      e.target.closest('tr').remove();
+      return;
+    }
+
+    // Request selected memo items
+    if (e.target.closest('.request-selected-memo-btn')) {
+      const modal = e.target.closest('.modal-content');
+      const checked = modal.querySelectorAll('input.memo-checkbox:checked');
+      let requests = JSON.parse(localStorage.getItem('memoRequests') || '[]');
+      checked.forEach(cb => {
+        const job = cb.dataset.job_no;
+        if (!requests.includes(job)) requests.push(job);
+      });
+      localStorage.setItem('memoRequests', JSON.stringify(requests));
+      alert('Memo request queued.');
+      return;
+    }
+
+    // Add to cart (jobs + custom rows)
+    const addBtn = e.target.closest('.btn-dark');
+    if (addBtn && e.target.closest('.modal-content')) {
+      const modal = e.target.closest('.modal-content');
+      const title = modal.querySelector('.modal-title').textContent;
+      const designNo = title.split(': ')[1];
+      let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+
+      // In‑stock jobs
+      modal.querySelectorAll('input.job-checkbox:checked').forEach(cb => {
+        const jobNo = cb.dataset.job_no;
+        if (!cart.find(x => x.job_no === jobNo)) {
+          cart.push({ design_no: designNo, job_no: jobNo, price: cb.dataset.price });
+        }
+      });
+
+      // Custom orders
+      modal.querySelectorAll(`#customOrderTable-${modal.id.split('-')[1]} tbody tr`)
+        .forEach(row => {
+          const data = { design_no: designNo, custom: [] };
+          row.querySelectorAll('input').forEach(i => {
+            // name like custom[DESIGN][IDX][field]
+            const [, , , field] = i.name.match(/custom\[[^\]]+\]\[\d+\]\[([^\]]+)\]/);
+            data.custom.push({ [field]: i.value });
+          });
+          cart.push(data);
+        });
+
+      localStorage.setItem('cart', JSON.stringify(cart));
+      alert('Added to cart.');
+      // Close modal
+      modal.querySelector('[data-bs-dismiss="modal"]').click();
+    }
+  });
+});
+
+</script>

@@ -1,0 +1,1567 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>DevERP Inventory</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="{% static 'inventory/index.css' %}" rel="stylesheet">
+  <style>
+    /* Enhanced card and layout styling */
+    .card-view .card {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      border: none;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .card-view .card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 12px 20px rgba(0, 0, 0, 0.12);
+    }
+
+    .card-img-container {
+      height: 180px;
+      padding: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #f8f9fa;
+      overflow: hidden;
+    }
+
+    .card-img-container img {
+      max-height: 100%;
+      max-width: 100%;
+      object-fit: contain;
+      transition: transform 0.4s ease;
+    }
+
+    .card-view .card:hover .card-img-container img {
+      transform: scale(1.08);
+    }
+
+    .status-icon {
+      padding: 0.35em 0.65em;
+      font-size: 0.8em;
+      border-radius: 50rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .status-circles-container {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin: 0.5rem 0;
+    }
+
+    .status-badge {
+      border-radius: 50rem;
+      font-weight: 500;
+    }
+
+    /* Improved filter buttons */
+    .filter-container {
+      background-color: #fff;
+      padding: 1rem;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      margin-bottom: 1.5rem;
+    }
+
+    .filter-btn {
+      border-radius: 50rem;
+      font-weight: 500;
+      padding: 0.5rem 1rem;
+      transition: all 0.3s ease;
+    }
+
+    #toggleViewBtn {
+      border-radius: 50rem;
+    }
+
+    /* Animation for status badges */
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+      }
+
+      50% {
+        transform: scale(1.05);
+      }
+
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    .status-circle {
+      animation: pulse 2s infinite ease-in-out;
+    }
+
+    /* Better modal styling */
+    .modal-content {
+      border-radius: 15px;
+      border: none;
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+    }
+
+    .modal-header {
+      background-color: #f8f9fa;
+      border-bottom: 1px solid #eee;
+      border-top-left-radius: 15px;
+      border-top-right-radius: 15px;
+    }
+
+    .modal-footer {
+      background-color: #f8f9fa;
+      border-top: 1px solid #eee;
+      border-bottom-left-radius: 15px;
+      border-bottom-right-radius: 15px;
+    }
+
+    /* Enhanced status indicators for cards */
+    .status-circle.out-of-stock {
+      background-color: #F44336;
+      color: white;
+    }
+
+    .status-icon.out-of-stock {
+      color: #F44336;
+      background-color: rgba(244, 67, 54, 0.1);
+      padding: 0.35em 0.65em;
+      border-radius: 50rem;
+    }
+
+    .status-icon.in-stock {
+      color: #4CAF50;
+      background-color: rgba(76, 175, 80, 0.1);
+      padding: 0.35em 0.65em;
+      border-radius: 50rem;
+    }
+
+    .status-icon.on-memo {
+      color: #FFC107;
+      background-color: rgba(255, 193, 7, 0.1);
+      padding: 0.35em 0.65em;
+      border-radius: 50rem;
+    }
+
+    /* Improved empty state for no results */
+    .no-results {
+      text-align: center;
+      padding: 3rem 0;
+      background-color: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .no-results i {
+      font-size: 3rem;
+      color: #ccc;
+      margin-bottom: 1rem;
+    }
+
+    /* Better responsive grid for card view */
+    @media (min-width: 1400px) {
+      .card-view .col-lg-3 {
+        flex: 0 0 auto;
+        width: 20%;
+      }
+    }
+
+    @media (max-width: 767.98px) {
+      .card-img-container {
+        height: 150px;
+      }
+
+      .card-title {
+        font-size: 0.9rem;
+      }
+
+      .status-circles-container {
+        gap: 4px;
+      }
+
+      .status-circle {
+        width: 30px;
+        height: 30px;
+        font-size: 12px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container py-4">
+    <!-- Navigation bar with Wishlist link -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4 rounded shadow-sm">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="{% url 'inventory:inventory' %}">DevERP</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+          aria-expanded="false">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item">
+              <a class="nav-link active" href="{% url 'inventory:inventory' %}">
+                <i class="bi bi-grid"></i> Inventory
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'inventory:wishlist' %}">
+                <i class="bi bi-heart"></i> Wishlist
+                <span class="badge rounded-pill bg-danger wishlist-count"></span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'inventory:cart' %}">
+                <i class="bi bi-cart"></i> Cart
+                <span class="badge rounded-pill bg-primary cart-counter"></span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'inventory:orders' %}">
+                <i class="bi bi-box"></i> Orders
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div id="loading-overlay"
+      class="position-fixed top-0 start-0 w-100 h-100 d-none align-items-center justify-content-center bg-white bg-opacity-75"
+      style="z-index: 1050;">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
+
+    <h1 class="text-center mb-4">Inventory</h1>
+
+    <!-- Filters in a container -->
+    <div class="filter-container">
+      <div class="row align-items-center g-3">
+        <div class="col-md-4">
+          <input type="text" id="searchInput" class="form-control" placeholder="Search by design or job no.">
+        </div>
+        <div class="col-md-3">
+          <select id="typeFilter" class="form-select">
+            <option value="all">All Categories</option>
+            <option value="earring">Earring</option>
+            <option value="ring">Ring</option>
+            <option value="necklace">Necklace</option>
+            <option value="bracelet">Bracelet</option>
+          </select>
+        </div>
+        <div class="col-md-5">
+          <div class="d-flex justify-content-md-end justify-content-center gap-2">
+            <button class="filter-btn" id="btn-all">All</button>
+            <button class="filter-btn active" id="btn-instock">In Stock</button>
+            <button class="filter-btn" id="btn-notinstock">Not In Stock</button>
+            <button class="btn btn-outline-primary" id="toggleViewBtn">
+              <i class="bi bi-table"></i> <span id="toggleBtnText">Table View</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card View (now default) -->
+    <div id="card-view" class="row g-3 card-view">
+      {% for prod in products %}
+      {% if prod.design_no %}
+      <div class="col-6 col-md-4 col-lg-3" data-type="{{ prod.category|lower }}" data-status="{{ prod.status|lower }}"
+        data-jobs="{% for job in prod.in_stock_jobs %}{{ job.job_no }} {% endfor %}"
+        data-memojobs="{% for job in prod.memo_jobs %}{{ job.job_no }} {% endfor %}">
+        <div class="card h-100">
+          <div class="card-img-container">
+            <img class="lazy" src="{% static 'inventory/placeholder.jpg' %}"
+              data-src="https://dev-jewels.s3.us-east-2.amazonaws.com/products/{{ prod.design_no }}/White/D_{{ prod.design_no }}-1.jpg"
+              alt="{{ prod.design_no }}" data-bs-toggle="modal" data-bs-target="#imageModal-{{ forloop.counter0 }}">
+
+            <!-- Wishlist Button overlay on image -->
+            <button class="wishlist-btn position-absolute top-0 end-0 m-2"
+              onclick="toggleWishlist('{{ prod.design_no }}', '{{ prod.in_stock_jobs.0.job_no|default:'' }}')">
+              <i class="bi bi-heart fs-5"></i>
+            </button>
+          </div>
+
+          <div class="card-body text-center p-3">
+            <h5 class="card-title mb-1">{{ prod.design_no }}</h5>
+            <p class="text-muted small mb-2">{{ prod.category }}</p>
+
+            <!-- Status Circles in a container -->
+            <div class="status-circles-container">
+              {% if prod.in_stock_jobs %}
+              <div class="status-circle in-stock" title="In Stock">{{ prod.in_stock_jobs|length }}</div>
+              {% endif %}
+              {% if prod.memo_jobs %}
+              <div class="status-circle on-memo" title="On Memo">{{ prod.memo_jobs|length }}</div>
+              {% endif %}
+              {% if not prod.in_stock_jobs and not prod.memo_jobs %}
+              <div class="status-circle out-of-stock" title="Not In Stock">0</div>
+              {% endif %}
+            </div>
+
+            <!-- Status Badge with Icon -->
+            <div class="d-flex justify-content-center mb-3">
+              {% if prod.in_stock_jobs and prod.memo_jobs %}
+              <div class="status-icon in-stock me-2"><i class="bi bi-check-circle-fill"></i> In Stock</div>
+              <div class="status-icon on-memo"><i class="bi bi-bookmark-fill"></i> On Memo</div>
+              {% elif prod.in_stock_jobs %}
+              <div class="status-icon in-stock"><i class="bi bi-check-circle-fill"></i> In Stock</div>
+              {% elif prod.memo_jobs %}
+              <div class="status-icon on-memo"><i class="bi bi-bookmark-fill"></i> On Memo</div>
+              {% else %}
+              <div class="status-icon out-of-stock"><i class="bi bi-x-circle-fill"></i> Not In Stock</div>
+              {% endif %}
+            </div>
+
+            <!-- Card Actions -->
+            {% if not prod.in_stock_jobs and not prod.memo_jobs %}
+            <!-- Show Request Custom Order Button if NOT in stock and NOT on memo -->
+            <button class="btn btn-sm btn-outline-secondary w-100" data-bs-toggle="modal"
+              data-bs-target="#modal-{{ forloop.counter0 }}">
+              <i class="bi bi-tools"></i> Request Custom Order
+            </button>
+            {% else %}
+            <button class="btn btn-sm btn-primary w-100 order-btn" data-bs-toggle="modal"
+              data-bs-target="#modal-{{ forloop.counter0 }}">
+              <i class="bi bi-cart-plus"></i> Order Now
+            </button>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      {% endif %}
+      {% endfor %}
+    </div>
+
+    <!-- Inventory Table (now hidden by default) -->
+    <div id="table-view" class="d-none">
+      <div class="table-responsive">
+        <table class="table table-hover text-center align-middle" id="inventory-table">
+          <thead class="table-secondary">
+            <tr>
+              <th>Sr No.</th>
+              <th>Image</th>
+              <th>Design No.</th>
+              <th>Category</th>
+              <th>No. of Pcs</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for prod in products %}
+            {% if prod.design_no %}
+            <tr data-type="{{ prod.category|lower }}" data-status="{{ prod.status|lower }}"
+              data-jobs="{% for job in prod.in_stock_jobs %}{{ job.job_no }} {% endfor %}"
+              data-memojobs="{% for job in prod.memo_jobs %}{{ job.job_no }} {% endfor %}">
+
+              <td>{{ forloop.counter }}</td>
+              <td>
+                <img src="{% static 'inventory/placeholder.jpg' %}"
+                  data-src="https://dev-jewels.s3.us-east-2.amazonaws.com/products/{{ prod.design_no }}/White/D_{{ prod.design_no }}-1.jpg"
+                  class="img-thumbnail lazy" style="height:60px; width:auto; cursor:pointer;" alt="Loading"
+                  data-bs-toggle="modal" data-bs-target="#imageModal-{{ forloop.counter0 }}">
+              </td>
+              <td>{{ prod.design_no }}</td>
+              <td>{{ prod.category }}</td>
+
+              <!-- Enhanced Inventory Status -->
+              <td class="inventory-status">
+                <a href="#" class="d-flex justify-content-center" data-bs-toggle="modal"
+                  data-bs-target="#modal-{{ forloop.counter0 }}">
+                  <div class="status-pills">
+                    {% if prod.in_stock_jobs %}
+                    <div class="status-item">
+                      <span class="status-circle in-stock">{{ prod.in_stock_jobs|length }}</span>
+                    </div>
+                    {% endif %}
+
+                    {% if prod.memo_jobs %}
+                    <div class="status-item">
+                      <span class="status-circle on-memo">{{ prod.memo_jobs|length }}</span>
+                    </div>
+                    {% endif %}
+
+                    {% if not prod.in_stock_jobs and not prod.memo_jobs %}
+                    <div class="status-item">
+                      <span class="status-circle out-of-stock">0</span>
+                    </div>
+                    {% endif %}
+                  </div>
+                </a>
+              </td>
+
+              <!-- Enhanced Status Badges with Icons -->
+              <td>
+                {% if prod.in_stock_jobs and prod.memo_jobs %}
+                <div class="status-badge dual">
+                  <span class="in-stock-label"><i class="bi bi-check-circle-fill me-1"></i> In Stock</span>
+                  <span class="on-memo-label"><i class="bi bi-bookmark-fill me-1"></i> On Memo</span>
+                </div>
+                {% elif prod.in_stock_jobs %}
+                <span class="status-badge in-stock"><i class="bi bi-check-circle-fill me-1"></i> In Stock</span>
+                {% elif prod.memo_jobs %}
+                <span class="status-badge on-memo"><i class="bi bi-bookmark-fill me-1"></i> On Memo</span>
+                {% else %}
+                <span class="status-badge out-of-stock"><i class="bi bi-x-circle-fill me-1"></i> Not In Stock</span>
+                {% endif %}
+              </td>
+
+              <!-- Actions Column with Wishlist -->
+              <td>
+                <div class="d-flex justify-content-center gap-2">
+                  <button class="wishlist-btn"
+                    onclick="toggleWishlist('{{ prod.design_no }}', '{{ prod.in_stock_jobs.0.job_no|default:"" }}')">
+                    <i class="bi bi-heart"></i>
+                  </button>
+                  <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
+                    data-bs-target="#modal-{{ forloop.counter0 }}">
+                    <i class="bi bi-cart-plus"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            {% endif %}
+            {% empty %}
+            <tr>
+              <td colspan="7" class="py-4">No items found.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 📌 Number of pcs Modal -->
+    {% for prod in products %}
+    {% if prod.design_no %}
+    <div class="modal fade" id="modal-{{ forloop.counter0 }}" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+          <!-- Header -->
+          <div class="modal-header">
+            <h5 class="modal-title">Order: {{ prod.design_no }}</h5>
+            <div class="ms-auto">
+              <!-- Add to Wishlist button in modal header -->
+              <button class="btn btn-outline-danger me-2"
+                onclick="toggleWishlist('{{ prod.design_no }}', '{{ prod.in_stock_jobs.0.job_no|default:"" }}')">
+                <i class="bi bi-heart"></i> Wishlist
+              </button>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+          </div>
+
+          <div class="modal-body">
+            <!-- In Stock Section -->
+            {% if prod.in_stock_jobs %}
+            <h6 class="text-center mb-4">
+              <i class="bi bi-check-circle-fill text-success me-2"></i>In Stock
+            </h6>
+            <div class="table-responsive mb-5">
+              <table class="table table-bordered">
+                <thead class="table-light">
+                  <tr class="text-center">
+                    <th class="text-center">SELECT</th>
+                    <th>JOB NO</th>
+                    <th>METAL</th>
+                    <th>QUALITY</th>
+                    <th>COLOR</th>
+                    <th>DIAMOND QUALITY</th>
+                    <th>DIAMOND COLOR</th>
+                    <th>GWT</th>
+                    <th>DWT</th>
+                    <th>SIZE</th>
+                    <th>PRICE</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for job in prod.in_stock_jobs %}
+                  <tr class="text-center">
+                    <td class="text-center">
+                      <input type="checkbox" class="form-check-input job-checkbox" data-design="{{ prod.design_no }}"
+                        data-job_no="{{ job.job_no }}" data-price="{{ job.discounted_price }}">
+                    </td>
+                    <td>{{ job.job_no }}</td>
+                    <td>{{ job.metal_type }}</td>
+                    <td>{{ job.metal_quality }}</td>
+                    <td>{{ job.metal_color }}</td>
+                    <td>{{ job.diamond_quality|default:"VVS-VS" }}</td>
+                    <td>{{ job.diamond_color|default:"D-E-F" }}</td>
+                    <td>{{ job.gwt }}</td>
+                    <td>{{ job.dwt }}</td>
+                    <td>{{ job.size }}</td>
+                    <td>${{ job.discounted_price }}</td>
+                  </tr>
+                  {% empty %}
+                  <tr>
+                    <td colspan="11" class="text-center py-3">No items in stock</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            {% endif %}
+
+            <!-- Memo Section (conditionally rendered) -->
+            {% if prod.memo_jobs %}
+            <h6 class="text-center mb-4">
+              <i class="bi bi-bookmark-fill text-warning me-2"></i>On Memo with Others
+            </h6>
+            <div class="table-responsive mb-5">
+              <table class="table table-bordered">
+                <thead class="table-light">
+                  <tr class="text-center">
+                    <th class="text-center">REQUEST</th>
+                    <th>JOB NO</th>
+                    <th>METAL</th>
+                    <th>QUALITY</th>
+                    <th>COLOR</th>
+                    <th>DIAMOND QUALITY</th>
+                    <th>DIAMOND COLOR</th>
+                    <th>GWT</th>
+                    <th>DWT</th>
+                    <th>SIZE</th>
+                    <th>PRICE</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for job in prod.memo_jobs %}
+                  <tr class="text-center">
+                    <td class="text-center">
+                      <input type="checkbox" class="form-check-input memo-checkbox" data-design="{{ prod.design_no }}"
+                        data-job_no="{{ job.job_no }}">
+                    </td>
+                    <td>{{ job.job_no }}</td>
+                    <td>{{ job.metal_type }}</td>
+                    <td>{{ job.metal_quality }}</td>
+                    <td>{{ job.metal_color }}</td>
+                    <td>{{ job.diamond_quality|default:"VVS-VS" }}</td>
+                    <td>{{ job.diamond_color|default:"D-E-F" }}</td>
+                    <td>{{ job.gwt }}</td>
+                    <td>{{ job.dwt }}</td>
+                    <td>{{ job.size }}</td>
+                    <td>${{ job.discounted_price }}</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+              <div class="text-end mt-3">
+                <button class="btn btn-warning request-selected-memo-btn">
+                  <i class="bi bi-bookmark-plus me-1"></i> Request Selected Items
+                </button>
+              </div>
+            </div>
+            {% endif %}
+
+            {% if not prod.in_stock_jobs and not prod.memo_jobs %}
+            <div class="alert alert-secondary mb-4 d-flex">
+              <i class="bi bi-exclamation-circle-fill me-2 fs-4"></i>
+              <div>
+                <p class="mb-2 fw-bold">Sorry, we are out of stock.</p>
+                <p class="mb-0">
+                  Contact us at <a href="mailto:abc@gmail.com">abc@gmail.com</a> or
+                  <a href="tel:+12011234567">+1 (201) 123 4567</a>
+                </p>
+              </div>
+            </div>
+            {% endif %}
+
+            <!-- Custom Order Section with Diamond Fields -->
+            <h6 class="text-center mb-4">
+              <i class="bi bi-tools me-2"></i>Custom Order
+            </h6>
+            <div class="table-responsive mb-3">
+              <table class="table table-bordered" id="customOrderTable-{{ forloop.counter0 }}">
+                <thead class="table-light">
+                  <tr class="text-center">
+                    <th>SERIAL NO.</th>
+                    <th>METAL TYPE</th>
+                    <th>QUALITY</th>
+                    <th>COLOR</th>
+                    <th>DIAMOND QUALITY</th>
+                    <th>DIAMOND COLOR</th>
+                    <th>SIZE (IN)</th>
+                    <th>NUMBER OF PCS</th>
+                    <th>REMARKS</th>
+                    <th>REMOVE</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Custom rows inserted via JS -->
+                </tbody>
+              </table>
+            </div>
+
+            <button class="btn btn-outline-primary btn-sm"
+              onclick="addCustomRow('{{ forloop.counter0 }}', '{{ prod.design_no }}')">
+              <i class="bi bi-plus-lg"></i> Add Row
+            </button>
+          </div>
+
+          <div class="modal-footer justify-content-between">
+            <button class="btn btn-outline-secondary" data-bs-dismiss="modal">
+              <i class="bi bi-x-lg"></i> Cancel
+            </button>
+            <button class="btn btn-dark" onclick="addToCart('{{ prod.design_no }}', '{{ forloop.counter0 }}')">
+              <i class="bi bi-cart-plus"></i> Add to Cart
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+    {% endfor %}
+
+    <!-- Image Modals -->
+    {% for prod in products %}
+    {% if prod.design_no %}
+    <div class="modal fade" id="imageModal-{{ forloop.counter0 }}" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Images - {{ prod.design_no }}</h5>
+            <div class="ms-auto">
+              <!-- Add to Wishlist button in image modal header -->
+              <button class="btn btn-outline-danger me-2"
+                onclick="toggleWishlist('{{ prod.design_no }}', '{{ prod.in_stock_jobs.0.job_no|default:"" }}')">
+                <i class="bi bi-heart"></i> Add to Wishlist
+              </button>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3 text-center">
+              <button class="btn btn-outline-secondary mx-1 color-btn" data-color="White"
+                data-design="{{ prod.design_no }}" data-modal="{{ forloop.counter0 }}">W</button>
+              <button class="btn btn-outline-secondary mx-1 color-btn" data-color="Yellow"
+                data-design="{{ prod.design_no }}" data-modal="{{ forloop.counter0 }}">Y</button>
+              <button class="btn btn-outline-secondary mx-1 color-btn" data-color="Rose"
+                data-design="{{ prod.design_no }}" data-modal="{{ forloop.counter0 }}">R</button>
+            </div>
+            <div id="carousel-{{ forloop.counter0 }}" class="carousel slide" data-bs-ride="false">
+              <div class="carousel-inner text-center" id="carousel-inner-{{ forloop.counter0 }}">
+                <div class="carousel-item active">
+                  <img
+                    src="https://dev-jewels.s3.us-east-2.amazonaws.com/products/{{ prod.design_no }}/White/D_{{ prod.design_no }}-1.jpg"
+                    class="modal-carousel-img d-inline-block" alt="{{ prod.design_no }}">
+                </div>
+              </div>
+              <button class="carousel-control-prev" type="button" data-bs-target="#carousel-{{ forloop.counter0 }}"
+                data-bs-slide="prev">
+                <span class="carousel-control-prev-icon"></span>
+              </button>
+              <button class="carousel-control-next" type="button" data-bs-target="#carousel-{{ forloop.counter0 }}"
+                data-bs-slide="next">
+                <span class="carousel-control-next-icon"></span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+    {% endfor %}
+
+    <!-- Memo Request Modal -->
+    <div class="modal fade" id="memoConfirmModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 shadow-lg">
+          <div class="modal-header border-bottom-0">
+            <h5 class="modal-title fw-semibold">
+              <i class="bi bi-exclamation-circle text-warning me-2"></i>Memo Item Request
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+
+          <div class="modal-body">
+            <p class="mb-3">The following items are currently on memo with another customer:</p>
+            <ul id="memoJobList" class="list-group mb-3 border rounded-2">
+              <!-- Filled dynamically -->
+            </ul>
+            <div class="alert alert-warning small mb-0">
+              <i class="bi bi-info-circle me-1"></i>
+              Do you want to request these items? They will be saved in your "My Requests".
+            </div>
+          </div>
+
+          <div class="modal-footer border-top-0 d-flex gap-2">
+            <button class="btn btn-outline-secondary flex-fill" data-bs-dismiss="modal">
+              <i class="bi bi-x-circle me-1"></i> Leave These Items
+            </button>
+            <button class="btn btn-primary flex-fill" id="proceedMemoItemsBtn" data-bs-dismiss="modal">
+              <i class="bi bi-check-circle me-1"></i> Proceed
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 9999">
+      <div id="cartToast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive"
+        aria-atomic="true">
+        <div class="d-flex">
+          <div class="toast-body">
+            ✅ Item(s) added to cart successfully.
+          </div>
+          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+            aria-label="Close"></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Filter functions -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const btnAll = document.getElementById('btn-all');
+      const btnInStock = document.getElementById('btn-instock');
+      const btnNotStock = document.getElementById('btn-notinstock');
+      const searchInput = document.getElementById('searchInput');
+      const typeFilter = document.getElementById('typeFilter');
+      const overlay = document.getElementById('loading-overlay');
+      const toggleBtnText = document.getElementById('toggleBtnText');
+      const tableView = document.getElementById('table-view');
+      const cardView = document.getElementById('card-view');
+      const toggleBtn = document.getElementById('toggleViewBtn');
+
+      // Get all rows/cards to be filtered
+      const rows = Array.from(document.querySelectorAll('#inventory-table tbody tr')).map(tr => {
+        const jobNos = ((tr.dataset.jobs || "") + " " + (tr.dataset.memojobs || "")).toLowerCase();
+        return {
+          el: tr,
+          type: tr.dataset.type,
+          status: tr.dataset.status,
+          jobs: jobNos.split(/\s+/).filter(Boolean),
+        };
+      });
+
+      // Get all card items
+      const cards = Array.from(document.querySelectorAll('#card-view .col-6')).map(card => {
+        const jobNos = ((card.dataset.jobs || "") + " " + (card.dataset.memojobs || "")).toLowerCase();
+        return {
+          el: card,
+          type: card.dataset.type,
+          status: card.dataset.status,
+          jobs: jobNos.split(/\s+/).filter(Boolean),
+        };
+      });
+
+      // Initialize with instock filter and card view active
+      let currentFilter = 'instock';
+      btnInStock.classList.add('active');
+
+      // Set the toggle button text based on the current view
+      const icon = toggleBtn.querySelector('i');
+      toggleBtnText.textContent = "Table View";
+      icon.classList.remove('bi-grid');
+      icon.classList.add('bi-table');
+
+      // Apply initial filters
+      applyFilters();
+
+      function debounce(fn, delay = 150) {
+        let timer;
+        return (...args) => {
+          clearTimeout(timer);
+          timer = setTimeout(() => fn.apply(this, args), delay);
+        };
+      }
+
+      // Filter Logic for Both Table and Card View with debug logging
+      function applyFilters() {
+        const query = searchInput.value.trim().toLowerCase();
+        const cat = typeFilter.value.toLowerCase();
+
+        console.log("Applying filters:");
+        console.log("- Current filter:", currentFilter);
+        console.log("- Category filter:", cat);
+        console.log("- Search query:", query);
+
+        // Filtering cards first
+        cards.forEach(card => {
+          const { el, type, status, jobs } = card;
+
+          console.log("Card: type = " + type + ", status = " + status);
+
+          // Get text content for searching
+          const text = el.innerText.toLowerCase();
+
+          const matchesSearch = query === '' ||
+            text.includes(query) ||
+            jobs.some(j => j.includes(query));
+
+          const matchesCat = cat === "all" || type === cat;
+
+          const matchesStat =
+            currentFilter === "all" ||
+            (currentFilter === "instock" && status === "in stock") ||
+            (currentFilter === "notinstock" && status === "not in stock");
+
+          console.log("- Matches: search = " + matchesSearch + ", cat = " + matchesCat + ", stat = " + matchesStat);
+
+          el.style.display = matchesSearch && matchesCat && matchesStat ? "" : "none";
+        });
+
+        // Then filter table rows
+        rows.forEach(row => {
+          const { el, type, status, jobs } = row;
+
+          console.log("Row: type = " + type + ", status = " + status);
+
+          const designNo = el.querySelector("td:nth-child(3)")?.textContent.toLowerCase() || "";
+          const category = el.querySelector("td:nth-child(4)")?.textContent.toLowerCase() || "";
+
+          const matchesSearch = query === '' ||
+            designNo.includes(query) ||
+            category.includes(query) ||
+            jobs.some(j => j.includes(query));
+
+          const matchesCat = cat === "all" || type === cat;
+
+          const matchesStat =
+            currentFilter === "all" ||
+            (currentFilter === "instock" && status === "in stock") ||
+            (currentFilter === "notinstock" && status === "not in stock");
+
+          console.log("- Matches: search = " + matchesSearch + ", cat = " + matchesCat + ", stat = " + matchesStat);
+
+          el.style.display = matchesSearch && matchesCat && matchesStat ? "" : "none";
+        });
+
+        // Check if we need to show "No results" message
+        const visibleCards = Array.from(document.querySelectorAll('#card-view .col-6')).filter(
+          card => card.style.display !== 'none'
+        );
+
+        const noResultsEl = document.querySelector('.no-results');
+
+        // If there's no visible cards and no "No results" message, add one
+        if (visibleCards.length === 0) {
+          if (!noResultsEl) {
+            const noResults = document.createElement('div');
+            noResults.className = 'col-12 no-results';
+            noResults.innerHTML = `
+            <i class="bi bi-search"></i>
+            <h4>No items found</h4>
+            <p class="text-muted">Try changing your search or filter criteria</p>
+          `;
+            document.getElementById('card-view').appendChild(noResults);
+          }
+        } else {
+          // If there are visible cards but a "No results" message exists, remove it
+          if (noResultsEl) {
+            noResultsEl.remove();
+          }
+        }
+      }
+
+      // Show/hide loading spinner during filtering
+      function applyFiltersWithLoading() {
+        overlay.classList.remove('d-none');
+        overlay.classList.add('d-flex');
+        setTimeout(() => {
+          applyFilters();
+          overlay.classList.add('d-none');
+          overlay.classList.remove('d-flex');
+        }, 400);
+      }
+
+      // Filter button click handlers
+      [btnAll, btnInStock, btnNotStock].forEach(btn => {
+        btn.addEventListener('click', () => {
+          btnAll.classList.remove('active');
+          btnInStock.classList.remove('active');
+          btnNotStock.classList.remove('active');
+          btn.classList.add('active');
+          currentFilter = btn.id.replace('btn-', '');
+          console.log("Filter button clicked:", currentFilter);
+          applyFiltersWithLoading();
+        });
+      });
+
+      // Input and dropdown event handlers
+      searchInput.addEventListener('input', debounce(applyFiltersWithLoading, 100));
+      typeFilter.addEventListener('change', applyFiltersWithLoading);
+
+      // Dynamic Carousel Image Loader
+      document.querySelectorAll('.color-btn').forEach(button => {
+        button.addEventListener('click', () => {
+          const designNo = button.getAttribute('data-design');
+          const color = button.getAttribute('data-color');
+          const modalId = button.getAttribute('data-modal');
+          const container = document.getElementById(`carousel-inner-${modalId}`);
+          const baseUrl = `https://dev-jewels.s3.us-east-2.amazonaws.com/products/${designNo}/${color}/`;
+
+          const imagePaths = [
+            `D_${designNo}-1.jpg`,
+            `H_${designNo}-2.jpg`,
+            `${designNo}-3.jpg`,
+            `${designNo}-4.jpg`
+          ];
+
+          let content = '';
+          imagePaths.forEach((name, idx) => {
+            content += `
+            <div class="carousel-item ${idx === 0 ? 'active' : ''}">
+              <img src="${baseUrl}${name}" class="modal-carousel-img d-inline-block" alt="${color} image ${idx + 1}">
+            </div>`;
+          });
+          container.innerHTML = content;
+        });
+      });
+
+      // View toggle handler
+      toggleBtn.addEventListener("click", () => {
+        tableView.classList.toggle("d-none");
+        cardView.classList.toggle("d-none");
+
+        const icon = toggleBtn.querySelector('i');
+
+        if (tableView.classList.contains("d-none")) {
+          toggleBtnText.textContent = "Table View";
+          icon.classList.remove('bi-grid');
+          icon.classList.add('bi-table');
+        } else {
+          toggleBtnText.textContent = "Card View";
+          icon.classList.remove('bi-table');
+          icon.classList.add('bi-grid');
+        }
+      });
+
+      // Update wishlist/cart counters
+      updateWishlistCount();
+      updateCartCounter();
+      updateCustomOrdersCount();
+    }); // Ensure there is no stray comma or incomplete statement above this line
+  </script>
+
+  <!-- Lazy Loading -->
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const lazyImages = document.querySelectorAll("img.lazy");
+
+      if ('IntersectionObserver' in window) {
+        const observer = new IntersectionObserver((entries, obs) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              const img = entry.target;
+
+              // Prevent double-loading
+              if (img.dataset.src && !img.dataset.loaded) {
+                img.src = img.dataset.src;
+                img.dataset.loaded = "true";
+                img.classList.remove("lazy");
+                obs.unobserve(img);
+              }
+            }
+          });
+        });
+
+        lazyImages.forEach(img => observer.observe(img));
+      } else {
+        // fallback for unsupported browsers
+        lazyImages.forEach(img => {
+          img.src = img.dataset.src;
+        });
+      }
+    });
+  </script>
+
+  <!-- Wishlist functionality -->
+  <script>
+    // Toggle item in wishlist
+    function toggleWishlist(designNo, jobNo) {
+      try {
+        // Get current wishlist
+        let wishlist = JSON.parse(localStorage.getItem("user_wishlist") || "[]");
+
+        // Check if this item is already in the wishlist
+        const existingIndex = wishlist.findIndex(item =>
+          item.design_no === designNo && (jobNo ? item.job_no === jobNo : true)
+        );
+
+        if (existingIndex >= 0) {
+          // Remove from wishlist
+          wishlist.splice(existingIndex, 1);
+          showToast('<i class="bi bi-heart"></i> Item removed from wishlist', "warning");
+        } else {
+          // Add to wishlist
+          wishlist.push({
+            design_no: designNo,
+            job_no: jobNo || "", // Use empty string if jobNo is not provided
+            added_on: new Date().toLocaleDateString()
+          });
+          showToast('<i class="bi bi-heart-fill"></i> Item added to wishlist', "success");
+        }
+
+        // Save updated wishlist
+        localStorage.setItem("user_wishlist", JSON.stringify(wishlist));
+
+        // Update all wishlist buttons
+        updateWishlistButtons();
+
+        // Update wishlist count in navbar
+        updateWishlistCount();
+
+      } catch (error) {
+        console.error("Error managing wishlist:", error);
+        showToast("<i class='bi bi-exclamation-triangle'></i> Error managing wishlist", "danger");
+      }
+    }
+
+    // Update all wishlist button icons based on current wishlist
+    function updateWishlistButtons() {
+      try {
+        const wishlist = JSON.parse(localStorage.getItem("user_wishlist") || "[]");
+
+        // Get all wishlist buttons
+        document.querySelectorAll('.wishlist-btn').forEach(btn => {
+          // Find parent row or card to get design number
+          const row = btn.closest('tr');
+          const card = btn.closest('.card');
+
+          let designNo, jobNo;
+
+          if (row) {
+            designNo = row.querySelector('td:nth-child(3)')?.textContent.trim();
+            jobNo = btn.getAttribute('data-job_no') || '';
+          } else if (card) {
+            designNo = card.querySelector('.card-title')?.textContent.trim();
+            jobNo = '';
+          } else {
+            // Button is in a modal
+            const modal = btn.closest('.modal');
+            if (modal) {
+              const title = modal.querySelector('.modal-title')?.textContent || '';
+              designNo = title.replace('Images -', '').replace('Order:', '').trim();
+              jobNo = btn.getAttribute('data-job_no') || '';
+            }
+          }
+
+          // Skip if we couldn't determine the design number
+          if (!designNo) return;
+
+          // Check if this item is in the wishlist
+          const isInWishlist = wishlist.some(item =>
+            item.design_no === designNo && (jobNo ? item.job_no === jobNo : true)
+          );
+
+          // Update button icon
+          const icon = btn.querySelector('.bi');
+          if (icon) {
+            if (isInWishlist) {
+              icon.classList.remove('bi-heart');
+              icon.classList.add('bi-heart-fill');
+              btn.classList.add('active');
+            } else {
+              icon.classList.remove('bi-heart-fill');
+              icon.classList.add('bi-heart');
+              btn.classList.remove('active');
+            }
+          }
+        });
+
+      } catch (error) {
+        console.error("Error updating wishlist buttons:", error);
+      }
+    }
+
+    // Update wishlist count in navbar
+    function updateWishlistCount() {
+      try {
+        const wishlist = JSON.parse(localStorage.getItem("user_wishlist") || "[]");
+        const count = wishlist.length;
+
+        const countBadge = document.querySelector('.wishlist-count');
+        if (countBadge) {
+          countBadge.textContent = count > 0 ? count : '';
+          countBadge.style.display = count > 0 ? 'inline-block' : 'none';
+        }
+      } catch (error) {
+        console.error("Error updating wishlist count:", error);
+      }
+    }
+
+    // Show toast message
+    function showToast(message, type = "success") {
+      const toastEl = document.getElementById("cartToast");
+      const toastBody = toastEl.querySelector(".toast-body");
+
+      // Update toast content and styling
+      toastBody.innerHTML = message;
+
+      // Update Bootstrap classes for different toast types
+      toastEl.className = `toast align-items-center border-0 text-bg-${type}`;
+
+      const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
+      toast.show();
+    }
+
+    // Update cart counter in navbar
+    function updateCartCounter() {
+      const cartCounter = document.querySelector(".cart-counter");
+      if (!cartCounter) return;
+
+      try {
+        // Count all types of items in the cart
+        const stockItems = JSON.parse(localStorage.getItem("cart_customer") || "[]");
+        const memoItems = JSON.parse(localStorage.getItem("memoRequests") || "[]");
+        const customItems = JSON.parse(localStorage.getItem("custom_orders") || "[]");
+
+        const count = stockItems.length + memoItems.length + customItems.length;
+
+        cartCounter.textContent = count > 0 ? count : '';
+        cartCounter.style.display = count > 0 ? 'inline-block' : 'none';
+      } catch (e) {
+        console.error("Error reading cart:", e);
+      }
+    }
+
+    // Update counter for custom orders
+    function updateCustomOrdersCount() {
+      const countBadge = document.querySelector('.custom-orders-count');
+      if (!countBadge) return;
+
+      try {
+        const allOrders = JSON.parse(localStorage.getItem("custom_orders") || "[]");
+        const pendingOrders = allOrders.filter(o => o.status === "pending");
+        const count = pendingOrders.length;
+
+        countBadge.textContent = count > 0 ? count : '';
+        countBadge.style.display = count > 0 ? 'inline-block' : 'none';
+      } catch (error) {
+        console.error('Error updating custom orders count:', error);
+      }
+    }
+
+    // Initialize wishlist buttons on page load
+    document.addEventListener("DOMContentLoaded", function () {
+      updateWishlistButtons();
+      updateWishlistCount();
+      updateCustomOrdersCount();
+    });
+  </script>
+
+  <!-- Custom Order Functions with Diamond Fields -->
+  <script>
+    // Generate a unique order ID
+    function generateOrderId() {
+      return 'order-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+    }
+
+    // Add custom order row with diamond fields
+    // Add custom order row with diamond fields
+    function addCustomRow(modalId, designNo) {
+      const table = document.querySelector(`#customOrderTable-${modalId || ''} tbody`);
+      const rowIndex = table.rows.length + 1;
+      const rowId = `custom-row-${modalId || 'main'}-${rowIndex}`;
+
+      const row = document.createElement('tr');
+      row.setAttribute("id", rowId);
+      row.innerHTML = `
+  <td>${rowIndex}</td>
+  <td>
+    <select class="form-select form-select-sm" name="metal_type" required>
+      <option value="Gold" selected>Gold</option>
+      <option value="Platinum">Platinum</option>
+      <option value="Silver">Silver</option>
+    </select>
+  </td>
+  <td>
+    <select class="form-select form-select-sm" name="metal_quality" required>
+      <option value="14k" selected>14k</option>
+      <option value="18k">18k</option>
+      <option value="22k">22k</option>
+    </select>
+  </td>
+  <td>
+    <select class="form-select form-select-sm" name="metal_color" required>
+      <option value="W" selected>White</option>
+      <option value="Y">Yellow</option>
+      <option value="R">Rose</option>
+    </select>
+  </td>
+  <td>
+    <select class="form-select form-select-sm" name="diamond_quality" required>
+      <option value="VVS" selected>VVS</option>
+      <option value="VS">VS</option>
+      <option value="SI">SI</option>
+    </select>
+  </td>
+  <td>
+    <select class="form-select form-select-sm" name="diamond_color" required>
+      <option value="D" selected>D</option>
+      <option value="E">E</option>
+      <option value="F">F</option>
+      <option value="G">G</option>
+      <option value="H">H</option>
+      <option value="I">I</option>
+      <option value="J">J</option>
+    </select>
+  </td>
+  <td>
+    <input type="number" min="1" max="100" step="0.1" class="form-control form-select-sm" 
+      name="size" placeholder="e.g. 6.5" required
+      oninput="this.classList.remove('is-invalid')">
+    <div class="invalid-feedback">Please enter a valid size</div>
+  </td>
+  <td>
+    <input type="number" min="1" max="100" class="form-control form-select-sm" 
+      name="qty" value="1" required
+      oninput="this.classList.remove('is-invalid')">
+    <div class="invalid-feedback">Please enter a quantity</div>
+  </td>
+  <td>
+    <input type="text" class="form-control form-select-sm" name="remarks" 
+      placeholder="Special instructions">
+  </td>
+  <td>
+    <button class="btn btn-sm btn-danger" onclick="removeCustomRow('${rowId}')">
+      <i class="bi bi-trash"></i>
+    </button>
+  </td>
+  `;
+
+      // Add event listeners for validation
+      const requiredFields = row.querySelectorAll('[required]');
+      requiredFields.forEach(field => {
+        field.addEventListener('blur', function () {
+          if (!this.value.trim()) {
+            this.classList.add('is-invalid');
+          } else {
+            this.classList.remove('is-invalid');
+          }
+        });
+      });
+
+      table.appendChild(row);
+
+      // Focus the first field for better UX
+      setTimeout(() => {
+        const firstField = row.querySelector('select, input');
+        if (firstField) firstField.focus();
+      }, 10);
+    }
+    function removeCustomRow(rowId) {
+      const row = document.getElementById(rowId);
+      if (row) {
+        row.remove();
+
+        // Renumber remaining rows
+        const modalId = rowId.split('-')[2];
+        const table = document.querySelector(`#customOrderTable-${modalId} tbody`);
+
+        Array.from(table.rows).forEach((row, idx) => {
+          row.cells[0].textContent = idx + 1;
+        });
+      }
+    }
+
+    // Enhanced Cart Management with Diamond Fields
+    // Modified function to add all types of items to cart instead of separate pages
+    // Enhanced Cart Management with Diamond Fields
+    function addToCart(designNo, modalId) {
+      const modal = document.getElementById(`modal-${modalId}`);
+      const checkboxes = modal.querySelectorAll(".job-checkbox:checked");
+      const memoCheckboxes = modal.querySelectorAll(".memo-checkbox:checked");
+      const customRows = modal.querySelectorAll(`#customOrderTable-${modalId} tbody tr`);
+
+      let hasStockItems = false;
+      let hasMemoItems = false;
+      let hasCustomItems = false;
+      let stockCartItems = [];
+      let memoCartItems = [];
+      let customOrderItems = [];
+
+      // Process selected in-stock items
+      if (checkboxes.length > 0) {
+        hasStockItems = true;
+
+        stockCartItems = Array.from(checkboxes).map(chk => {
+          // Get parent row to extract all details
+          const row = chk.closest('tr');
+
+          // Extract all data from the row cells
+          const jobNo = chk.dataset.job_no;
+          const metal = row.cells[2].textContent.trim();
+          const quality = row.cells[3].textContent.trim();
+          const color = row.cells[4].textContent.trim();
+          const diamondQuality = row.cells[5].textContent.trim();
+          const diamondColor = row.cells[6].textContent.trim();
+          const gwt = row.cells[7].textContent.trim();
+          const dwt = row.cells[8].textContent.trim();
+          const size = row.cells[9].textContent.trim();
+          const price = parseFloat(chk.dataset.price || 0);
+
+          // Store all details
+          return {
+            design_no: chk.dataset.design,
+            job_no: jobNo,
+            metal_type: metal,
+            metal_quality: quality,
+            metal_color: color,
+            diamond_quality: diamondQuality,
+            diamond_color: diamondColor,
+            gwt: gwt,
+            dwt: dwt,
+            size: size,
+            qty: 1,
+            price: price,
+            type: "stock",
+            added_at: new Date().toISOString()
+          };
+        });
+      }
+
+      // Process selected memo items (similar enhancement)
+      if (memoCheckboxes.length > 0) {
+        hasMemoItems = true;
+
+        memoCartItems = Array.from(memoCheckboxes).map(chk => {
+          // Get parent row to extract all details
+          const row = chk.closest('tr');
+
+          // Extract all data from the row cells
+          const jobNo = chk.dataset.job_no;
+          const metal = row.cells[2].textContent.trim();
+          const quality = row.cells[3].textContent.trim();
+          const color = row.cells[4].textContent.trim();
+          const diamondQuality = row.cells[5].textContent.trim();
+          const diamondColor = row.cells[6].textContent.trim();
+          const gwt = row.cells[7].textContent.trim();
+          const dwt = row.cells[8].textContent.trim();
+          const size = row.cells[9].textContent.trim();
+          const price = parseFloat(row.cells[10].textContent.replace('$', '') || 0);
+
+          return {
+            design_no: chk.dataset.design,
+            job_no: jobNo,
+            metal_type: metal,
+            metal_quality: quality,
+            metal_color: color,
+            diamond_quality: diamondQuality,
+            diamond_color: diamondColor,
+            gwt: gwt,
+            dwt: dwt,
+            size: size,
+            requested_at: new Date().toISOString(),
+            price: price,
+            type: "memo"
+          };
+        });
+      }
+
+      // Process custom order items (already has all fields)
+      if (customRows.length > 0) {
+        // Validate required fields before processing
+        const validRows = [];
+        let hasInvalidRows = false;
+
+        customRows.forEach(row => {
+          const size = row.querySelector("[name='size']")?.value;
+          const qty = row.querySelector("[name='qty']")?.value;
+
+          if (!size || !qty) {
+            hasInvalidRows = true;
+            // Highlight invalid fields
+            if (!size) row.querySelector("[name='size']").classList.add('is-invalid');
+            if (!qty) row.querySelector("[name='qty']").classList.add('is-invalid');
+          } else {
+            // Clear any previous validation errors
+            row.querySelectorAll('.is-invalid').forEach(field => field.classList.remove('is-invalid'));
+            validRows.push(row);
+          }
+        });
+
+        if (hasInvalidRows) {
+          showToast("<i class='bi bi-exclamation-triangle'></i> Please fill in all required fields (Size and Quantity).", "warning");
+          return;
+        }
+
+        // Process valid rows
+        if (validRows.length > 0) {
+          hasCustomItems = true;
+
+          customOrderItems = validRows.map(row => ({
+            order_id: generateOrderId(),
+            design_no: designNo,
+            metal_type: row.querySelector("[name='metal_type']")?.value || "Gold",
+            metal_quality: row.querySelector("[name='metal_quality']")?.value || "14k",
+            metal_color: row.querySelector("[name='metal_color']")?.value || "W",
+            diamond_quality: row.querySelector("[name='diamond_quality']")?.value || "VVS",
+            diamond_color: row.querySelector("[name='diamond_color']")?.value || "D",
+            size: row.querySelector("[name='size']")?.value,
+            qty: parseInt(row.querySelector("[name='qty']")?.value || 1, 10),
+            remarks: row.querySelector("[name='remarks']")?.value || "",
+            price: 0, // To be calculated by server
+            added_at: new Date().toISOString(),
+            status: "pending" // Initial status for custom orders
+          }));
+        }
+      }
+
+      if (!hasStockItems && !hasMemoItems && !hasCustomItems) {
+        showToast("<i class='bi bi-exclamation-triangle'></i> Please select at least one item or add a custom order.", "warning");
+        return;
+      }
+
+      // Handle regular stock items in cart
+      if (hasStockItems) {
+        const cartKey = "cart_customer";
+        let existing = [];
+        try {
+          existing = JSON.parse(localStorage.getItem(cartKey) || "[]");
+        } catch (e) {
+          console.error("Error parsing cart:", e);
+        }
+
+        // Merge cart items, avoiding duplicates
+        stockCartItems.forEach(item => {
+          if (!existing.some(e => e.job_no === item.job_no && e.design_no === item.design_no)) {
+            existing.push(item);
+          }
+        });
+
+        localStorage.setItem(cartKey, JSON.stringify(existing));
+      }
+
+      // Handle memo items
+      if (hasMemoItems) {
+        let memoRequests = [];
+        try {
+          memoRequests = JSON.parse(localStorage.getItem("memoRequests") || "[]");
+        } catch (e) {
+          console.error("Error parsing memo requests:", e);
+        }
+
+        // Add to memo requests, avoiding duplicates
+        memoCartItems.forEach(item => {
+          if (!memoRequests.some(r => r.job_no === item.job_no && r.design_no === item.design_no)) {
+            memoRequests.push(item);
+          }
+        });
+
+        localStorage.setItem("memoRequests", JSON.stringify(memoRequests));
+      }
+
+      // Handle custom order items
+      if (hasCustomItems) {
+        const customOrdersKey = "custom_orders";
+        let existingOrders = [];
+        try {
+          existingOrders = JSON.parse(localStorage.getItem(customOrdersKey) || "[]");
+        } catch (e) {
+          console.error("Error parsing custom orders:", e);
+        }
+
+        // Add all custom orders (they all have unique IDs)
+        existingOrders.push(...customOrderItems);
+
+        localStorage.setItem(customOrdersKey, JSON.stringify(existingOrders));
+      }
+
+      // Calculate totals for the toast message
+      const stockItemsQty = stockCartItems.reduce((sum, item) => sum + (parseInt(item.qty) || 1), 0);
+      const memoItemsQty = memoCartItems.length;
+      const customItemsQty = customOrderItems.reduce((sum, item) => sum + (parseInt(item.qty) || 1), 0);
+      const totalItems = stockItemsQty + memoItemsQty + customItemsQty;
+
+      // Prepare a more detailed toast message
+      let toastMessage = '';
+      if (totalItems > 0) {
+        toastMessage = `<i class='bi bi-check-circle-fill'></i> ${totalItems} item(s) added to cart. <a href="{% url 'inventory:cart' %}" class="alert-link text-white">View Cart</a>`;
+      }
+
+      showToast(toastMessage, "success");
+
+      // Close the modal after adding to cart
+      const modalInstance = bootstrap.Modal.getInstance(modal);
+      if (modalInstance) modalInstance.hide();
+
+      // Update cart counter in the header
+      updateCartCounter();
+    }
+
+    // Memo Request Handler
+    document.addEventListener("DOMContentLoaded", function () {
+      let selectedMemoJobs = [];
+
+      // Handle memo request button
+      document.querySelectorAll(".request-selected-memo-btn").forEach(button => {
+        button.addEventListener("click", () => {
+          const modal = button.closest(".modal");
+          const checkboxes = modal.querySelectorAll(".memo-checkbox:checked");
+
+          if (checkboxes.length === 0) {
+            showToast("<i class='bi bi-exclamation-triangle'></i> Please select at least one memo item.", "warning");
+            return;
+          }
+
+          // Collect selected jobs
+          selectedMemoJobs = Array.from(checkboxes).map(chk => ({
+            design_no: chk.dataset.design,
+            job_no: chk.dataset.job_no
+          }));
+
+          // Render job list in confirmation modal
+          const jobList = document.getElementById("memoJobList");
+          jobList.innerHTML = selectedMemoJobs.map(j =>
+            `<li class="list-group-item">${j.design_no} – Job ${j.job_no}</li>`
+          ).join("");
+
+          // Show the modal
+          const confirmModal = new bootstrap.Modal(document.getElementById("memoConfirmModal"));
+          confirmModal.show();
+        });
+      });
+
+      // Proceed button saves to localStorage
+      document.getElementById("proceedMemoItemsBtn")?.addEventListener("click", () => {
+        let memoRequests = [];
+        try {
+          memoRequests = JSON.parse(localStorage.getItem("memoRequests") || "[]");
+        } catch (e) {
+          console.error("Error parsing memo requests:", e);
+        }
+
+        selectedMemoJobs.forEach(job => {
+          if (!memoRequests.some(j => j.job_no === job.job_no && j.design_no === job.design_no)) {
+            memoRequests.push({
+              ...job,
+              requested_at: new Date().toISOString()
+            });
+          }
+        });
+
+        try {
+          localStorage.setItem("memoRequests", JSON.stringify(memoRequests));
+          showToast("<i class='bi bi-check-circle-fill'></i> Memo requests saved successfully.", "success");
+        } catch (e) {
+          console.error("Error saving memo requests:", e);
+          showToast("<i class='bi bi-exclamation-triangle'></i> Could not save memo requests. Please try again.", "warning");
+        }
+      });
+
+      // Initialize cart counter if present
+      updateCartCounter();
+    });
+  </script>
+</body>
+
+</html>

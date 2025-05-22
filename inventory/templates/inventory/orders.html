@@ -1,0 +1,1218 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>My Orders</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="{% static 'inventory/index.css' %}" rel="stylesheet">
+  <style>
+    /* Card styling */
+    .card {
+      transition: transform 0.2s, box-shadow 0.2s;
+      border-radius: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Item card styling */
+    .card-img-container img {
+      transition: transform 0.3s ease;
+    }
+
+    .card:hover .card-img-container img {
+      transform: scale(1.05);
+    }
+
+    /* Badge styling */
+    .badge {
+      padding: 0.5em 0.8em;
+    }
+
+    /* Navbar link styles */
+    .navbar-nav .nav-link {
+      position: relative;
+    }
+
+    .navbar-nav .nav-link .badge {
+      position: absolute;
+      top: 0;
+      right: 0;
+      transform: translate(50%, -50%);
+    }
+
+    /* Empty state styling */
+    .empty-state {
+      padding: 3rem;
+      text-align: center;
+    }
+
+    .empty-state i {
+      font-size: 3.5rem;
+      color: #ccc;
+      opacity: 0.7;
+      margin-bottom: 1.5rem;
+    }
+
+    /* Toast notification */
+    .toast-container {
+      z-index: 11000;
+    }
+
+    /* Item type badges */
+    .item-type-badge {
+      display: inline-block;
+      padding: 0.25rem 0.5rem;
+      border-radius: 3px;
+      font-size: 0.7rem;
+      margin-right: 0.5rem;
+    }
+
+    .item-stock {
+      background-color: #28a745;
+      color: white;
+    }
+
+    .item-memo {
+      background-color: #fd7e14;
+      color: white;
+    }
+
+    .item-custom {
+      background-color: #6f42c1;
+      color: white;
+    }
+
+    /* Item type count badges */
+    .item-type-badges {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .item-type-badges .badge {
+      font-size: 0.75rem;
+      font-weight: 500;
+      padding: 0.35em 0.65em;
+    }
+
+    /* Custom purple badge color for custom items */
+    .bg-purple {
+      background-color: #6f42c1;
+      color: white;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 576px) {
+      .item-type-badges {
+        margin-top: 0.5rem;
+        margin-left: 0 !important;
+      }
+      
+      .item-type-badges .badge {
+        font-size: 0.7rem;
+        padding: 0.25em 0.5em;
+      }
+    }
+
+    /* Make sure header status badge is prominently displayed */
+    .card-header .badge {
+      font-weight: 500;
+    }
+
+    /* Ensure status badge has enough space from chevron */
+    .collapse-icon {
+      margin-left: 0.75rem;
+    }
+
+    /* Progress steps */
+    .order-progress {
+      margin: 1.5rem 0;
+      position: relative;
+    }
+
+    .progress-step {
+      display: flex;
+      align-items: center;
+      position: relative;
+      padding-bottom: 1.5rem;
+    }
+
+    .progress-step:last-child {
+      padding-bottom: 0;
+    }
+
+    .progress-step::before {
+      content: "";
+      position: absolute;
+      left: 14px;
+      top: 30px;
+      bottom: 0;
+      width: 2px;
+      background-color: #e9ecef;
+    }
+
+    .progress-step:last-child::before {
+      display: none;
+    }
+
+    .progress-marker {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background-color: #e9ecef;
+      margin-right: 1rem;
+      flex-shrink: 0;
+      z-index: 1;
+    }
+
+    .progress-step.active .progress-marker {
+      background-color: #0d6efd;
+      color: white;
+    }
+
+    .progress-step.completed .progress-marker {
+      background-color: #28a745;
+      color: white;
+    }
+
+    .progress-step.canceled .progress-marker {
+      background-color: #dc3545;
+      color: white;
+    }
+
+    .progress-text {
+      flex-grow: 1;
+    }
+
+    .progress-title {
+      font-weight: 500;
+      margin-bottom: 0.25rem;
+    }
+
+    .progress-date {
+      font-size: 0.875rem;
+      color: #6c757d;
+    }
+
+    /* Collapsible panel styles */
+    .collapse-icon {
+      transition: transform 0.2s ease-in-out;
+    }
+
+    [aria-expanded="true"] .collapse-icon {
+      transform: rotate(180deg);
+    }
+
+    /* Smooth transitions for collapse elements */
+    .collapse {
+      transition: height 0.35s ease;
+    }
+
+    /* Card styling for collapsible panels */
+    .card-header {
+      border-bottom: 0;
+      transition: background-color 0.2s;
+    }
+
+    .card-header:hover {
+      background-color: #f8f9fa !important;
+    }
+
+    /* Add a subtle highlight for the active/expanded card */
+    .card .collapse.show + .card-footer,
+    .card .collapsing + .card-footer {
+      border-top: 1px solid rgba(0,0,0,.125);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container py-4">
+    <!-- Navigation bar with Orders link -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4 rounded">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="{% url 'inventory:inventory' %}">DevERP</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+          aria-expanded="false">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'inventory:inventory' %}">
+                <i class="bi bi-grid"></i> Inventory
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'inventory:wishlist' %}">
+                <i class="bi bi-heart"></i> Wishlist
+                <span class="badge rounded-pill bg-danger wishlist-count"></span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'inventory:cart' %}">
+                <i class="bi bi-cart"></i> Cart
+                <span class="badge rounded-pill bg-primary cart-counter"></span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link active" href="{% url 'inventory:orders' %}">
+                <i class="bi bi-box"></i> Orders
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2 class="mb-0"><i class="bi bi-box me-2"></i>My Orders</h2>
+      <div class="d-flex gap-2">
+        <div class="btn-group" role="group">
+          <input type="radio" class="btn-check" name="filter" id="all-orders" autocomplete="off" checked>
+          <label class="btn btn-outline-primary" for="all-orders">All</label>
+
+          <input type="radio" class="btn-check" name="filter" id="completed-orders" autocomplete="off">
+          <label class="btn btn-outline-primary" for="completed-orders">Completed</label>
+
+          <input type="radio" class="btn-check" name="filter" id="processing-orders" autocomplete="off">
+          <label class="btn btn-outline-primary" for="processing-orders">In Process</label>
+
+          <input type="radio" class="btn-check" name="filter" id="pending-orders" autocomplete="off">
+          <label class="btn btn-outline-primary" for="pending-orders">Pending</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Orders Container -->
+    <div id="ordersContainer" class="mt-4"></div>
+  </div>
+
+  <!-- Order Details Modal -->
+  <div class="modal fade" id="orderDetailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content rounded-4 border-0 shadow">
+        <div class="modal-header">
+          <h5 class="modal-title">Order Details</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="orderDetailsContent">
+          <!-- Content will be populated by JavaScript -->
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary" id="trackOrderBtn">
+            <i class="bi bi-truck me-1"></i> Track Order
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 9999">
+    <div id="orderToast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive"
+      aria-atomic="true">
+      <div class="d-flex">
+        <div class="toast-body">
+          <!-- Toast content set dynamically -->
+        </div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+          aria-label="Close"></button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Order status constants
+    const ORDER_STATUS = {
+      PENDING: "Pending",
+      IN_PROCESS: "In Process",
+      COMPLETED: "Completed",
+      CANCELLED: "Cancelled"
+    };
+
+    // Item type constants
+    const ITEM_TYPES = {
+      STOCK: "stock",
+      MEMO: "memo",
+      CUSTOM: "custom"
+    };
+
+    // Show toast notification
+    function showToast(message, type = "success") {
+      const toastEl = document.getElementById("orderToast");
+      const toastBody = toastEl.querySelector(".toast-body");
+
+      // Format message with appropriate icon based on type
+      let iconClass = 'bi-check-circle-fill';
+      if (type === 'warning') iconClass = 'bi-exclamation-triangle-fill';
+      else if (type === 'danger') iconClass = 'bi-x-circle-fill';
+      else if (type === 'info') iconClass = 'bi-info-circle-fill';
+
+      // Update content with icon if not already present
+      if (!message.includes('<i class=')) {
+        toastBody.innerHTML = `<i class="bi ${iconClass} me-2"></i>${message}`;
+      } else {
+        toastBody.innerHTML = message;
+      }
+
+      // Update Bootstrap classes for different toast types
+      toastEl.className = `toast align-items-center border-0 text-bg-${type}`;
+
+      const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
+      toast.show();
+    }
+
+    // Format date for display
+    function formatDate(dateString) {
+      const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+      return new Date(dateString).toLocaleDateString('en-US', options);
+    }
+
+    // Helper function to get appropriate badge class for status
+    function getStatusBadgeClass(status) {
+      switch (status) {
+        case 'Completed':
+        case 'Available':
+          return 'bg-success';
+        case 'In Process':
+        case 'Ready to Ship':
+        case 'Designing':
+        case 'In Production':
+        case 'Quality Check':
+          return 'bg-warning text-dark';
+        case 'Cancelled':
+        case 'Unavailable':
+          return 'bg-danger';
+        case 'On Hold':
+          return 'bg-secondary';
+        case 'Pending':
+        case 'Requested':
+        default:
+          return 'bg-info';
+      }
+    }
+
+    // Get status badge HTML
+    function getStatusBadge(status) {
+      const badgeClass = getStatusBadgeClass(status);
+      return `<span class="badge ${badgeClass}">${status}</span>`;
+    }
+
+    // Get item type badge
+    function getItemTypeBadge(type) {
+      switch (type) {
+        case ITEM_TYPES.STOCK:
+          return '<span class="item-type-badge item-stock">In Stock</span>';
+        case ITEM_TYPES.MEMO:
+          return '<span class="item-type-badge item-memo">Memo Request</span>';
+        case ITEM_TYPES.CUSTOM:
+          return '<span class="item-type-badge item-custom">Custom Order</span>';
+        default:
+          return '';
+      }
+    }
+
+    // Render an order card with collapsible content and item type count badges
+    function createOrderSection(order) {
+      const section = document.createElement("div");
+      section.className = "card mb-3 shadow-sm border-2 rounded-1";
+      section.dataset.status = order.status;
+      
+      // Generate unique ID for this order's collapsible content
+      const collapseId = `order-content-${order.order_id}`;
+      
+      // Get all items from all types and count them
+      const stockItems = order.items.stock || [];
+      const memoItems = order.items.memo || [];
+      const customItems = order.items.custom || [];
+      
+      const stockCount = stockItems.length;
+      const memoCount = memoItems.length;
+      const customCount = customItems.length;
+      
+      // Combine all items for the detailed view
+      const allItems = [...stockItems, ...memoItems, ...customItems];
+
+      // Generate HTML for all items in the detailed view
+      let itemsHTML = "";
+      for (const item of allItems) {
+        const imgUrl = `https://dev-jewels.s3.us-east-2.amazonaws.com/products/${item.design_no}/White/D_${item.design_no}-1.jpg`;
+        const typeBadge = getItemTypeBadge(item.item_type);
+        const itemDetails = getItemSpecificDetails(item);
+
+        itemsHTML += `
+          <div class="col-md-3 col-6 mb-3">
+            <div class="card h-100 border-0 shadow-sm">
+              <div class="card-img-container position-relative" style="height: 140px; overflow: hidden;">
+                <img src="${imgUrl}" class="card-img-top h-100 w-100 object-fit-contain p-2" 
+                     onerror="this.src='{% static 'inventory/placeholder.jpg' %}'">
+              </div>
+              <div class="card-body p-2">
+                <h6 class="card-title mb-1 d-flex align-items-center">
+                  ${typeBadge}${item.design_no}
+                </h6>
+                <p class="card-text mb-0 small">${itemDetails}</p>
+              </div>
+            </div>
+          </div>`;
+      }
+
+      // Generate the item type count badges HTML
+      let typeBadgesHTML = '';
+      
+      if (stockCount > 0) {
+        typeBadgesHTML += `<span class="badge rounded-pill bg-success me-1">${stockCount} Stock</span>`;
+      }
+      
+      if (memoCount > 0) {
+        typeBadgesHTML += `<span class="badge rounded-pill bg-warning text-dark me-1">${memoCount} Memo</span>`;
+      }
+      
+      if (customCount > 0) {
+        typeBadgesHTML += `<span class="badge rounded-pill bg-purple me-1">${customCount} Custom</span>`;
+      }
+
+      section.innerHTML = `
+        <!-- Collapsible header - always visible -->
+        <div class="card-header bg-white p-3">
+          <div class="d-flex justify-content-between align-items-center" 
+               data-bs-toggle="collapse" 
+               data-bs-target="#${collapseId}" 
+               aria-expanded="false" 
+               aria-controls="${collapseId}"
+               role="button"
+               style="cursor: pointer;">
+            <div>
+              <div class="d-flex align-items-center flex-wrap mb-1">
+                <h5 class="mb-0 me-2">Order #${order.order_id}</h5>
+                <div class="item-type-badges d-inline-flex ms-1">
+                  ${typeBadgesHTML}
+                </div>
+              </div>
+              <p class="text-muted small mb-0 mt-1">Placed on: ${formatDate(order.date)}</p>
+            </div>
+            <div class="d-flex align-items-center">
+              ${getStatusBadge(order.status)}
+              <i class="bi bi-chevron-down ms-3 collapse-icon"></i>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Collapsible content - hidden by default -->
+        <div class="collapse" id="${collapseId}">
+          <div class="card-body p-3">
+            <div class="row">${itemsHTML}</div>
+          </div>
+          <div class="card-footer bg-white p-3 d-flex justify-content-between align-items-center">
+            <span class="text-muted small">${allItems.length} item${allItems.length !== 1 ? 's' : ''}</span>
+            <div>
+              <button class="btn btn-sm btn-outline-primary" onclick="viewOrderDetails('${order.order_id}')">
+                <i class="bi bi-eye me-1"></i> View Details
+              </button>
+              <button class="btn btn-sm btn-outline-secondary ms-2" onclick="reorderItems('${order.order_id}')">
+                <i class="bi bi-arrow-repeat me-1"></i> Reorder
+              </button>
+            </div>
+          </div>
+        </div>`;
+
+      return section;
+    }
+
+    // Helper function to get item-specific details
+    function getItemSpecificDetails(item) {
+      // Get the status badge for this item
+      const statusBadge = item.item_status ?
+        `<span class="badge ${getStatusBadgeClass(item.item_status)}">${item.item_status}</span><br>` : '';
+
+      if (item.item_type === ITEM_TYPES.STOCK) {
+        return `${statusBadge}<strong>Job No:</strong> ${item.job_no || 'N/A'}<br><strong>Metal:</strong> ${item.metal_type || 'N/A'} (${item.metal_quality || 'N/A'})`;
+      } else if (item.item_type === ITEM_TYPES.MEMO) {
+        return `${statusBadge}<strong>Job No:</strong> ${item.job_no || 'N/A'}<br><strong>Request Date:</strong> ${new Date(item.requested_at || item.added_at).toLocaleDateString()}`;
+      } else if (item.item_type === ITEM_TYPES.CUSTOM) {
+        return `${statusBadge}<strong>Qty:</strong> ${item.qty || 1} pc(s)<br><strong>Size:</strong> ${item.size || 'N/A'}`;
+      }
+      return '';
+    }
+
+    // View order details with improved status display
+    function viewOrderDetails(orderId) {
+      try {
+        // Get orders from localStorage
+        const orders = JSON.parse(localStorage.getItem("customer_orders") || "[]");
+        const order = orders.find(o => o.order_id === orderId);
+
+        if (!order) {
+          showToast("Order not found", "warning");
+          return;
+        }
+
+        // Get content element
+        const contentEl = document.getElementById('orderDetailsContent');
+
+        // Show loading state
+        contentEl.innerHTML = `
+        <div class="text-center py-3">
+          <div class="spinner-border text-primary" role="status"></div>
+          <p class="mt-2">Loading order details...</p>
+        </div>
+      `;
+
+        // Clean up any existing modal instances
+        const modalElement = document.getElementById('orderDetailsModal');
+        const existingModal = bootstrap.Modal.getInstance(modalElement);
+
+        if (existingModal) {
+          existingModal.dispose();
+        }
+
+        // Remove lingering backdrops
+        document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+          backdrop.parentNode.removeChild(backdrop);
+        });
+
+        // Reset body classes
+        document.body.classList.remove('modal-open');
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
+
+        // Create new modal
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+
+        // Simulate loading and then show order details
+        setTimeout(() => {
+          // Get all items from all types
+          const stockItems = order.items.stock || [];
+          const memoItems = order.items.memo || [];
+          const customItems = order.items.custom || [];
+
+          // Calculate total items
+          const totalItems = stockItems.length + memoItems.length + customItems.length;
+
+          // Get payment details
+          const payment = order.payment || {};
+
+          // Generate item type badges HTML for the modal header
+          let typeBadgesHTML = '';
+      
+          if (stockItems.length > 0) {
+            typeBadgesHTML += `<span class="badge rounded-pill bg-success me-1">${stockItems.length} Stock</span>`;
+          }
+          
+          if (memoItems.length > 0) {
+            typeBadgesHTML += `<span class="badge rounded-pill bg-warning text-dark me-1">${memoItems.length} Memo</span>`;
+          }
+          
+          if (customItems.length > 0) {
+            typeBadgesHTML += `<span class="badge rounded-pill bg-purple me-1">${customItems.length} Custom</span>`;
+          }
+
+          // Generate order progress HTML
+          let progressHTML = '';
+          if (order.status === ORDER_STATUS.COMPLETED) {
+            progressHTML = `
+            <div class="order-progress">
+              <div class="progress-step completed">
+                <div class="progress-marker"><i class="bi bi-check"></i></div>
+                <div class="progress-text">
+                  <div class="progress-title">Order Placed</div>
+                  <div class="progress-date">${formatDate(order.date)}</div>
+                </div>
+              </div>
+              <div class="progress-step completed">
+                <div class="progress-marker"><i class="bi bi-check"></i></div>
+                <div class="progress-text">
+                  <div class="progress-title">Processing</div>
+                  <div class="progress-date">${formatDate(order.processed_at || new Date(new Date(order.date).getTime() + 24 * 60 * 60 * 1000))}</div>
+                </div>
+              </div>
+              <div class="progress-step completed">
+                <div class="progress-marker"><i class="bi bi-check"></i></div>
+                <div class="progress-text">
+                  <div class="progress-title">Shipped</div>
+                  <div class="progress-date">${formatDate(order.shipped_at || new Date(new Date(order.date).getTime() + 48 * 60 * 60 * 1000))}</div>
+                </div>
+              </div>
+              <div class="progress-step completed">
+                <div class="progress-marker"><i class="bi bi-check"></i></div>
+                <div class="progress-text">
+                  <div class="progress-title">Delivered</div>
+                  <div class="progress-date">${formatDate(order.completed_at || new Date(new Date(order.date).getTime() + 120 * 60 * 60 * 1000))}</div>
+                </div>
+              </div>
+            </div>
+          `;
+          } else if (order.status === ORDER_STATUS.IN_PROCESS) {
+            progressHTML = `
+            <div class="order-progress">
+              <div class="progress-step completed">
+                <div class="progress-marker"><i class="bi bi-check"></i></div>
+                <div class="progress-text">
+                  <div class="progress-title">Order Placed</div>
+                  <div class="progress-date">${formatDate(order.date)}</div>
+                </div>
+              </div>
+              <div class="progress-step active">
+                <div class="progress-marker"><i class="bi bi-arrow-right"></i></div>
+                <div class="progress-text">
+                  <div class="progress-title">Processing</div>
+                  <div class="progress-date">${order.processed_at ? formatDate(order.processed_at) : 'In progress'}</div>
+                </div>
+              </div>
+              <div class="progress-step">
+                <div class="progress-marker"></div>
+                <div class="progress-text">
+                  <div class="progress-title">Shipped</div>
+                  <div class="progress-date">Pending</div>
+                </div>
+              </div>
+              <div class="progress-step">
+                <div class="progress-marker"></div>
+                <div class="progress-text">
+                  <div class="progress-title">Delivered</div>
+                  <div class="progress-date">Pending</div>
+                </div>
+              </div>
+            </div>
+          `;
+          } else if (order.status === ORDER_STATUS.CANCELLED) {
+            progressHTML = `
+            <div class="order-progress">
+              <div class="progress-step completed">
+                <div class="progress-marker"><i class="bi bi-check"></i></div>
+                <div class="progress-text">
+                  <div class="progress-title">Order Placed</div>
+                  <div class="progress-date">${formatDate(order.date)}</div>
+                </div>
+              </div>
+              <div class="progress-step canceled">
+                <div class="progress-marker"><i class="bi bi-x"></i></div>
+                <div class="progress-text">
+                  <div class="progress-title">Order Cancelled</div>
+                  <div class="progress-date">${order.cancelled_at ? formatDate(order.cancelled_at) : formatDate(new Date(new Date(order.date).getTime() + 12 * 60 * 60 * 1000))}</div>
+                </div>
+              </div>
+            </div>
+          `;
+          } else { // PENDING
+            progressHTML = `
+            <div class="order-progress">
+              <div class="progress-step active">
+                <div class="progress-marker"><i class="bi bi-clock"></i></div>
+                <div class="progress-text">
+                  <div class="progress-title">Order Placed</div>
+                  <div class="progress-date">${formatDate(order.date)}</div>
+                </div>
+              </div>
+              <div class="progress-step">
+                <div class="progress-marker"></div>
+                <div class="progress-text">
+                  <div class="progress-title">Processing</div>
+                  <div class="progress-date">Pending</div>
+                </div>
+              </div>
+              <div class="progress-step">
+                <div class="progress-marker"></div>
+                <div class="progress-text">
+                  <div class="progress-title">Shipped</div>
+                  <div class="progress-date">Pending</div>
+                </div>
+              </div>
+              <div class="progress-step">
+                <div class="progress-marker"></div>
+                <div class="progress-text">
+                  <div class="progress-title">Delivered</div>
+                  <div class="progress-date">Pending</div>
+                </div>
+              </div>
+            </div>
+          `;
+          }
+
+          // Generate order items HTML
+          let itemsHTML = '';
+
+          // Add stock items
+          if (stockItems.length > 0) {
+            itemsHTML += `
+            <h6 class="mt-4 mb-3 border-bottom pb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>In Stock Items</h6>
+            <div class="table-responsive mb-3">
+              <table class="table table-bordered table-sm">
+                <thead class="table-light">
+                  <tr>
+                    <th>Item</th>
+                    <th>Job No.</th>
+                    <th>Metal</th>
+                    <th>Size</th>
+                    <th>Price</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+          `;
+
+            stockItems.forEach(item => {
+              const itemStatus = item.item_status || 'Pending';
+              const statusBadge = getStatusBadge(itemStatus);
+
+              itemsHTML += `
+              <tr>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <img src="https://dev-jewels.s3.us-east-2.amazonaws.com/products/${item.design_no}/White/D_${item.design_no}-1.jpg" alt="${item.design_no}" 
+                         class="me-2" style="width: 40px; height: 40px; object-fit: contain;" 
+                         onerror="this.src='{% static 'inventory/placeholder.jpg' %}'">
+                    <div class="fw-bold">${item.design_no}</div>
+                  </div>
+                </td>
+                <td>${item.job_no || 'N/A'}</td>
+                <td>${item.metal_type || 'N/A'} ${item.metal_quality || ''}</td>
+                <td>${item.size || 'N/A'}</td>
+                <td>${parseFloat(item.price || 0).toFixed(2)}</td>
+                <td>${statusBadge}</td>
+              </tr>
+            `;
+            });
+
+            itemsHTML += `
+                </tbody>
+              </table>
+            </div>
+          `;
+          }
+
+          // Add memo items
+          if (memoItems.length > 0) {
+            itemsHTML += `
+            <h6 class="mt-4 mb-3 border-bottom pb-2"><i class="bi bi-bookmark-fill text-warning me-2"></i>Requested Items (On Memo)</h6>
+            <div class="table-responsive mb-3">
+              <table class="table table-bordered table-sm">
+                <thead class="table-light">
+                  <tr>
+                    <th>Item</th>
+                    <th>Job No.</th>
+                    <th>Requested</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+          `;
+
+            memoItems.forEach(item => {
+              const itemStatus = item.item_status || 'Requested';
+              const statusBadge = getStatusBadge(itemStatus);
+
+              itemsHTML += `
+              <tr>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <img src="https://dev-jewels.s3.us-east-2.amazonaws.com/products/${item.design_no}/White/D_${item.design_no}-1.jpg" alt="${item.design_no}" 
+                         class="me-2" style="width: 40px; height: 40px; object-fit: contain;"
+                         onerror="this.src='{% static 'inventory/placeholder.jpg' %}'">
+                    <div class="fw-bold">${item.design_no}</div>
+                  </div>
+                </td>
+                <td>${item.job_no || 'N/A'}</td>
+                <td>${new Date(item.requested_at || item.added_at).toLocaleDateString()}</td>
+                <td>${statusBadge}</td>
+              </tr>
+            `;
+            });
+
+            itemsHTML += `
+                </tbody>
+              </table>
+            </div>
+          `;
+          }
+
+          // Add custom items
+          if (customItems.length > 0) {
+            itemsHTML += `
+            <h6 class="mt-4 mb-3 border-bottom pb-2"><i class="bi bi-tools text-info me-2"></i>Custom Orders</h6>
+            <div class="table-responsive mb-3">
+              <table class="table table-bordered table-sm">
+                <thead class="table-light">
+                  <tr>
+                    <th>Item</th>
+                    <th>Specifications</th>
+                    <th>Quantity</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+          `;
+
+            customItems.forEach(item => {
+              const itemStatus = item.item_status || 'Pending';
+              const statusBadge = getStatusBadge(itemStatus);
+
+              itemsHTML += `
+              <tr>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <img src="https://dev-jewels.s3.us-east-2.amazonaws.com/products/${item.design_no}/White/D_${item.design_no}-1.jpg" alt="${item.design_no}" 
+                         class="me-2" style="width: 40px; height: 40px; object-fit: contain;"
+                         onerror="this.src='{% static 'inventory/placeholder.jpg' %}'">
+                    <div class="fw-bold">${item.design_no}</div>
+                  </div>
+                </td>
+                <td>
+                  <small>
+                    <strong>Metal:</strong> ${item.metal_type} ${item.metal_quality} ${item.metal_color}<br>
+                    <strong>Diamond:</strong> ${item.diamond_quality}-${item.diamond_color}<br>
+                    <strong>Size:</strong> ${item.size}
+                    ${item.remarks ? `<br><strong>Note:</strong> ${item.remarks}` : ''}
+                  </small>
+                </td>
+                <td>${item.qty || 1}</td>
+                <td>${statusBadge}</td>
+              </tr>
+            `;
+            });
+
+            itemsHTML += `
+                </tbody>
+              </table>
+            </div>
+          `;
+          }
+
+          // Build the complete HTML content
+          contentEl.innerHTML = `
+          <div class="border-bottom pb-3 mb-3">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <div class="d-flex align-items-center flex-wrap mb-1">
+                  <h5 class="mb-0 me-2">Order #${order.order_id}</h5>
+                  <div class="item-type-badges d-inline-flex ms-1">
+                    ${typeBadgesHTML}
+                  </div>
+                </div>
+                <p class="text-muted mb-0 mt-1">Placed on ${formatDate(order.date)}</p>
+              </div>
+              ${getStatusBadge(order.status)}
+            </div>
+          </div>
+          
+          ${progressHTML}
+          
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <h6 class="mb-2">Shipping Address</h6>
+              <address class="mb-0">
+                ${order.customer?.name || 'John Doe'}<br>
+                ${order.shipping_address?.line1 || '123 Main Street'}<br>
+                ${order.shipping_address?.line2 ? order.shipping_address.line2 + '<br>' : ''}
+                ${order.shipping_address?.city || 'New York'}, ${order.shipping_address?.state || 'NY'} ${order.shipping_address?.postal_code || '10001'}<br>
+                ${order.shipping_address?.country || 'United States'}
+              </address>
+            </div>
+            <div class="col-md-6">
+              <h6 class="mb-2">Payment Method</h6>
+              <p class="mb-1">${order.payment_method?.type || 'Credit Card'} ${order.payment_method?.last4 ? `(ending in ${order.payment_method.last4})` : ''}</p>
+              <p class="mb-0">Billing address same as shipping</p>
+            </div>
+          </div>
+          
+          ${itemsHTML}
+          
+          <h6 class="mt-4 mb-3 border-bottom pb-2">Order Summary</h6>
+          <div class="table-responsive mb-3">
+            <table class="table table-bordered table-sm">
+              <tbody>
+                <tr>
+                  <th width="40%" class="table-light">Subtotal:</th>
+                  <td>${parseFloat(payment.subtotal || 0).toFixed(2)}</td>
+                </tr>
+                <tr>
+                  <th class="table-light">Shipping (${payment.shipping_method || 'Standard'}):</th>
+                  <td>${parseFloat(payment.shipping || 0).toFixed(2)}</td>
+                </tr>
+                <tr>
+                  <th class="table-light">Tax:</th>
+                  <td>${parseFloat(payment.tax || 0).toFixed(2)}</td>
+                </tr>
+                ${payment.discount > 0 ? `
+                <tr>
+                  <th class="table-light">Discount:</th>
+                  <td class="text-success">-${parseFloat(payment.discount || 0).toFixed(2)}</td>
+                </tr>
+                ` : ''}
+                <tr>
+                  <th class="table-light">Total:</th>
+                  <td class="fw-bold">${parseFloat(payment.total || 0).toFixed(2)}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          
+          <div class="alert alert-info mb-0">
+            <i class="bi bi-info-circle-fill me-2"></i>
+            ${getOrderStatusMessage(order.status)}
+          </div>
+        `;
+        }, 800);
+      } catch (error) {
+        console.error('Error showing order details:', error);
+        showToast('Error loading order details', 'danger');
+      }
+    }
+
+    // Get order status message based on order status
+    function getOrderStatusMessage(status) {
+      switch (status) {
+        case ORDER_STATUS.COMPLETED:
+          return "Your order has been delivered. Thank you for shopping with us!";
+        case ORDER_STATUS.IN_PROCESS:
+          return "Your order is being processed. We'll notify you when it ships.";
+        case ORDER_STATUS.CANCELLED:
+          return "This order has been cancelled. Please contact customer support for any questions.";
+        case ORDER_STATUS.PENDING:
+        default:
+          return "Your order is pending. We'll begin processing it soon.";
+      }
+    }
+
+    function reorderItems(orderId) {
+      try {
+        // Get orders from localStorage
+        const orders = JSON.parse(localStorage.getItem("customer_orders") || "[]");
+        const order = orders.find(o => o.order_id === orderId);
+
+        if (!order) {
+          showToast("Order not found", "warning");
+          return;
+        }
+
+        // Get all items to reorder
+        const stockItems = order.items.stock || [];
+        const customItems = order.items.custom || [];
+
+        // Don't reorder memo items, they were requests for items that were not in stock
+
+        let addedToCart = 0;
+
+        // Add stock items to cart
+        if (stockItems.length > 0) {
+          // Get current cart
+          let cart = JSON.parse(localStorage.getItem("cart_customer") || "[]");
+
+          // Add each stock item to cart if not already there
+          stockItems.forEach(item => {
+            if (!cart.some(cartItem => cartItem.job_no === item.job_no)) {
+              cart.push({
+                ...item,
+                added_at: new Date().toISOString()
+              });
+              addedToCart++;
+            }
+          });
+
+          // Save back to localStorage
+          localStorage.setItem("cart_customer", JSON.stringify(cart));
+        }
+
+        // Add custom items to custom orders
+        if (customItems.length > 0) {
+          // Get current custom orders
+          let customOrders = JSON.parse(localStorage.getItem("custom_orders") || "[]");
+
+          // Add each custom item with a new order ID and reset status to pending
+          customItems.forEach(item => {
+            const newOrderId = 'order-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+
+            customOrders.push({
+              ...item,
+              order_id: newOrderId,
+              added_at: new Date().toISOString(),
+              status: "pending"
+            });
+
+            addedToCart++;
+          });
+
+          // Save back to localStorage
+          localStorage.setItem("custom_orders", JSON.stringify(customOrders));
+        }
+
+        // Show success message
+        if (addedToCart > 0) {
+          showToast(`${addedToCart} item(s) added to cart from order #${orderId}`, "success");
+
+          // Update cart counter
+          updateCartCounter();
+        } else {
+          showToast("No items were added to cart", "warning");
+        }
+      } catch (error) {
+        console.error('Error reordering items:', error);
+        showToast('Error reordering items', 'danger');
+      }
+    }
+
+    // Load orders from localStorage
+    function loadOrders() {
+      try {
+        // Get container and show loading state
+        const container = document.getElementById('ordersContainer');
+        container.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-3 text-muted">Loading orders...</p></div>';
+
+        // Get orders from localStorage
+        const orders = JSON.parse(localStorage.getItem("customer_orders") || "[]");
+
+        // Get filter value
+        const filterValue = document.querySelector('input[name="filter"]:checked').id;
+
+        // Filter orders based on selection
+        let filteredOrders = orders;
+        if (filterValue === 'completed-orders') {
+          filteredOrders = orders.filter(o => o.status === ORDER_STATUS.COMPLETED);
+        } else if (filterValue === 'processing-orders') {
+          filteredOrders = orders.filter(o => o.status === ORDER_STATUS.IN_PROCESS);
+        } else if (filterValue === 'pending-orders') {
+          filteredOrders = orders.filter(o => o.status === ORDER_STATUS.PENDING);
+        }
+
+        // Sort by date (newest first)
+        filteredOrders.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        // Clear container
+        container.innerHTML = '';
+
+        // If no orders match filter
+        if (filteredOrders.length === 0) {
+          container.innerHTML = `
+          <div class="empty-state">
+            <i class="bi bi-box"></i>
+            <h4>No orders found</h4>
+            <p class="text-muted mb-3">
+              ${orders.length > 0 ? 'No orders match your current filter.' : 'You haven\'t placed any orders yet.'}
+            </p>
+            <a href="{% url 'inventory:inventory' %}" class="btn btn-primary">
+              <i class="bi bi-grid me-1"></i> Browse Inventory
+            </a>
+          </div>`;
+          return;
+        }
+
+        // Render each order
+        filteredOrders.forEach(order => {
+          container.appendChild(createOrderSection(order));
+        });
+      } catch (error) {
+        console.error('Error loading orders:', error);
+
+        const container = document.getElementById('ordersContainer');
+        container.innerHTML = `
+        <div class="alert alert-danger">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i>
+          Error loading orders. Please try again later.
+        </div>`;
+      }
+    }
+
+    // Update wishlist count in navbar
+    function updateWishlistCount() {
+      const countBadge = document.querySelector('.wishlist-count');
+      if (!countBadge) return;
+
+      try {
+        const wishlist = JSON.parse(localStorage.getItem("user_wishlist") || "[]");
+        const count = wishlist.length;
+
+        countBadge.textContent = count > 0 ? count : '';
+        countBadge.style.display = count > 0 ? 'inline-block' : 'none';
+      } catch (error) {
+        console.error("Error updating wishlist count:", error);
+      }
+    }
+
+    // Update cart counter in navbar
+    function updateCartCounter() {
+      const cartCounter = document.querySelector(".cart-counter");
+      if (!cartCounter) return;
+
+      try {
+        // Count all types of items in the cart
+        const stockItems = JSON.parse(localStorage.getItem("cart_customer") || "[]");
+        const memoItems = JSON.parse(localStorage.getItem("memoRequests") || "[]");
+        const customItems = JSON.parse(localStorage.getItem("custom_orders") || "[]");
+
+        const count = stockItems.length + memoItems.length + customItems.length;
+
+        cartCounter.textContent = count > 0 ? count : '';
+        cartCounter.style.display = count > 0 ? 'inline-block' : 'none';
+      } catch (e) {
+        console.error("Error counting cart items:", e);
+      }
+    }
+
+    // Initialize page
+    document.addEventListener("DOMContentLoaded", function () {
+      // Load orders
+      loadOrders();
+
+      // Add event listeners for filter buttons
+      document.querySelectorAll('input[name="filter"]').forEach(radio => {
+        radio.addEventListener('change', loadOrders);
+      });
+
+      // Add event listener for track order button
+      document.getElementById('trackOrderBtn').addEventListener('click', function () {
+        showToast("Tracking information sent to your email.", "info");
+      });
+
+      // Update wishlist and cart counters
+      updateWishlistCount();
+      updateCartCounter();
+
+      // Set up listeners for collapse state change (for chevron rotation)
+      document.addEventListener('show.bs.collapse', function(e) {
+        // Make sure it's only our order content collapse elements
+        if (e.target.id.startsWith('order-content-')) {
+          const header = e.target.previousElementSibling;
+          const icon = header.querySelector('.collapse-icon');
+          if (icon) icon.classList.add('rotate');
+        }
+      });
+
+      document.addEventListener('hide.bs.collapse', function(e) {
+        // Make sure it's only our order content collapse elements
+        if (e.target.id.startsWith('order-content-')) {
+          const header = e.target.previousElementSibling;
+          const icon = header.querySelector('.collapse-icon');
+          if (icon) icon.classList.remove('rotate');
+        }
+      });
+
+      // Ensure any modal backdrops are cleaned up on page load
+      document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+        backdrop.parentNode.removeChild(backdrop);
+      });
+
+      // Reset body classes
+      document.body.classList.remove('modal-open');
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
+    });
+  </script>
+</body>
+
+</html>

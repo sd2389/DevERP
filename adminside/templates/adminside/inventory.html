@@ -1,0 +1,1535 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>DevERP Admin - Inventory Management</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        /* Sidebar styling */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
+            padding: 48px 0 0;
+            box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+            background-color: #f8f9fa;
+            width: 240px;
+        }
+
+        .sidebar-sticky {
+            position: relative;
+            top: 0;
+            height: calc(100vh - 48px);
+            padding-top: 0.5rem;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+
+        .sidebar .nav-link {
+            font-weight: 500;
+            color: #333;
+            padding: 0.75rem 1rem;
+        }
+
+        .sidebar .nav-link.active {
+            color: #0d6efd;
+        }
+
+        .sidebar .nav-link:hover {
+            color: #0a58ca;
+            background-color: #e9ecef;
+        }
+
+        .sidebar .nav-link .bi {
+            margin-right: 0.5rem;
+        }
+
+        /* Main content */
+        .main-content {
+            margin-left: 240px;
+            padding: 2rem;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 767.98px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+                padding: 0;
+            }
+
+            .sidebar-sticky {
+                height: auto;
+                overflow: visible;
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 1rem;
+            }
+
+            /* Stack the sidebar navigation horizontally on small screens */
+            .sidebar .nav {
+                display: flex;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                white-space: nowrap;
+                padding-bottom: 1rem;
+            }
+
+            .sidebar h6.sidebar-heading {
+                display: none;
+            }
+        }
+
+        /* Card styles */
+        .inventory-card {
+            border-radius: 0.5rem;
+            overflow: hidden;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            border: none;
+            transition: transform 0.2s, box-shadow 0.2s;
+            height: 100%;
+        }
+
+        .inventory-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+
+        /* Table styles */
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        .table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        .table td {
+            vertical-align: middle;
+        }
+
+        /* Search and filter form */
+        .filter-form .form-control,
+        .filter-form .form-select {
+            font-size: 0.9rem;
+            padding: 0.375rem 0.75rem;
+        }
+
+        /* Status badges */
+        .status-badge {
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.35em 0.65em;
+            border-radius: 0.25rem;
+        }
+
+        .status-in-stock {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .status-on-memo {
+            background-color: #fd7e14;
+            color: white;
+        }
+
+        .status-not-in-stock {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        /* Item card */
+        .item-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            height: 100%;
+        }
+
+        .item-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+
+        .item-img {
+            height: 120px;
+            object-fit: contain;
+            padding: 0.5rem;
+        }
+
+        .item-details {
+            font-size: 0.875rem;
+        }
+
+        .meta-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.25rem;
+        }
+
+        .meta-label {
+            color: #6c757d;
+        }
+
+        .meta-value {
+            font-weight: 500;
+        }
+
+        /* Item detail modal */
+        .item-info-row {
+            display: flex;
+            margin-bottom: 0.5rem;
+        }
+
+        .item-info-label {
+            width: 120px;
+            color: #6c757d;
+        }
+
+        /* Loading spinner */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay d-none">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar d-md-block">
+        <div class="sidebar-sticky">
+            <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                <span>Management</span>
+            </h6>
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'adminside:dashboard' %}">
+                        <i class="bi bi-speedometer2"></i> Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'adminside:orders' %}">
+                        <i class="bi bi-box"></i> Orders
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="{% url 'adminside:inventory' %}">
+                        <i class="bi bi-grid"></i> Inventory
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'adminside:customers' %}">
+                        <i class="bi bi-people"></i> Customers
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'adminside:reports' %}">
+                        <i class="bi bi-graph-up"></i> Reports
+                    </a>
+                </li>
+            </ul>
+
+            <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                <span>Settings</span>
+            </h6>
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'adminside:settings' %}">
+                        <i class="bi bi-gear"></i> System Settings
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'adminside:users' %}">
+                        <i class="bi bi-person-gear"></i> User Management
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'logout' %}">
+                        <i class="bi bi-box-arrow-right"></i> Logout
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+            <h1 class="h2"><i class="bi bi-grid me-2"></i>Inventory Management</h1>
+            <div class="btn-toolbar mb-2 mb-md-0">
+                <div class="btn-group me-2">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="refreshInventory">
+                        <i class="bi bi-arrow-repeat me-1"></i> Refresh
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="window.print()">
+                        <i class="bi bi-printer me-1"></i> Print
+                    </button>
+                </div>
+                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal"
+                    data-bs-target="#addItemModal">
+                    <i class="bi bi-plus me-1"></i> Add Item
+                </button>
+            </div>
+        </div>
+
+        <!-- Inventory Statistics -->
+        <div class="row g-4 mb-4">
+            <div class="col-lg-3 col-md-6">
+                <div class="inventory-card">
+                    <div class="card-body text-center p-4">
+                        <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center"
+                            style="width: 64px; height: 64px; background-color: rgba(13, 110, 253, 0.1);">
+                            <i class="bi bi-box-seam text-primary" style="font-size: 1.75rem;"></i>
+                        </div>
+                        <h3 class="mb-2 fw-bold" id="totalItems">0</h3>
+                        <p class="text-muted mb-0">Total Items</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6">
+                <div class="inventory-card">
+                    <div class="card-body text-center p-4">
+                        <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center"
+                            style="width: 64px; height: 64px; background-color: rgba(40, 167, 69, 0.1);">
+                            <i class="bi bi-check-circle text-success" style="font-size: 1.75rem;"></i>
+                        </div>
+                        <h3 class="mb-2 fw-bold" id="inStockItems">0</h3>
+                        <p class="text-muted mb-0">In Stock</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6">
+                <div class="inventory-card">
+                    <div class="card-body text-center p-4">
+                        <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center"
+                            style="width: 64px; height: 64px; background-color: rgba(253, 126, 20, 0.1);">
+                            <i class="bi bi-bookmark text-warning" style="font-size: 1.75rem;"></i>
+                        </div>
+                        <h3 class="mb-2 fw-bold" id="onMemoItems">0</h3>
+                        <p class="text-muted mb-0">On Memo</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6">
+                <div class="inventory-card">
+                    <div class="card-body text-center p-4">
+                        <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center"
+                            style="width: 64px; height: 64px; background-color: rgba(220, 53, 69, 0.1);">
+                            <i class="bi bi-x-circle text-danger" style="font-size: 1.75rem;"></i>
+                        </div>
+                        <h3 class="mb-2 fw-bold" id="outOfStockItems">0</h3>
+                        <p class="text-muted mb-0">Out of Stock</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters and Search -->
+        <div class="inventory-card mb-4">
+            <div class="card-header py-3">
+                <h5 class="mb-0"><i class="bi bi-funnel me-2"></i>Filters & Search</h5>
+            </div>
+            <div class="card-body">
+                <form class="filter-form" id="inventoryFilterForm">
+                    <div class="row g-3">
+                        <div class="col-lg-4 col-md-6">
+                            <label for="searchInventory" class="form-label">Search</label>
+                            <input type="text" class="form-control" id="searchInventory"
+                                placeholder="Design No. or Job No.">
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <label for="categoryFilter" class="form-label">Category</label>
+                            <select class="form-select" id="categoryFilter">
+                                <option value="">All Categories</option>
+                                <!-- Categories will be populated dynamically -->
+                            </select>
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <label for="statusFilter" class="form-label">Status</label>
+                            <select class="form-select" id="statusFilter">
+                                <option value="">All Statuses</option>
+                                <option value="in stock">In Stock</option>
+                                <option value="on memo">On Memo</option>
+                                <option value="not in stock">Out of Stock</option>
+                            </select>
+                        </div>
+                        <div class="col-lg-2 col-md-6 d-flex align-items-end">
+                            <button type="button" class="btn btn-primary w-100" id="applyFilters">
+                                <i class="bi bi-search me-1"></i> Search
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Display Options -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <span class="text-muted" id="itemsCountDisplay">Showing 0 items</span>
+            </div>
+            <div class="btn-group" role="group">
+                <input type="radio" class="btn-check" name="viewMode" id="tableView" autocomplete="off" checked>
+                <label class="btn btn-outline-primary btn-sm" for="tableView">
+                    <i class="bi bi-table me-1"></i> Table View
+                </label>
+
+                <input type="radio" class="btn-check" name="viewMode" id="cardView" autocomplete="off">
+                <label class="btn btn-outline-primary btn-sm" for="cardView">
+                    <i class="bi bi-grid-3x3 me-1"></i> Card View
+                </label>
+            </div>
+        </div>
+
+        <!-- Table View -->
+        <div id="tableViewContainer" class="inventory-card mb-4">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col">Image</th>
+                            <th scope="col">Design No.</th>
+                            <th scope="col">Category</th>
+                            <th scope="col">Jobs</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inventoryTableBody">
+                        <!-- Inventory items will be populated here -->
+                        <tr>
+                            <td colspan="7" class="text-center py-4">Loading inventory data...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <!-- Pagination -->
+            <div class="d-flex justify-content-between align-items-center p-3 border-top">
+                <div class="small text-muted" id="paginationInfo">
+                    Showing <span id="currentRange">0-0</span> of <span id="totalItems">0</span> items
+                </div>
+                <nav>
+                    <ul class="pagination pagination-sm mb-0" id="paginationControls">
+                        <!-- Pagination controls will be added here -->
+                    </ul>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Card View -->
+        <div id="cardViewContainer" class="d-none">
+            <div class="row g-4" id="inventoryCardGrid">
+                <!-- Inventory cards will be populated here -->
+                <div class="col-12 text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Loading inventory data...</p>
+                </div>
+            </div>
+            <!-- Card View Pagination -->
+            <div class="d-flex justify-content-between align-items-center mt-4">
+                <div class="small text-muted" id="cardPaginationInfo">
+                    Showing <span id="cardCurrentRange">0-0</span> of <span id="cardTotalItems">0</span> items
+                </div>
+                <nav>
+                    <ul class="pagination pagination-sm mb-0" id="cardPaginationControls">
+                        <!-- Pagination controls will be added here -->
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <!-- Item Detail Modal -->
+    <div class="modal fade" id="itemDetailModal" tabindex="-1" aria-labelledby="itemDetailModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="itemDetailModalLabel">Item Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <img id="modalItemImage" src="" alt="Product Image" class="img-fluid rounded shadow-sm">
+
+                            <div class="mt-3 d-flex justify-content-between">
+                                <button class="btn btn-sm btn-outline-primary" id="prevImageBtn">
+                                    <i class="bi bi-arrow-left"></i> Previous
+                                </button>
+                                <button class="btn btn-sm btn-outline-primary" id="nextImageBtn">
+                                    Next <i class="bi bi-arrow-right"></i>
+                                </button>
+                            </div>
+
+                            <div class="d-flex justify-content-between mt-3">
+                                <button class="btn btn-sm btn-outline-secondary" id="whiteColorBtn">White</button>
+                                <button class="btn btn-sm btn-outline-secondary" id="yellowColorBtn">Yellow</button>
+                                <button class="btn btn-sm btn-outline-secondary" id="roseColorBtn">Rose</button>
+                            </div>
+                        </div>
+
+                        <div class="col-md-8">
+                            <h4 id="modalDesignNo" class="mb-3">Design #</h4>
+
+                            <div class="mb-3 item-info-row">
+                                <div class="item-info-label">Category:</div>
+                                <div id="modalCategory">--</div>
+                            </div>
+
+                            <div class="mb-3 item-info-row">
+                                <div class="item-info-label">Status:</div>
+                                <div id="modalStatus">--</div>
+                            </div>
+
+                            <h5 class="mt-4 mb-3">Available Jobs</h5>
+
+                            <div class="table-responsive mb-4">
+                                <table class="table table-sm table-bordered">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Job No.</th>
+                                            <th>Metal</th>
+                                            <th>Quality</th>
+                                            <th>Color</th>
+                                            <th>Size</th>
+                                            <th>Price</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="modalJobsTable">
+                                        <!-- Jobs will be populated here -->
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <h5 class="mt-4 mb-3">On Memo Jobs</h5>
+
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Job No.</th>
+                                            <th>Metal</th>
+                                            <th>Quality</th>
+                                            <th>Color</th>
+                                            <th>Size</th>
+                                            <th>Price</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="modalMemoTable">
+                                        <!-- Memo jobs will be populated here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="editItemBtn">
+                        <i class="bi bi-pencil me-1"></i> Edit Item
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Item Modal -->
+    <div class="modal fade" id="addItemModal" tabindex="-1" aria-labelledby="addItemModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addItemModalLabel">Add New Inventory Item</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addItemForm">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="designNo" class="form-label">Design No.</label>
+                                <input type="text" class="form-control" id="designNo" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="category" class="form-label">Category</label>
+                                <select class="form-select" id="category" required>
+                                    <option value="">Select Category</option>
+                                    <option value="Ring">Ring</option>
+                                    <option value="Necklace">Necklace</option>
+                                    <option value="Earring">Earring</option>
+                                    <option value="Bracelet">Bracelet</option>
+                                    <option value="Pendant">Pendant</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <hr>
+                                <h5 class="mb-3">Job Details</h5>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="jobNo" class="form-label">Job No.</label>
+                                <input type="text" class="form-control" id="jobNo" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="metalType" class="form-label">Metal Type</label>
+                                <select class="form-select" id="metalType" required>
+                                    <option value="">Select Metal</option>
+                                    <option value="Gold">Gold</option>
+                                    <option value="Silver">Silver</option>
+                                    <option value="Platinum">Platinum</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="metalQuality" class="form-label">Metal Quality</label>
+                                <select class="form-select" id="metalQuality" required>
+                                    <option value="">Select Quality</option>
+                                    <option value="14k">14k</option>
+                                    <option value="18k">18k</option>
+                                    <option value="22k">22k</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="metalColor" class="form-label">Metal Color</label>
+                                <select class="form-select" id="metalColor" required>
+                                    <option value="">Select Color</option>
+                                    <option value="W">White</option>
+                                    <option value="Y">Yellow</option>
+                                    <option value="R">Rose</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="size" class="form-label">Size</label>
+                                <input type="text" class="form-control" id="size">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="gwt" class="form-label">GWT (g)</label>
+                                <input type="number" step="0.001" class="form-control" id="gwt">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="dwt" class="form-label">DWT (ct)</label>
+                                <input type="number" step="0.001" class="form-control" id="dwt">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="price" class="form-label">Price ($)</label>
+                                <input type="number" step="0.01" class="form-control" id="price" required>
+                            </div>
+                            <div class="col-md-12">
+                                <label for="stockStatus" class="form-label">Stock Status</label>
+                                <select class="form-select" id="stockStatus" required>
+                                    <option value="0">In Stock</option>
+                                    <option value="1">On Memo</option>
+                                </select>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveItemBtn">
+                        <i class="bi bi-save me-1"></i> Save Item
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1050">
+        <div id="inventoryToast" class="toast align-items-center text-white bg-success" role="alert"
+            aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="bi bi-check-circle-fill me-2"></i>
+                    <span id="toastMessage">Operation completed successfully.</span>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+                    aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Fixed inventory data loading script that handles all product states
+        // and includes proper image path handling
+
+        // Constants for localStorage keys
+        const STORAGE_KEYS = {
+            // Client-side storage
+            CART: 'cart_customer',
+            MEMO_REQUESTS: 'memoRequests',
+            CUSTOM_ORDERS: 'custom_orders',
+            ORDERS: 'customer_orders',
+            WISHLIST: 'user_wishlist'
+        };
+
+        // State variables
+        let allProducts = [];
+        let filteredProducts = [];
+        let currentPage = 1;
+        const itemsPerPage = 10;
+        let currentItem = null;
+        let categories = [];
+
+        // Helper function to safely retrieve data from localStorage
+        function getStorageData(key, defaultValue = []) {
+            try {
+                const data = localStorage.getItem(key);
+                return data ? JSON.parse(data) : defaultValue;
+            } catch (error) {
+                console.error(`Error retrieving data from ${key}:`, error);
+                return defaultValue;
+            }
+        }
+
+        // Format currency
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(parseFloat(amount) || 0);
+        }
+
+        // Show toast notification
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('inventoryToast');
+            const messageSpan = document.getElementById('toastMessage');
+
+            // Set message
+            messageSpan.textContent = message;
+
+            // Set toast type/color
+            toast.className = 'toast align-items-center text-white';
+            toast.classList.add(`bg-${type}`);
+
+            // Show toast
+            const bsToast = new bootstrap.Toast(toast);
+            bsToast.show();
+        }
+
+        // Show loading overlay
+        function showLoading() {
+            document.getElementById('loadingOverlay').classList.remove('d-none');
+        }
+
+        // Hide loading overlay
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.add('d-none');
+        }
+
+        // Check if an image exists
+        async function imageExists(url) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => resolve(true);
+                img.onerror = () => resolve(false);
+                img.src = url;
+            });
+        }
+
+        // Get proper image URL with fallbacks
+        async function getProductImageUrl(designNo, color = 'White', index = 1) {
+            // Base path to images
+            const basePath = `/static/adminside/img/`;
+
+            // Try S3 URL first (using full URL for direct browser access)
+            let fileName;
+            if (index === 1) {
+                fileName = `D_${designNo}-1.jpg`;
+            } else if (index === 2) {
+                fileName = `H_${designNo}-2.jpg`;
+            } else {
+                fileName = `${designNo}-${index}.jpg`;
+            }
+
+            const s3Url = `https://dev-jewels.s3.us-east-2.amazonaws.com/products/${designNo}/${color}/${fileName}`;
+
+            // Check if image exists - disabled for now since it makes too many requests
+            // Instead, we'll rely on the onerror handler in the HTML
+            // const exists = await imageExists(s3Url);
+
+            // Return URL with placeholder as fallback
+            return {
+                url: s3Url,
+                placeholder: `${basePath}placeholder.jpg`
+            };
+        }
+
+        // Fetch inventory from existing inventory app API
+        async function fetchInventoryFromApi() {
+            try {
+                const response = await fetch('/inventory/api/inventory-data/');
+                if (!response.ok) {
+                    throw new Error(`API returned status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                return data.products || [];
+            } catch (error) {
+                console.warn('API fetch failed:', error);
+                return fetchInventoryFromClientSide();
+            }
+        }
+
+        // Generate inventory data from localStorage (client-side approach)
+        async function fetchInventoryFromClientSide() {
+            console.log('Fetching inventory from client-side data...');
+
+            try {
+                // Create a map to hold products by design number
+                const productsMap = {};
+
+                // Step 1: Collect all design numbers from various sources
+                // Process cart items (in stock)
+                const cartItems = getStorageData(STORAGE_KEYS.CART, []);
+                console.log(`Found ${cartItems.length} items in cart`);
+
+                for (const item of cartItems) {
+                    if (!item.design_no) continue;
+
+                    if (!productsMap[item.design_no]) {
+                        productsMap[item.design_no] = {
+                            design_no: item.design_no,
+                            category: item.category || 'Jewelry',
+                            in_stock_jobs: [],
+                            memo_jobs: [],
+                            status: 'Not In Stock'
+                        };
+                    }
+
+                    // Add to in_stock_jobs if not already there
+                    if (!productsMap[item.design_no].in_stock_jobs.some(job => job.job_no === item.job_no)) {
+                        productsMap[item.design_no].in_stock_jobs.push({
+                            job_no: item.job_no,
+                            metal_type: item.metal_type || 'N/A',
+                            metal_quality: item.metal_quality || 'N/A',
+                            metal_color: item.metal_color || 'N/A',
+                            gwt: item.gwt || '0',
+                            dwt: item.dwt || '0',
+                            size: item.size || 'N/A',
+                            price: item.price || item.discounted_price || '0.00',
+                            memostock: '0'
+                        });
+                    }
+                }
+
+                // Process memo requests
+                const memoItems = getStorageData(STORAGE_KEYS.MEMO_REQUESTS, []);
+                console.log(`Found ${memoItems.length} memo requests`);
+
+                for (const item of memoItems) {
+                    if (!item.design_no) continue;
+
+                    if (!productsMap[item.design_no]) {
+                        productsMap[item.design_no] = {
+                            design_no: item.design_no,
+                            category: item.category || 'Jewelry',
+                            in_stock_jobs: [],
+                            memo_jobs: [],
+                            status: 'Not In Stock'
+                        };
+                    }
+
+                    // Add to memo_jobs if not already there
+                    if (!productsMap[item.design_no].memo_jobs.some(job => job.job_no === item.job_no)) {
+                        productsMap[item.design_no].memo_jobs.push({
+                            job_no: item.job_no,
+                            metal_type: item.metal_type || 'N/A',
+                            metal_quality: item.metal_quality || 'N/A',
+                            metal_color: item.metal_color || 'N/A',
+                            gwt: item.gwt || '0',
+                            dwt: item.dwt || '0',
+                            size: item.size || 'N/A',
+                            price: item.price || '0.00',
+                            memostock: '1'
+                        });
+                    }
+                }
+
+                // Process custom orders to extract design numbers
+                const customItems = getStorageData(STORAGE_KEYS.CUSTOM_ORDERS, []);
+                console.log(`Found ${customItems.length} custom orders`);
+
+                for (const item of customItems) {
+                    if (!item.design_no) continue;
+
+                    if (!productsMap[item.design_no]) {
+                        productsMap[item.design_no] = {
+                            design_no: item.design_no,
+                            category: item.category || 'Jewelry',
+                            in_stock_jobs: [],
+                            memo_jobs: [],
+                            status: 'Not In Stock'
+                        };
+                    }
+                    // No need to add jobs for custom orders as they're not inventory items
+                }
+
+                // Process orders to find more products
+                const orders = getStorageData(STORAGE_KEYS.ORDERS, []);
+                console.log(`Found ${orders.length} orders`);
+
+                // Step 2: Build comprehensive product data from collected sources
+                // Process all product entries
+                const products = Object.values(productsMap);
+
+                // Step 3: Update status and counts
+                products.forEach(product => {
+                    const inStockCount = product.in_stock_jobs.length;
+                    const memoCount = product.memo_jobs.length;
+
+                    // Update product status based on job counts
+                    if (inStockCount > 0) {
+                        product.status = 'In Stock';
+                    } else if (memoCount > 0) {
+                        product.status = 'On Memo';
+                    } else {
+                        product.status = 'Not In Stock';
+                    }
+
+                    // Update item count
+                    product.pcs = inStockCount;
+                });
+
+                console.log(`Created ${products.length} products`);
+
+                // Step 4: Gather unique categories
+                categories = [...new Set(products.map(p => p.category))].filter(Boolean);
+                console.log(`Found ${categories.length} unique categories`);
+
+                return products;
+            } catch (error) {
+                console.error('Error creating inventory data:', error);
+                return []; // Return empty array in case of error
+            }
+        }
+
+        // Fetch inventory data
+        async function fetchInventoryData() {
+            showLoading();
+
+            try {
+                console.log('Fetching inventory data...');
+
+                // Try to fetch from API first (this will fall back to client-side if API fails)
+                allProducts = await fetchInventoryFromApi();
+                console.log(`Loaded ${allProducts.length} products`);
+
+                // Make a copy for filtered view
+                filteredProducts = [...allProducts];
+
+                // Update UI
+                updateInventoryStats();
+                populateCategories();
+                renderInventory();
+
+                // Show success message
+                showToast('Inventory data loaded successfully');
+            } catch (error) {
+                console.error('Error fetching inventory:', error);
+                showToast('Error loading inventory data', 'danger');
+
+                // Fall back to empty state
+                allProducts = [];
+                filteredProducts = [];
+                renderInventory();
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Update inventory statistics
+        function updateInventoryStats() {
+            // Total includes all products
+            const totalItems = allProducts.length;
+
+            // Count by status
+            const inStockItems = allProducts.filter(p => p.status === 'In Stock').length;
+            const onMemoItems = allProducts.filter(p =>
+                p.status === 'On Memo' || (p.status === 'In Stock' && p.memo_jobs.length > 0)
+            ).length;
+            const outOfStockItems = allProducts.filter(p => p.status === 'Not In Stock').length;
+
+            // Update display
+            document.getElementById('totalItems').textContent = totalItems;
+            document.getElementById('inStockItems').textContent = inStockItems;
+            document.getElementById('onMemoItems').textContent = onMemoItems;
+            document.getElementById('outOfStockItems').textContent = outOfStockItems;
+
+            console.log(`Stats - Total: ${totalItems}, In Stock: ${inStockItems}, On Memo: ${onMemoItems}, Out of Stock: ${outOfStockItems}`);
+        }
+
+        // Populate category filter
+        function populateCategories() {
+            const categorySelect = document.getElementById('categoryFilter');
+            if (!categorySelect) return;
+
+            // Clear existing options except the first one
+            while (categorySelect.options.length > 1) {
+                categorySelect.remove(1);
+            }
+
+            // Sort categories alphabetically
+            categories.sort();
+
+            // Add category options
+            categories.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category.toLowerCase();
+                option.textContent = category;
+                categorySelect.appendChild(option);
+            });
+
+            console.log(`Populated ${categories.length} categories in filter`);
+        }
+
+        // Apply filters
+        function applyFilters() {
+            const searchTerm = document.getElementById('searchInventory').value.toLowerCase();
+            const categoryFilter = document.getElementById('categoryFilter').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value.toLowerCase();
+
+            console.log(`Applying filters - Search: "${searchTerm}", Category: "${categoryFilter}", Status: "${statusFilter}"`);
+
+            filteredProducts = allProducts.filter(product => {
+                // Search matching - check design number and job numbers
+                const matchesSearch = !searchTerm ||
+                    product.design_no.toLowerCase().includes(searchTerm) ||
+                    (product.in_stock_jobs && product.in_stock_jobs.some(job => job.job_no.toLowerCase().includes(searchTerm))) ||
+                    (product.memo_jobs && product.memo_jobs.some(job => job.job_no.toLowerCase().includes(searchTerm)));
+
+                // Category matching
+                const matchesCategory = !categoryFilter ||
+                    (product.category && product.category.toLowerCase().includes(categoryFilter));
+
+                // Status matching
+                const matchesStatus = !statusFilter ||
+                    product.status.toLowerCase().replace(/\s+/g, ' ') === statusFilter;
+
+                return matchesSearch && matchesCategory && matchesStatus;
+            });
+
+            // Reset to first page
+            currentPage = 1;
+
+            // Update UI
+            console.log(`Filter results: ${filteredProducts.length} matching products`);
+            renderInventory();
+        }
+
+        // Render inventory table
+        function renderInventory() {
+            const viewMode = document.querySelector('input[name="viewMode"]:checked').id;
+            console.log(`Rendering inventory in ${viewMode} mode`);
+
+            if (viewMode === 'tableView') {
+                renderTableView();
+                document.getElementById('tableViewContainer').classList.remove('d-none');
+                document.getElementById('cardViewContainer').classList.add('d-none');
+            } else {
+                renderCardView();
+                document.getElementById('tableViewContainer').classList.add('d-none');
+                document.getElementById('cardViewContainer').classList.remove('d-none');
+            }
+        }
+
+        // Render table view
+        function renderTableView() {
+            const tableBody = document.getElementById('inventoryTableBody');
+            if (!tableBody) {
+                console.error('Table body element not found');
+                return;
+            }
+            tableBody.innerHTML = '';
+
+            // Calculate pagination
+            const totalItems = filteredProducts.length;
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
+            const currentItems = filteredProducts.slice(startIndex, endIndex);
+
+            // Update items count display
+            document.getElementById('itemsCountDisplay').textContent = `Showing ${totalItems} items`;
+
+            // Update pagination info
+            document.getElementById('currentRange').textContent = totalItems > 0 ? `${startIndex + 1}-${endIndex}` : '0-0';
+            document.querySelectorAll('.total-items-count').forEach(el => {
+                el.textContent = totalItems;
+            });
+
+            // If no items, show message
+            if (currentItems.length === 0) {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td colspan="7" class="text-center py-4">No inventory items found matching your criteria.</td>`;
+                tableBody.appendChild(row);
+
+                // Clear pagination
+                document.getElementById('paginationControls').innerHTML = '';
+                return;
+            }
+
+            // Render items
+            currentItems.forEach((product, index) => {
+                const inStockCount = product.in_stock_jobs?.length || 0;
+                const onMemoCount = product.memo_jobs?.length || 0;
+                const totalJobs = inStockCount + onMemoCount;
+
+                // Create status badge
+                let statusBadge = '';
+                if (product.status === 'In Stock') {
+                    statusBadge = '<span class="status-badge status-in-stock">In Stock</span>';
+                } else if (product.status === 'On Memo') {
+                    statusBadge = '<span class="status-badge status-on-memo">On Memo</span>';
+                } else {
+                    statusBadge = '<span class="status-badge status-not-in-stock">Not In Stock</span>';
+                }
+
+                // Create row
+                const row = document.createElement('tr');
+                row.innerHTML = `
+      <td>${startIndex + index + 1}</td>
+      <td>
+        <img src="https://dev-jewels.s3.us-east-2.amazonaws.com/products/${product.design_no}/White/D_${product.design_no}-1.jpg" 
+             alt="${product.design_no}" class="img-thumbnail" style="height: 50px; width: auto;"
+             onerror="this.src='/static/adminside/img/placeholder.jpg'">
+      </td>
+      <td>${product.design_no}</td>
+      <td>${product.category || 'Jewelry'}</td>
+      <td>
+        <div class="d-flex gap-2">
+          ${inStockCount > 0 ? `<span class="badge bg-success">${inStockCount} In Stock</span>` : ''}
+          ${onMemoCount > 0 ? `<span class="badge bg-warning text-dark">${onMemoCount} On Memo</span>` : ''}
+          ${totalJobs === 0 ? `<span class="badge bg-danger">No Jobs</span>` : ''}
+        </div>
+      </td>
+      <td>${statusBadge}</td>
+      <td>
+        <div class="btn-group">
+          <button class="btn btn-sm btn-outline-primary" onclick="viewItemDetails('${product.design_no}')">
+            <i class="bi bi-eye"></i>
+          </button>
+          <button class="btn btn-sm btn-outline-secondary" onclick="editItem('${product.design_no}')">
+            <i class="bi bi-pencil"></i>
+          </button>
+        </div>
+      </td>
+    `;
+                tableBody.appendChild(row);
+            });
+
+            // Render pagination
+            renderPagination(totalItems, 'paginationControls');
+        }
+
+        // Render card view
+        function renderCardView() {
+            const cardGrid = document.getElementById('inventoryCardGrid');
+            if (!cardGrid) {
+                console.error('Card grid element not found');
+                return;
+            }
+            cardGrid.innerHTML = '';
+
+            // Calculate pagination
+            const totalItems = filteredProducts.length;
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
+            const currentItems = filteredProducts.slice(startIndex, endIndex);
+
+            // Update card pagination info
+            document.getElementById('cardCurrentRange').textContent = totalItems > 0 ? `${startIndex + 1}-${endIndex}` : '0-0';
+            document.getElementById('cardTotalItems').textContent = totalItems;
+
+            // If no items, show message
+            if (currentItems.length === 0) {
+                const emptyCol = document.createElement('div');
+                emptyCol.className = 'col-12 text-center py-4';
+                emptyCol.innerHTML = `
+      <div class="alert alert-info">
+        <i class="bi bi-info-circle me-2"></i>
+        No inventory items found matching your criteria.
+      </div>
+    `;
+                cardGrid.appendChild(emptyCol);
+
+                // Clear pagination
+                document.getElementById('cardPaginationControls').innerHTML = '';
+                return;
+            }
+
+            // Render items
+            currentItems.forEach(product => {
+                const inStockCount = product.in_stock_jobs?.length || 0;
+                const onMemoCount = product.memo_jobs?.length || 0;
+
+                // Create status badge
+                let statusBadge = '';
+                let statusClass = '';
+
+                if (product.status === 'In Stock') {
+                    statusBadge = '<span class="status-badge status-in-stock">In Stock</span>';
+                    statusClass = 'text-success';
+                } else if (product.status === 'On Memo') {
+                    statusBadge = '<span class="status-badge status-on-memo">On Memo</span>';
+                    statusClass = 'text-warning';
+                } else {
+                    statusBadge = '<span class="status-badge status-not-in-stock">Not In Stock</span>';
+                    statusClass = 'text-danger';
+                }
+
+                // Create card
+                const col = document.createElement('div');
+                col.className = 'col-xl-3 col-lg-4 col-sm-6';
+                col.innerHTML = `
+      <div class="card item-card h-100 border">
+        <div class="card-img-top bg-light text-center">
+          <img src="https://dev-jewels.s3.us-east-2.amazonaws.com/products/${product.design_no}/White/D_${product.design_no}-1.jpg" 
+               alt="${product.design_no}" class="item-img"
+               onerror="this.src='/static/adminside/img/placeholder.jpg'">
+        </div>
+        <div class="card-body">
+          <h5 class="card-title d-flex justify-content-between align-items-start">
+            <span>${product.design_no}</span>
+            ${statusBadge}
+          </h5>
+          <p class="card-text text-muted mb-2">${product.category || 'Jewelry'}</p>
+          
+          <div class="item-details mt-3">
+            <div class="meta-item">
+              <span class="meta-label">In Stock Jobs:</span>
+              <span class="meta-value ${inStockCount > 0 ? 'text-success' : 'text-muted'}">${inStockCount}</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">On Memo Jobs:</span>
+              <span class="meta-value ${onMemoCount > 0 ? 'text-warning' : 'text-muted'}">${onMemoCount}</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">Total Jobs:</span>
+              <span class="meta-value fw-bold">${inStockCount + onMemoCount}</span>
+            </div>
+          </div>
+        </div>
+        <div class="card-footer bg-white border-top d-flex justify-content-between">
+          <button class="btn btn-sm btn-outline-primary" onclick="viewItemDetails('${product.design_no}')">
+            <i class="bi bi-eye me-1"></i> View
+          </button>
+          <button class="btn btn-sm btn-outline-secondary" onclick="editItem('${product.design_no}')">
+            <i class="bi bi-pencil me-1"></i> Edit
+          </button>
+        </div>
+      </div>
+    `;
+                cardGrid.appendChild(col);
+            });
+
+            // Render pagination
+            renderPagination(totalItems, 'cardPaginationControls');
+        }
+
+        // Render pagination controls
+        function renderPagination(totalItems, containerId) {
+            const paginationContainer = document.getElementById(containerId);
+            paginationContainer.innerHTML = '';
+
+            // Calculate total pages
+            const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+            if (totalPages <= 1) {
+                return; // No pagination needed
+            }
+
+            // Previous button
+            const prevLi = document.createElement('li');
+            prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+            prevLi.innerHTML = `
+    <a class="page-link" href="#" aria-label="Previous" ${currentPage > 1 ? `onclick="changePage(${currentPage - 1})"` : ''}>
+      <span aria-hidden="true">&laquo;</span>
+    </a>
+  `;
+            paginationContainer.appendChild(prevLi);
+
+            // Page numbers
+            const maxVisiblePages = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+            let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+            if (endPage - startPage + 1 < maxVisiblePages) {
+                startPage = Math.max(1, endPage - maxVisiblePages + 1);
+            }
+
+            for (let i = startPage;i <= endPage;i++) {
+                const li = document.createElement('li');
+                li.className = `page-item ${i === currentPage ? 'active' : ''}`;
+                li.innerHTML = `
+      <a class="page-link" href="#" onclick="changePage(${i})">${i}</a>
+    `;
+                paginationContainer.appendChild(li);
+            }
+
+            // Next button
+            const nextLi = document.createElement('li');
+            nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+            nextLi.innerHTML = `
+    <a class="page-link" href="#" aria-label="Next" ${currentPage < totalPages ? `onclick="changePage(${currentPage + 1})"` : ''}>
+      <span aria-hidden="true">&raquo;</span>
+    </a>
+  `;
+            paginationContainer.appendChild(nextLi);
+        }
+
+        // Change page
+        function changePage(pageNumber) {
+            currentPage = pageNumber;
+            renderInventory();
+            // Scroll to top of inventory section
+            document.querySelector('.inventory-card')?.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // View item details
+        function viewItemDetails(designNo) {
+            // Find product
+            const product = allProducts.find(p => p.design_no === designNo);
+            if (!product) {
+                showToast('Item not found', 'warning');
+                return;
+            }
+
+            currentItem = product;
+
+            // Set modal title
+            document.getElementById('modalDesignNo').textContent = product.design_no;
+
+            // Set product details
+            document.getElementById('modalCategory').textContent = product.category || 'Jewelry';
+
+            // Set status
+            let statusHTML = '';
+            if (product.status === 'In Stock') {
+                statusHTML = '<span class="badge bg-success">In Stock</span>';
+            } else if (product.status === 'On Memo') {
+                statusHTML = '<span class="badge bg-warning text-dark">On Memo</span>';
+            } else {
+                statusHTML = '<span class="badge bg-danger">Not In Stock</span>';
+            }
+            document.getElementById('modalStatus').innerHTML = statusHTML;
+
+            // Set image - default to White
+            const imgSrc = `https://dev-jewels.s3.us-east-2.amazonaws.com/products/${product.design_no}/White/D_${product.design_no}-1.jpg`;
+            const imgElement = document.getElementById('modalItemImage');
+            imgElement.src = imgSrc;
+            imgElement.onerror = function () {
+                this.src = "/static/adminside/img/placeholder.jpg";
+            };
+
+            // Populate in-stock jobs table
+            const jobsTable = document.getElementById('modalJobsTable');
+            jobsTable.innerHTML = '';
+
+            if (product.in_stock_jobs && product.in_stock_jobs.length > 0) {
+                product.in_stock_jobs.forEach(job => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+        <td>${job.job_no}</td>
+        <td>${job.metal_type || 'N/A'}</td>
+        <td>${job.metal_quality || 'N/A'}</td>
+        <td>${job.metal_color || 'N/A'}</td>
+        <td>${job.size || 'N/A'}</td>
+        <td>${formatCurrency(job.price)}</td>
+        <td><span class="badge bg-success">In Stock</span></td>
+      `;
+                    jobsTable.appendChild(row);
+                });
+            } else {
+                jobsTable.innerHTML = `<tr><td colspan="7" class="text-center">No in-stock jobs available</td></tr>`;
+            }
+
+            // Populate memo jobs table
+            const memoTable = document.getElementById('modalMemoTable');
+            memoTable.innerHTML = '';
+
+            if (product.memo_jobs && product.memo_jobs.length > 0) {
+                product.memo_jobs.forEach(job => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+        <td>${job.job_no}</td>
+        <td>${job.metal_type || 'N/A'}</td>
+        <td>${job.metal_quality || 'N/A'}</td>
+        <td>${job.metal_color || 'N/A'}</td>
+        <td>${job.size || 'N/A'}</td>
+        <td>${formatCurrency(job.price)}</td>
+        <td><span class="badge bg-warning text-dark">On Memo</span></td>
+      `;
+                    memoTable.appendChild(row);
+                });
+            } else {
+                memoTable.innerHTML = `<tr><td colspan="7" class="text-center">No jobs on memo</td></tr>`;
+            }
+
+            // Set up color buttons
+            document.getElementById('whiteColorBtn').onclick = () => updateModalImage(product.design_no, 'White');
+            document.getElementById('yellowColorBtn').onclick = () => updateModalImage(product.design_no, 'Yellow');
+            document.getElementById('roseColorBtn').onclick = () => updateModalImage(product.design_no, 'Rose');
+
+            // Set up navigation buttons
+            document.getElementById('prevImageBtn').onclick = () => changeModalImageIndex(-1, product.design_no);
+            document.getElementById('nextImageBtn').onclick = () => changeModalImageIndex(1, product.design_no);
+
+            // Set up edit button
+            document.getElementById('editItemBtn').onclick = () => editItem(product.design_no);
+
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('itemDetailModal'));
+            modal.show();
+        }
+
+        // Current image variables
+        let currentImageColor = 'White';
+        let currentImageIndex = 1;
+
+        // Update modal image
+        function updateModalImage(designNo, color) {
+            currentImageColor = color;
+            currentImageIndex = 1;
+
+            const imgSrc = `https://dev-jewels.s3.us-east-2.amazonaws.com/products/${designNo}/${color}/D_${designNo}-1.jpg`;
+            const imgElement = document.getElementById('modalItemImage');
+
+            imgElement.src = imgSrc;
+            imgElement.onerror = function () {
+                this.src = "/static/adminside/img/placeholder.jpg";
+            };
+
+            // Update active color button
+            document.getElementById('whiteColorBtn').classList.toggle('btn-outline-secondary', color !== 'White');
+            document.getElementById('whiteColorBtn').classList.toggle('btn-secondary', color === 'White');
+
+            document.getElementById('yellowColorBtn').classList.toggle('btn-outline-secondary', color !== 'Yellow');
+            document.getElementById('yellowColorBtn').classList.toggle('btn-secondary', color === 'Yellow');
+
+            document.getElementById('roseColorBtn').classList.toggle('btn-outline-secondary', color !== 'Rose');
+            document.getElementById('roseColorBtn').classList.toggle('btn-secondary', color === 'Rose');
+        }
+
+        // Change image index (next/prev)
+        function changeModalImageIndex(direction, designNo) {
+            // There are typically 4 images per design/color
+            const maxIndex = 4;
+
+            // Calculate new index
+            currentImageIndex = currentImageIndex + direction;
+
+            // Wrap around if needed
+            if (currentImageIndex < 1) currentImageIndex = maxIndex;
+            if (currentImageIndex > maxIndex) currentImageIndex = 1;
+
+            // Determine image name pattern based on index
+            let namePattern;
+            if (currentImageIndex === 1) {
+                namePattern = `D_${designNo}-1.jpg`;
+            } else if (currentImageIndex === 2) {
+                namePattern = `H_${designNo}-2.jpg`;
+            } else {
+                namePattern = `${designNo}-${currentImageIndex}.jpg`;
+            }
+
+            // Update image
+            const imgSrc = `https://dev-jewels.s3.us-east-2.amazonaws.com/products/${designNo}/${currentImageColor}/${namePattern}`;
+            const imgElement = document.getElementById('modalItemImage');
+
+            imgElement.src = imgSrc;
+            imgElement.onerror = function () {
+                // If this image doesn't exist, try the next one in the same direction
+                this.src = "/static/adminside/img/placeholder.jpg";
+            };
+        }
+
+        // Edit item
+        function editItem(designNo) {
+            // In a real app, this would open an edit form
+            // For this demo, just show a toast
+            showToast(`Edit functionality for ${designNo} would be implemented here`, 'info');
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function () {
+            console.log('DOM loaded, initializing inventory page...');
+
+            // Fetch inventory data
+            fetchInventoryData();
+
+            // Set up filter form
+            document.getElementById('applyFilters')?.addEventListener('click', applyFilters);
+
+            // Search input - apply filters on Enter key
+            document.getElementById('searchInventory')?.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') {
+                    applyFilters();
+                }
+            });
+
+            // View mode toggle
+            document.querySelectorAll('input[name="viewMode"]').forEach(radio => {
+                radio.addEventListener('change', renderInventory);
+            });
+
+            // Refresh button
+            document.getElementById('refreshInventory')?.addEventListener('click', function () {
+                fetchInventoryData();
+            });
+
+            // Add item form
+            document.getElementById('saveItemBtn')?.addEventListener('click', function () {
+                // In a real app, this would save the item
+                // For this demo, just show a toast
+                showToast('Item would be saved to database', 'info');
+
+                // Hide modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('addItemModal'));
+                if (modal) modal.hide();
+            });
+        });
+
+        // Expose functions to global scope for use in HTML
+        window.changePage = changePage;
+        window.viewItemDetails = viewItemDetails;
+        window.editItem = editItem;
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,775 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>My Requests - DevERP</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="{% static 'inventory/index.css' %}" rel="stylesheet">
+  <style>
+    body {
+      background-color: #f9fafb;
+    }
+    
+    /* Page header styling */
+    .page-header {
+      background-color: white;
+      border-bottom: 1px solid #eaeaea;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      padding: 1.25rem 0;
+      margin-bottom: 2rem;
+    }
+    
+    /* Date header styling - exactly as in screenshot */
+    .date-header {
+      color: #333;
+      font-size: 1.25rem;
+      font-weight: 500;
+      margin-top: 2rem;
+      margin-bottom: 1.25rem;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 0.75rem;
+    }
+    
+    /* Search box styling - exactly as in screenshot */
+    .search-container {
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      padding: 0.75rem 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    .search-input {
+      border: none;
+      width: 100%;
+      padding: 0.5rem 0.5rem 0.5rem 2rem;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23999' class='bi bi-search' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z'%3E%3C/path%3E%3C/svg%3E") no-repeat 0 center;
+      font-size: 0.95rem;
+    }
+    
+    .search-input:focus {
+      outline: none;
+    }
+    
+    /* Request card with image */
+    .request-card {
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      margin-bottom: 1.5rem;
+      position: relative;
+    }
+    
+    .request-card-img {
+      height: auto;
+      object-fit: contain;
+      background-color: #f9fafb;
+      border-radius: 8px 8px 0 0;
+      width: 100%;
+      border-bottom: 1px solid #eee;
+      padding: 1rem;
+      cursor: pointer;
+    }
+    
+    .request-card-body {
+      padding: 1.5rem;
+      position: relative;
+    }
+    
+    /* Checkbox positioning */
+    .form-check {
+      position: absolute;
+      top: 1.5rem;
+      left: 1.5rem;
+      z-index: 10;
+    }
+    
+    /* Detail rows with proper spacing */
+    .detail-row {
+      display: flex;
+      margin-bottom: 1rem;
+      padding-left: 2.5rem; /* Space for checkbox */
+    }
+    
+    .detail-label {
+      width: 100px;
+      color: #666;
+      font-weight: 500;
+    }
+    
+    .detail-value {
+      flex: 1;
+      text-align: right;
+      font-weight: 500;
+    }
+    
+    /* Separator line - exactly as in screenshot */
+    .request-separator {
+      height: 1px;
+      background-color: #eee;
+      margin: 1.5rem 0;
+    }
+    
+    /* Footer with requested date and remove button */
+    .request-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .requested-date {
+      color: #947E6D; /* Brown-ish color for the date */
+      font-size: 0.9rem;
+    }
+    
+    /* Remove button styling */
+    .remove-btn {
+      border: 1px solid #dc3545;
+      color: #dc3545;
+      background-color: transparent;
+      border-radius: 0.375rem;
+      padding: 0.375rem 0.75rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      font-size: 0.9rem;
+    }
+    
+    .remove-btn:hover {
+      background-color: #dc3545;
+      color: white;
+    }
+    
+    /* Stats boxes */
+    .stats-box {
+      background-color: #fff;
+      border-radius: 0.5rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      padding: 1.25rem;
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+    
+    .stats-number {
+      font-size: 1.75rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+    
+    .stats-label {
+      color: #666;
+      font-size: 0.875rem;
+    }
+    
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 3rem;
+      background-color: white;
+      border-radius: 0.5rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .empty-state i {
+      font-size: 3rem;
+      color: #ccc;
+      margin-bottom: 1rem;
+    }
+    
+    /* Loading state */
+    .loading-state {
+      text-align: center;
+      padding: 3rem;
+    }
+    
+    /* Modal carousel styling */
+    .modal-carousel-img {
+      max-height: 70vh;
+      max-width: 100%;
+      object-fit: contain;
+    }
+    
+    /* Print styles */
+    @media print {
+      .no-print {
+        display: none !important;
+      }
+      
+      .request-card {
+        break-inside: avoid;
+        page-break-inside: avoid;
+        box-shadow: none;
+        border: 1px solid #ddd;
+      }
+    }
+  </style>
+</head>
+
+<body>
+<header class="page-header no-print">
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-center">
+      <h2 class="mb-0">My Requests</h2>
+      <div class="d-flex gap-2">
+        <button class="btn btn-outline-danger" onclick="removeSelected()">
+          <i class="bi bi-trash"></i> Remove Selected
+        </button>
+        <button class="btn btn-outline-primary" onclick="printSelected()">
+          <i class="bi bi-printer"></i> Print Selected
+        </button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+  <!-- Loading State -->
+  <div id="loadingState" class="loading-state">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-3 text-muted">Loading your requests...</p>
+  </div>
+
+  <!-- Main Content (hidden initially) -->
+  <div id="contentContainer" class="d-none">
+    <!-- Stats Row -->
+    <div class="row mb-4 no-print">
+      <div class="col-md-3">
+        <div class="stats-box">
+          <div class="stats-number" id="total-requests">0</div>
+          <div class="stats-label">Total Requests</div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="stats-box">
+          <div class="stats-number text-success" id="in-stock-count">0</div>
+          <div class="stats-label">In Stock</div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="stats-box">
+          <div class="stats-number text-warning" id="on-memo-count">0</div>
+          <div class="stats-label">On Memo</div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="stats-box">
+          <div class="stats-number text-secondary" id="pending-count">0</div>
+          <div class="stats-label">Pending</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Search Box - Styled to match screenshot -->
+    <div class="search-container no-print">
+      <input type="text" id="requestSearch" class="search-input" placeholder="Search design or job number">
+    </div>
+
+    <!-- Empty State (hidden initially) -->
+    <div id="emptyState" class="empty-state d-none">
+      <i class="bi bi-inbox"></i>
+      <h4>No Request Items</h4>
+      <p class="text-muted mb-4">You haven't requested any items yet. Go to Inventory to request items.</p>
+      <a href="{% url 'inventory:inventory' %}" class="btn btn-primary">
+        <i class="bi bi-box-arrow-right me-2"></i>Browse Inventory
+      </a>
+    </div>
+
+    <!-- Request Groups Container -->
+    <div id="requestDateGroups"></div>
+  </div>
+</div>
+
+<!-- Image Modals - Will be populated dynamically -->
+<div id="imageModalsContainer"></div>
+
+<!-- Toast Notification -->
+<div class="position-fixed bottom-0 end-0 p-3 no-print" style="z-index: 9999">
+  <div id="toast" class="toast align-items-center text-white bg-primary border-0" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="d-flex">
+      <div class="toast-body">
+        <!-- Toast content set dynamically -->
+      </div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// Fetch stock details for a job number
+async function fetchStock(jobNo) {
+  try {
+    const response = await fetch(`/api/get-stock-by-job/${jobNo}/`);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch stock data (${response.status})`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error(`Error fetching stock for job ${jobNo}:`, error);
+    return {
+      job_no: jobNo,
+      memostock: "unknown",
+      metal_type: "N/A",
+      metal_quality: "",
+      metal_color: "",
+      diamond_quality: "",
+      diamond_color: "",
+      gwt: "N/A",
+      dwt: "N/A",
+      size: "N/A",
+      price: "0.00"
+    };
+  }
+}
+
+// Show toast notification
+function showToast(message, type = "primary") {
+  const toast = document.getElementById("toast");
+  toast.querySelector(".toast-body").innerHTML = message;
+  toast.className = `toast align-items-center text-white bg-${type} border-0`;
+  
+  const bsToast = new bootstrap.Toast(toast);
+  bsToast.show();
+}
+
+// Format date for display (e.g., "Sunday, April 27, 2025")
+function formatDate(date) {
+  return date.toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+}
+
+// Load image with fallback
+function loadImage(designNo, imgElement) {
+  // Try to load White version first
+  const imgUrl = `https://dev-jewels.s3.us-east-2.amazonaws.com/products/${designNo}/White/D_${designNo}-1.jpg`;
+  
+  const testImg = new Image();
+  testImg.onload = function() {
+    imgElement.src = imgUrl;
+  };
+  testImg.onerror = function() {
+    // Try Yellow if White fails
+    const yellowUrl = `https://dev-jewels.s3.us-east-2.amazonaws.com/products/${designNo}/Yellow/D_${designNo}-1.jpg`;
+    const testYellow = new Image();
+    
+    testYellow.onload = function() {
+      imgElement.src = yellowUrl;
+    };
+    testYellow.onerror = function() {
+      // Try Rose if Yellow fails
+      const roseUrl = `https://dev-jewels.s3.us-east-2.amazonaws.com/products/${designNo}/Rose/D_${designNo}-1.jpg`;
+      const testRose = new Image();
+      
+      testRose.onload = function() {
+        imgElement.src = roseUrl;
+      };
+      testRose.onerror = function() {
+        // Use placeholder if all fail
+        imgElement.src = "{% static 'inventory/placeholder.jpg' %}";
+      };
+      testRose.src = roseUrl;
+    };
+    testYellow.src = yellowUrl;
+  };
+  testImg.src = imgUrl;
+}
+
+// Dynamic Carousel Image Loader - From your inventory.html
+function setupColorButtons() {
+  document.querySelectorAll('.color-btn').forEach(button => {
+    button.addEventListener('click', () => {
+      const designNo = button.getAttribute('data-design');
+      const color = button.getAttribute('data-color');
+      const modalId = button.getAttribute('data-modal');
+      const container = document.getElementById(`carousel-inner-${modalId}`);
+      const baseUrl = `https://dev-jewels.s3.us-east-2.amazonaws.com/products/${designNo}/${color}/`;
+
+      const imagePaths = [
+        `D_${designNo}-1.jpg`,
+        `H_${designNo}-2.jpg`,
+        `${designNo}-3.jpg`,
+        `${designNo}-4.jpg`
+      ];
+
+      let content = '';
+      imagePaths.forEach((name, idx) => {
+        content += `
+          <div class="carousel-item ${idx === 0 ? 'active' : ''}">
+            <img src="${baseUrl}${name}" class="modal-carousel-img d-inline-block" alt="${color} image ${idx + 1}">
+          </div>`;
+      });
+      container.innerHTML = content;
+    });
+  });
+}
+
+// Create image modals for all designs
+function createImageModals(designNumbers) {
+  const container = document.getElementById('imageModalsContainer');
+  container.innerHTML = '';
+  
+  // Create a modal for each unique design number
+  const uniqueDesigns = [...new Set(designNumbers)];
+  uniqueDesigns.forEach((designNo, index) => {
+    const modalHtml = `
+      <div class="modal fade" id="imageModal-${index}" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-xl">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Images - ${designNo}</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <div class="mb-3 text-center">
+                <button class="btn btn-outline-secondary mx-1 color-btn" data-color="White"
+                  data-design="${designNo}" data-modal="${index}">W</button>
+                <button class="btn btn-outline-secondary mx-1 color-btn" data-color="Yellow"
+                  data-design="${designNo}" data-modal="${index}">Y</button>
+                <button class="btn btn-outline-secondary mx-1 color-btn" data-color="Rose"
+                  data-design="${designNo}" data-modal="${index}">R</button>
+              </div>
+              <div id="carousel-${index}" class="carousel slide" data-bs-ride="false">
+                <div class="carousel-inner text-center" id="carousel-inner-${index}">
+                  <div class="carousel-item active">
+                    <img
+                      src="https://dev-jewels.s3.us-east-2.amazonaws.com/products/${designNo}/White/D_${designNo}-1.jpg"
+                      class="modal-carousel-img d-inline-block" alt="${designNo}">
+                  </div>
+                </div>
+                <button class="carousel-control-prev" type="button" data-bs-target="#carousel-${index}"
+                  data-bs-slide="prev">
+                  <span class="carousel-control-prev-icon"></span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#carousel-${index}"
+                  data-bs-slide="next">
+                  <span class="carousel-control-next-icon"></span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    container.innerHTML += modalHtml;
+  });
+  
+  // Map design numbers to modal indices for quick lookup
+  const designToIndex = {};
+  uniqueDesigns.forEach((design, index) => {
+    designToIndex[design] = index;
+  });
+  
+  // Add click handlers to all card images
+  document.querySelectorAll('.request-card-img').forEach(img => {
+    const card = img.closest('.request-card');
+    const designNo = card.getAttribute('data-design');
+    const modalIndex = designToIndex[designNo];
+    
+    img.onclick = function() {
+      const modal = new bootstrap.Modal(document.getElementById(`imageModal-${modalIndex}`));
+      modal.show();
+    };
+  });
+  
+  // Set up color buttons
+  setupColorButtons();
+}
+
+// Main function to render requests
+async function renderRequests() {
+  // Show loading state
+  document.getElementById('loadingState').classList.remove('d-none');
+  document.getElementById('contentContainer').classList.add('d-none');
+  document.getElementById('emptyState').classList.add('d-none');
+  
+  try {
+    // Get data from localStorage
+    const list = JSON.parse(localStorage.getItem("memoRequests") || "[]");
+    const search = document.getElementById("requestSearch")?.value?.toLowerCase() || "";
+    
+    // If no requests, show empty state
+    if (list.length === 0) {
+      document.getElementById('loadingState').classList.add('d-none');
+      document.getElementById('contentContainer').classList.remove('d-none');
+      document.getElementById('emptyState').classList.remove('d-none');
+      document.getElementById('total-requests').textContent = "0";
+      document.getElementById('in-stock-count').textContent = "0";
+      document.getElementById('on-memo-count').textContent = "0";
+      document.getElementById('pending-count').textContent = "0";
+      return;
+    }
+    
+    // Group requests by date
+    const grouped = {};
+    
+    // Stats counters
+    let totalItems = 0;
+    let inStockCount = 0;
+    let onMemoCount = 0;
+    let pendingCount = 0;
+    
+    // Collect all design numbers for modals
+    const allDesignNumbers = [];
+    
+    // Process all items, fetch stock data
+    for (const item of list) {
+      // Skip if doesn't match search
+      if (search && !item.design_no?.toLowerCase().includes(search) && !item.job_no?.toLowerCase().includes(search)) {
+        continue;
+      }
+      
+      // Add to design numbers
+      allDesignNumbers.push(item.design_no);
+      
+      // Fetch stock data
+      const stock = await fetchStock(item.job_no);
+      
+      // Format the date for grouping (YYYY-MM-DD)
+      const dateObj = new Date(item.requested_at);
+      const dateKey = dateObj.toISOString().split('T')[0];
+      
+      // Create date group if it doesn't exist
+      if (!grouped[dateKey]) {
+        grouped[dateKey] = {
+          date: dateObj,
+          items: []
+        };
+      }
+      
+      // Add enriched item to group
+      grouped[dateKey].items.push({
+        ...item,
+        stock
+      });
+      
+      // Update counters
+      totalItems++;
+      if (stock.memostock === "0") inStockCount++;
+      else if (stock.memostock === "1") onMemoCount++;
+      else pendingCount++;
+    }
+    
+    // Sort groups by date (newest first)
+    const sortedDates = Object.keys(grouped).sort().reverse();
+    
+    // Render groups to DOM
+    const wrapper = document.getElementById("requestDateGroups");
+    wrapper.innerHTML = "";
+    
+    for (const dateKey of sortedDates) {
+      const group = grouped[dateKey];
+      
+      // Create date header exactly as shown in the screenshot
+      const dateHeader = document.createElement("h4");
+      dateHeader.className = "date-header";
+      dateHeader.textContent = formatDate(group.date);
+      wrapper.appendChild(dateHeader);
+      
+      // Create row for cards
+      const row = document.createElement("div");
+      row.className = "row";
+      
+      // Add each item card
+      for (const item of group.items) {
+        const col = document.createElement("div");
+        col.className = "col-md-4 mb-4";
+        
+        // Format date string (MM/DD/YYYY)
+        const formattedDate = new Date(item.requested_at).toLocaleDateString();
+        
+        // Create request card that exactly matches the screenshot
+        col.innerHTML = `
+          <div class="request-card" data-design="${item.design_no}">
+            <div class="form-check">
+              <input class="form-check-input request-checkbox" type="checkbox" data-design="${item.design_no}" data-job="${item.job_no}">
+            </div>
+            
+            <img src="{% static 'inventory/placeholder.jpg' %}" data-design="${item.design_no}" class="request-card-img">
+            
+            <div class="request-card-body">
+              <div class="detail-row">
+                <div class="detail-label">Job No:</div>
+                <div class="detail-value">${item.job_no}</div>
+              </div>
+              
+              <div class="detail-row">
+                <div class="detail-label">Metal:</div>
+                <div class="detail-value">${item.stock.metal_type || 'N/A'}</div>
+              </div>
+              
+              <div class="detail-row">
+                <div class="detail-label">Weight:</div>
+                <div class="detail-value">${item.stock.gwt || 'N/A'} g</div>
+              </div>
+              
+              <div class="detail-row">
+                <div class="detail-label">Size:</div>
+                <div class="detail-value">${item.stock.size || 'N/A'}</div>
+              </div>
+              
+              ${item.stock.diamond_quality ? `
+              <div class="detail-row">
+                <div class="detail-label">Diamond Quality:</div>
+                <div class="detail-value">${item.stock.diamond_quality}</div>
+              </div>
+              ` : ''}
+              
+              ${item.stock.diamond_color ? `
+              <div class="detail-row">
+                <div class="detail-label">Diamond Color:</div>
+                <div class="detail-value">${item.stock.diamond_color}</div>
+              </div>
+              ` : ''}
+              
+              <div class="request-separator"></div>
+              
+              <div class="request-footer">
+                <div class="requested-date">Requested: ${formattedDate}</div>
+                <button class="remove-btn" onclick="removeRequest('${item.design_no}', '${item.job_no}')">
+                  <span aria-hidden="true">&times;</span> Remove
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+        
+        row.appendChild(col);
+      }
+      
+      wrapper.appendChild(row);
+    }
+    
+    // Create image modals and set up image click handlers
+    createImageModals(allDesignNumbers);
+    
+    // Now load the images
+    document.querySelectorAll('.request-card-img').forEach(img => {
+      const designNo = img.getAttribute('data-design');
+      loadImage(designNo, img);
+    });
+    
+    // Update stats in the UI
+    document.getElementById("total-requests").textContent = totalItems;
+    document.getElementById("in-stock-count").textContent = inStockCount;
+    document.getElementById("on-memo-count").textContent = onMemoCount;
+    document.getElementById("pending-count").textContent = pendingCount;
+    
+    // Show no results message if filtered to zero
+    if (totalItems === 0 && search) {
+      const noResults = document.createElement("div");
+      noResults.className = "alert alert-info";
+      noResults.textContent = `No results found for "${search}"`;
+      wrapper.appendChild(noResults);
+    }
+  } catch (error) {
+    console.error("Error rendering requests:", error);
+  } finally {
+    // Hide loading, show content
+    document.getElementById('loadingState').classList.add('d-none');
+    document.getElementById('contentContainer').classList.remove('d-none');
+  }
+}
+
+// Remove a request from localStorage
+function removeRequest(design_no, job_no) {
+  let requests = JSON.parse(localStorage.getItem("memoRequests") || "[]");
+  requests = requests.filter(r => !(r.design_no === design_no && r.job_no === job_no));
+  localStorage.setItem("memoRequests", JSON.stringify(requests));
+  
+  showToast("Request removed successfully", "success");
+  
+  // Re-render requests
+  renderRequests();
+}
+
+// Remove selected requests
+function removeSelected() {
+  const checkboxes = document.querySelectorAll('.request-checkbox:checked');
+  if (!checkboxes.length) {
+    showToast("Please select at least one item", "warning");
+    return;
+  }
+
+  let requests = JSON.parse(localStorage.getItem("memoRequests") || "[]");
+  const initialCount = requests.length;
+  
+  checkboxes.forEach(box => {
+    const design = box.dataset.design;
+    const job = box.dataset.job;
+    requests = requests.filter(r => !(r.design_no === design && r.job_no === job));
+  });
+  
+  localStorage.setItem("memoRequests", JSON.stringify(requests));
+  
+  const removedCount = initialCount - requests.length;
+  showToast(`${removedCount} item(s) removed successfully`, "success");
+  
+  // Re-render requests
+  renderRequests();
+}
+
+// Print selected requests
+function printSelected() {
+  const checkboxes = document.querySelectorAll('.request-checkbox:checked');
+  if (!checkboxes.length) {
+    showToast("Please select at least one item", "warning");
+    return;
+  }
+
+  // Print only the selected cards
+  checkboxes.forEach(checkbox => {
+    const card = checkbox.closest('.request-card');
+    card.classList.add('print-only');
+  });
+  
+  document.querySelectorAll('.request-card:not(.print-only)').forEach(card => {
+    card.style.display = 'none';
+  });
+  
+  // Hide elements we don't want to print
+  document.querySelectorAll('.no-print').forEach(el => {
+    el.style.display = 'none';
+  });
+  
+  // Print
+  window.print();
+  
+  // Restore the page
+  document.querySelectorAll('.request-card').forEach(card => {
+    card.classList.remove('print-only');
+    card.style.display = '';
+  });
+  
+  document.querySelectorAll('.no-print').forEach(el => {
+    el.style.display = '';
+  });
+}
+
+// Initialize page
+document.addEventListener("DOMContentLoaded", () => {
+  // Render requests
+  renderRequests();
+  
+  // Add search input event listener
+  const searchInput = document.getElementById("requestSearch");
+  if (searchInput) {
+    searchInput.addEventListener("input", renderRequests);
+  }
+});
+</script>
+</body>
+</html>

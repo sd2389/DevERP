@@ -1,0 +1,3583 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>DevERP Admin - Reports & Analytics</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    /* Sidebar styling */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 100;
+      padding: 48px 0 0;
+      box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+      background-color: #f8f9fa;
+      width: 240px;
+    }
+
+    .sidebar-sticky {
+      position: relative;
+      top: 0;
+      height: calc(100vh - 48px);
+      padding-top: 0.5rem;
+      overflow-x: hidden;
+      overflow-y: auto;
+    }
+
+    .sidebar .nav-link {
+      font-weight: 500;
+      color: #333;
+      padding: 0.75rem 1rem;
+    }
+
+    .sidebar .nav-link.active {
+      color: #0d6efd;
+    }
+
+    .sidebar .nav-link:hover {
+      color: #0a58ca;
+      background-color: #e9ecef;
+    }
+
+    .sidebar .nav-link .bi {
+      margin-right: 0.5rem;
+    }
+
+    /* Main content */
+    .main-content {
+      margin-left: 240px;
+      padding: 2rem;
+      transition: margin-left 0.3s ease;
+    }
+
+    /* Mobile sidebar toggle */
+    #sidebarToggle {
+      display: none;
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      z-index: 1050;
+      width: 40px;
+      height: 40px;
+      background: #0d6efd;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+
+    @media (max-width: 767.98px) {
+      .sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+      }
+
+      .sidebar.show {
+        transform: translateX(0);
+      }
+
+      .main-content {
+        margin-left: 0;
+        padding: 1rem;
+      }
+
+      #sidebarToggle {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .header-spacer {
+        height: 60px;
+      }
+    }
+
+    /* Stats cards */
+    .stats-card {
+      background-color: #fff;
+      border-radius: 0.5rem;
+      box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+      padding: 1.5rem;
+      height: 100%;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .stats-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+
+    .stats-icon {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1rem;
+      font-size: 1.75rem;
+    }
+
+    .stats-value {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      text-align: center;
+    }
+
+    .stats-label {
+      color: #6c757d;
+      text-align: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .icon-orders {
+      background-color: rgba(13, 110, 253, 0.1);
+      color: #0d6efd;
+    }
+
+    .icon-revenue {
+      background-color: rgba(25, 135, 84, 0.1);
+      color: #198754;
+    }
+
+    .icon-customers {
+      background-color: rgba(255, 193, 7, 0.1);
+      color: #ffc107;
+    }
+
+    .icon-memos {
+      background-color: rgba(220, 53, 69, 0.1);
+      color: #dc3545;
+    }
+
+    /* Chart containers */
+    .chart-container {
+      background-color: #fff;
+      border-radius: 0.5rem;
+      box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      transition: box-shadow 0.3s ease;
+    }
+
+    .chart-container:hover {
+      box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .chart-title {
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+    }
+
+    .chart-title i {
+      margin-right: 0.5rem;
+    }
+
+    .chart-canvas-container {
+      position: relative;
+      height: 350px;
+      width: 100%;
+    }
+
+    /* Tables */
+    .data-table {
+      background-color: #fff;
+      border-radius: 0.5rem;
+      box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      transition: box-shadow 0.3s ease;
+    }
+
+    .data-table:hover {
+      box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+
+    .table-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .table-title {
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+    }
+
+    .table-title i {
+      margin-right: 0.5rem;
+    }
+
+    /* Status badges */
+    .status-badge {
+      font-size: 0.85rem;
+      padding: 0.35em 0.65em;
+    }
+
+    .status-Pending {
+      background-color: #6c757d;
+      color: white;
+    }
+
+    .status-In-Process {
+      background-color: #fd7e14;
+      color: white;
+    }
+
+    .status-Completed {
+      background-color: #198754;
+      color: white;
+    }
+
+    .status-Cancelled {
+      background-color: #dc3545;
+      color: white;
+    }
+
+    /* Item type badges */
+    .item-type-badge {
+      font-size: 0.7rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 3px;
+      margin-right: 0.25rem;
+    }
+
+    .item-stock {
+      background-color: #28a745;
+      color: white;
+    }
+
+    .item-memo {
+      background-color: #fd7e14;
+      color: white;
+    }
+
+    .item-custom {
+      background-color: #6f42c1;
+      color: white;
+    }
+
+    /* Debug panel */
+    .debug-panel {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      z-index: 9999;
+      background-color: rgba(0, 0, 0, 0.8);
+      color: #fff;
+      padding: 10px;
+      border-radius: 5px;
+      font-family: monospace;
+      font-size: 12px;
+      max-width: 400px;
+      max-height: 200px;
+      overflow: auto;
+      display: none;
+    }
+
+    /* Report filters */
+    .report-filters {
+      background-color: #fff;
+      border-radius: 0.5rem;
+      box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      transition: box-shadow 0.3s ease;
+    }
+
+    .report-filters:hover {
+      box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+
+    /* Date picker customization */
+    .date-picker {
+      max-width: 140px;
+    }
+
+    /* Toast styling */
+    .toast-container {
+      z-index: 1100;
+    }
+
+    /* KPI styles */
+    .kpi-card {
+      background-color: #fff;
+      border-left: 4px solid #0d6efd;
+      border-radius: 0.5rem;
+      box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+      padding: 1rem;
+      height: 100%;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .kpi-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+
+    .kpi-title {
+      color: #6c757d;
+      font-size: 0.9rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .kpi-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+
+    .kpi-change {
+      font-size: 0.85rem;
+    }
+
+    /* Loading spinner */
+    .loading-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(255, 255, 255, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      border-radius: inherit;
+    }
+
+    .section-loader {
+      position: relative;
+      min-height: 200px;
+    }
+
+    /* Print styles */
+    @media print {
+      .sidebar, .no-print {
+        display: none !important;
+      }
+      
+      .main-content {
+        margin-left: 0 !important;
+        padding: 0 !important;
+      }
+      
+      .stats-card, .chart-container, .data-table, .kpi-card {
+        break-inside: avoid;
+        box-shadow: none !important;
+      }
+      
+      .chart-canvas-container {
+        height: 300px !important;
+      }
+    }
+
+    /* New Responsive table */
+    .table-responsive {
+      overflow-x: auto;
+    }
+
+    /* Expandable row */
+    .expandable-row {
+      cursor: pointer;
+    }
+
+    .expandable-row:hover {
+      background-color: rgba(0,0,0,0.03);
+    }
+
+    .row-details {
+      display: none;
+      background-color: #f8f9fa;
+      padding: 1rem;
+    }
+
+    /* Data Refresh Animation */
+    .refresh-spin {
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Custom Focus styles for better a11y */
+    button:focus, 
+    a:focus,
+    input:focus,
+    select:focus {
+      outline: 2px solid #0d6efd;
+      outline-offset: 2px;
+    }
+
+    /* Dark mode support */
+    @media (prefers-color-scheme: dark) {
+      .dark-mode-supported {
+        /* Dark mode styles will be applied when browser prefers dark mode */
+      }
+    }
+
+    /* Custom checkbox styling */
+    .custom-control-input:checked ~ .custom-control-label::before {
+      border-color: #0d6efd;
+      background-color: #0d6efd;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Debug Panel (hidden by default) -->
+  <div id="debugPanel" class="debug-panel"></div>
+
+  <!-- Mobile Sidebar Toggle -->
+  <button class="btn rounded-circle" id="sidebarToggle">
+    <i class="bi bi-list"></i>
+  </button>
+
+  <!-- Mobile Header Spacer -->
+  <div class="d-md-none header-spacer"></div>
+
+  <!-- Sidebar -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-sticky">
+      <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+        <span>Management</span>
+      </h6>
+      <ul class="nav flex-column">
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'adminside:dashboard' %}">
+            <i class="bi bi-speedometer2"></i> Dashboard
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'adminside:orders' %}">
+            <i class="bi bi-box"></i> Orders
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'adminside:inventory' %}">
+            <i class="bi bi-grid"></i> Inventory
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'adminside:customers' %}">
+            <i class="bi bi-people"></i> Customers
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link active" href="{% url 'adminside:reports' %}">
+            <i class="bi bi-graph-up"></i> Reports
+          </a>
+        </li>
+      </ul>
+
+      <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+        <span>Settings</span>
+      </h6>
+      <ul class="nav flex-column">
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'adminside:settings' %}">
+            <i class="bi bi-gear"></i> System Settings
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'adminside:users' %}">
+            <i class="bi bi-person-gear"></i> User Management
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'logout' %}">
+            <i class="bi bi-box-arrow-right"></i> Logout
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content" id="mainContent">
+    <!-- Header with title and actions -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+      <h4>
+        <i class="bi bi-graph-up me-2"></i> Reports & Analytics
+      </h4>
+      <div class="d-flex mt-2 mt-md-0">
+        <button type="button" class="btn btn-outline-secondary me-2" id="refreshBtn">
+          <i class="bi bi-arrow-clockwise me-1"></i> Refresh
+        </button>
+        <button type="button" class="btn btn-outline-secondary me-2" id="printBtn">
+          <i class="bi bi-printer me-1"></i> Print
+        </button>
+        <div class="dropdown">
+          <button class="btn btn-outline-primary dropdown-toggle" type="button" id="exportDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-download me-1"></i> Export
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="exportDropdown">
+            <li><a class="dropdown-item" href="#" id="exportCSV"><i class="bi bi-filetype-csv me-2"></i> Export as CSV</a></li>
+            <li><a class="dropdown-item" href="#" id="exportPDF"><i class="bi bi-filetype-pdf me-2"></i> Export as PDF</a></li>
+            <li><a class="dropdown-item" href="#" id="exportExcel"><i class="bi bi-file-earmark-excel me-2"></i> Export as Excel</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="#" id="scheduleReport"><i class="bi bi-calendar-check me-2"></i> Schedule Report</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Date range selector -->
+    <div class="report-filters">
+      <div class="row align-items-end gy-3">
+        <div class="col-md-3 col-sm-6">
+          <label for="startDate" class="form-label">Start Date</label>
+          <input type="date" class="form-control date-picker" id="startDate" value="{{ default_start_date|date:'Y-m-d' }}">
+        </div>
+        <div class="col-md-3 col-sm-6">
+          <label for="endDate" class="form-label">End Date</label>
+          <input type="date" class="form-control date-picker" id="endDate" value="{{ default_end_date|date:'Y-m-d' }}">
+        </div>
+        <div class="col-md-2 col-sm-6">
+          <button type="button" class="btn btn-primary w-100" id="applyDateRangeBtn">
+            <i class="bi bi-calendar3 me-1"></i> Apply Range
+          </button>
+        </div>
+        <div class="col-md-4 col-sm-6 text-md-end">
+          <div class="btn-group w-100">
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-range="7">Last 7 Days</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm active" data-range="30">Last 30 Days</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-range="90">Last 90 Days</button>
+          </div>
+        </div>
+        <div class="col-12 mt-3">
+          <div class="form-check form-check-inline">
+            <input class="form-check-input" type="checkbox" id="autoRefresh" value="option1">
+            <label class="form-check-label" for="autoRefresh">Auto refresh (every 5 min)</label>
+          </div>
+          <div class="form-check form-check-inline">
+            <input class="form-check-input" type="checkbox" id="showOnlyActive" value="option2" checked>
+            <label class="form-check-label" for="showOnlyActive">Show only active products</label>
+          </div>
+          <div class="form-check form-check-inline">
+            <input class="form-check-input" type="checkbox" id="includeCancelled" value="option3">
+            <label class="form-check-label" for="includeCancelled">Include cancelled orders</label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row g-4 mb-4">
+      <!-- Total Orders -->
+      <div class="col-xl-3 col-lg-6 col-md-6">
+        <div class="stats-card">
+          <div class="stats-icon icon-orders">
+            <i class="bi bi-box"></i>
+          </div>
+          <div class="stats-value" id="totalOrdersValue">
+            <div class="spinner-border spinner-border-sm text-primary" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+          </div>
+          <div class="stats-label">Total Orders</div>
+          <div class="mt-2 text-center">
+            <button class="btn btn-sm btn-outline-primary" onclick="showOrdersModal('all')">
+              View Orders <i class="bi bi-arrow-right"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Total Revenue -->
+      <div class="col-xl-3 col-lg-6 col-md-6">
+        <div class="stats-card">
+          <div class="stats-icon icon-revenue">
+            <i class="bi bi-cash"></i>
+          </div>
+          <div class="stats-value" id="totalRevenueValue">
+            <div class="spinner-border spinner-border-sm text-success" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+          </div>
+          <div class="stats-label">Total Revenue</div>
+          <div class="mt-2 text-center" id="revenueGrowthContainer">
+            <div class="spinner-border spinner-border-sm text-success" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Total Customers -->
+      <div class="col-xl-3 col-lg-6 col-md-6">
+        <div class="stats-card">
+          <div class="stats-icon icon-customers">
+            <i class="bi bi-people"></i>
+          </div>
+          <div class="stats-value" id="totalCustomersValue">
+            <div class="spinner-border spinner-border-sm text-warning" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+          </div>
+          <div class="stats-label">Total Customers</div>
+          <div class="mt-2 text-center" id="customerGrowthContainer">
+            <div class="spinner-border spinner-border-sm text-warning" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Memo Requests -->
+      <div class="col-xl-3 col-lg-6 col-md-6">
+        <div class="stats-card">
+          <div class="stats-icon icon-memos">
+            <i class="bi bi-bookmark"></i>
+          </div>
+          <div class="stats-value" id="memoRequestsValue">
+            <div class="spinner-border spinner-border-sm text-danger" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+          </div>
+          <div class="stats-label">Memo Requests</div>
+          <div class="mt-2 text-center">
+            <button class="btn btn-sm btn-outline-danger" onclick="showOrdersModal('memo')">
+              View Memos <i class="bi bi-arrow-right"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Key Performance Indicators -->
+    <div class="row g-4 mb-4">
+      <div class="col-xl-3 col-lg-6 col-md-6">
+        <div class="kpi-card">
+          <div class="kpi-title">Average Order Value</div>
+          <div class="kpi-value" id="avgOrderValue">
+            <div class="spinner-border spinner-border-sm text-primary" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+          </div>
+          <div class="kpi-change" id="avgOrderTrendContainer">
+            <div class="spinner-border spinner-border-sm" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-xl-3 col-lg-6 col-md-6">
+        <div class="kpi-card">
+          <div class="kpi-title">Conversion Rate</div>
+          <div class="kpi-value" id="conversionRate">
+            <div class="spinner-border spinner-border-sm text-primary" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+          </div>
+          <div class="kpi-change" id="conversionTrendContainer">
+            <div class="spinner-border spinner-border-sm" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-xl-3 col-lg-6 col-md-6">
+        <div class="kpi-card">
+          <div class="kpi-title">Items Per Order</div>
+          <div class="kpi-value" id="itemsPerOrder">
+            <div class="spinner-border spinner-border-sm text-primary" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+          </div>
+          <div class="kpi-change" id="itemsPerOrderTrendContainer">
+            <div class="spinner-border spinner-border-sm" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-xl-3 col-lg-6 col-md-6">
+        <div class="kpi-card">
+          <div class="kpi-title">Customer Satisfaction</div>
+          <div class="kpi-value" id="customerSatisfaction">
+            <div class="spinner-border spinner-border-sm text-primary" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+          </div>
+          <div class="kpi-change" id="satisfactionTrendContainer">
+            <div class="spinner-border spinner-border-sm" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sales Overview Chart -->
+    <div class="chart-container section-loader" id="salesChartContainer">
+      <div class="loading-overlay" id="salesChartLoader">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+      </div>
+      <div class="chart-header">
+        <div class="chart-title">
+          <i class="bi bi-graph-up"></i> Sales Overview
+        </div>
+        <div class="d-flex align-items-center flex-wrap gap-2">
+          <select class="form-select form-select-sm me-2" id="salesChartPeriod">
+            <option value="weekly">Weekly</option>
+            <option value="monthly" selected>Monthly</option>
+            <option value="quarterly">Quarterly</option>
+            <option value="yearly">Yearly</option>
+          </select>
+          <div class="btn-group">
+            <button type="button" class="btn btn-sm btn-outline-secondary active" data-chart-type="line">
+              <i class="bi bi-graph-up"></i>
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-chart-type="bar">
+              <i class="bi bi-bar-chart"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="chart-canvas-container">
+        <canvas id="salesChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Distribution Charts Row -->
+    <div class="row g-4 mb-4">
+      <div class="col-lg-6">
+        <div class="chart-container section-loader" id="orderStatusChartContainer">
+          <div class="loading-overlay" id="orderStatusChartLoader">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+          </div>
+          <div class="chart-header">
+            <div class="chart-title">
+              <i class="bi bi-pie-chart"></i> Order Status Distribution
+            </div>
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="toggleOrderStatus">
+              <label class="form-check-label" for="toggleOrderStatus">Show as percentage</label>
+            </div>
+          </div>
+          <div class="chart-canvas-container">
+            <canvas id="orderStatusChart"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="chart-container section-loader" id="orderTypesChartContainer">
+          <div class="loading-overlay" id="orderTypesChartLoader">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+          </div>
+          <div class="chart-header">
+            <div class="chart-title">
+              <i class="bi bi-pie-chart"></i> Order Types Distribution
+            </div>
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="toggleOrderTypes">
+              <label class="form-check-label" for="toggleOrderTypes">Show as percentage</label>
+            </div>
+          </div>
+          <div class="chart-canvas-container">
+            <canvas id="orderTypesChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top Products Table -->
+    <div class="data-table section-loader" id="topProductsTableContainer">
+      <div class="loading-overlay" id="topProductsTableLoader">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+      </div>
+      <div class="table-header">
+        <div class="table-title">
+          <i class="bi bi-trophy"></i> Top Selling Products
+        </div>
+        <div class="d-flex align-items-center flex-wrap gap-2">
+          <div class="input-group input-group-sm">
+            <span class="input-group-text">
+              <i class="bi bi-search"></i>
+            </span>
+            <input type="text" class="form-control" id="topProductsSearch" placeholder="Search products">
+          </div>
+          <select class="form-select form-select-sm" id="topProductsPeriod">
+            <option value="7">Last 7 Days</option>
+            <option value="30" selected>Last 30 Days</option>
+            <option value="90">Last 90 Days</option>
+            <option value="365">Last Year</option>
+            <option value="custom">Custom Range</option>
+          </select>
+        </div>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th><a href="#" class="text-decoration-none" data-sort="index">Sr No. <i class="bi bi-arrow-down-up"></i></a></th>
+              <th><a href="#" class="text-decoration-none" data-sort="design">Design No. <i class="bi bi-arrow-down-up"></i></a></th>
+              <th>Product</th>
+              <th><a href="#" class="text-decoration-none" data-sort="orders">Orders <i class="bi bi-arrow-down-up"></i></a></th>
+              <th><a href="#" class="text-decoration-none" data-sort="revenue">Revenue <i class="bi bi-arrow-down-up"></i></a></th>
+              <th>Trend</th>
+            </tr>
+          </thead>
+          <tbody id="topProductsTable">
+            <tr>
+              <td colspan="6" class="text-center py-3">Loading data...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <nav aria-label="Top products navigation">
+        <ul class="pagination pagination-sm justify-content-center mt-3" id="topProductsPagination">
+          <!-- Pagination will be populated by JavaScript -->
+        </ul>
+      </nav>
+    </div>
+
+    <!-- Recent Orders Table -->
+    <div class="data-table section-loader" id="recentOrdersTableContainer">
+      <div class="loading-overlay" id="recentOrdersTableLoader">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+      </div>
+      <div class="table-header">
+        <div class="table-title">
+          <i class="bi bi-box"></i> Recent Orders
+          <span class="badge bg-secondary ms-2" id="recentOrdersCount">0</span>
+        </div>
+        <div class="d-flex align-items-center flex-wrap gap-2">
+          <div class="input-group input-group-sm me-2">
+            <span class="input-group-text">
+              <i class="bi bi-search"></i>
+            </span>
+            <input type="text" class="form-control" id="recentOrdersSearch" placeholder="Search orders">
+          </div>
+          <div class="dropdown">
+            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="bi bi-funnel"></i> All Orders
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><a class="dropdown-item" href="#" data-filter="all">All Orders</a></li>
+              <li><a class="dropdown-item" href="#" data-filter="pending">Pending Orders</a></li>
+              <li><a class="dropdown-item" href="#" data-filter="in-process">In Process Orders</a></li>
+              <li><a class="dropdown-item" href="#" data-filter="completed">Completed Orders</a></li>
+              <li><a class="dropdown-item" href="#" data-filter="cancelled">Cancelled Orders</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th><a href="#" class="text-decoration-none" data-sort="index">Sr No. <i class="bi bi-arrow-down-up"></i></a></th>
+              <th><a href="#" class="text-decoration-none" data-sort="id">Order ID <i class="bi bi-arrow-down-up"></i></a></th>
+              <th><a href="#" class="text-decoration-none" data-sort="date">Date <i class="bi bi-arrow-down-up"></i></a></th>
+              <th>Customer</th>
+              <th>Items</th>
+              <th><a href="#" class="text-decoration-none" data-sort="total">Total <i class="bi bi-arrow-down-up"></i></a></th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="recentOrdersTable">
+            <tr>
+              <td colspan="8" class="text-center py-3">Loading orders...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <nav aria-label="Recent orders pagination">
+        <ul class="pagination pagination-sm justify-content-center mt-3" id="recentOrdersPagination">
+          <!-- Pagination will be populated by JavaScript -->
+        </ul>
+      </nav>
+    </div>
+  </div>
+
+  <!-- Orders List Modal -->
+  <div class="modal fade" id="ordersListModal" tabindex="-1" aria-labelledby="ordersListModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="ordersListModalLabel">Order List</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-search"></i></span>
+              <input type="text" class="form-control" id="modalOrdersSearch" placeholder="Search orders...">
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th scope="col">Sr No.</th>
+                  <th scope="col">Order ID</th>
+                  <th scope="col">Date</th>
+                  <th scope="col">Customer</th>
+                  <th scope="col">Items</th>
+                  <th scope="col">Total</th>
+                  <th scope="col">Status</th>
+                </tr>
+              </thead>
+              <tbody id="ordersModalTableBody">
+                <tr>
+                  <td colspan="7" class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                      <span class="visually-hidden">Loading...</span>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <nav aria-label="Modal orders pagination">
+            <ul class="pagination pagination-sm justify-content-center" id="modalOrdersPagination">
+              <!-- Pagination will be populated by JavaScript -->
+            </ul>
+          </nav>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <a href="{% url 'adminside:orders' %}" class="btn btn-primary">View All Orders</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Schedule Report Modal -->
+  <div class="modal fade" id="scheduleReportModal" tabindex="-1" aria-labelledby="scheduleReportModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="scheduleReportModalLabel">Schedule Report</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="scheduleReportForm">
+            <div class="mb-3">
+              <label for="reportName" class="form-label">Report Name</label>
+              <input type="text" class="form-control" id="reportName" placeholder="Sales Report May 2025">
+            </div>
+            <div class="mb-3">
+              <label for="reportFormat" class="form-label">Format</label>
+              <select class="form-select" id="reportFormat">
+                <option value="pdf">PDF</option>
+                <option value="csv">CSV</option>
+                <option value="excel">Excel</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="reportFrequency" class="form-label">Frequency</label>
+              <select class="form-select" id="reportFrequency">
+                <option value="once">One time</option>
+                <option value="daily">Daily</option>
+                <option value="weekly">Weekly</option>
+                <option value="monthly">Monthly</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="reportDate" class="form-label">Date</label>
+              <input type="date" class="form-control" id="reportDate">
+            </div>
+            <div class="mb-3">
+              <label for="reportEmail" class="form-label">Email To</label>
+              <input type="email" class="form-control" id="reportEmail" value="{{ request.user.email }}">
+            </div>
+            <div class="form-check mb-3">
+              <input class="form-check-input" type="checkbox" id="applyFilters" checked>
+              <label class="form-check-label" for="applyFilters">
+                Apply current filters and date range
+              </label>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" id="scheduleReportBtn">Schedule Report</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Product Detail Modal -->
+  <div class="modal fade" id="productDetailModal" tabindex="-1" aria-labelledby="productDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="productDetailModalLabel">Product Details</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row">
+            <div class="col-md-5">
+              <div id="productImageContainer" class="text-center mb-3">
+                <img id="productImage" src="" alt="Product" class="img-fluid rounded">
+              </div>
+              <div class="d-flex justify-content-between">
+                <button class="btn btn-sm btn-outline-secondary" id="prevImageBtn">
+                  <i class="bi bi-chevron-left"></i> Previous
+                </button>
+                <button class="btn btn-sm btn-outline-secondary" id="nextImageBtn">
+                  Next <i class="bi bi-chevron-right"></i>
+                </button>
+              </div>
+            </div>
+            <div class="col-md-7">
+              <h4 id="productDesignNo">Design #</h4>
+              <div class="mb-2">
+                <span class="badge bg-primary" id="productCategory">Category</span>
+              </div>
+              <div class="row mb-4">
+                <div class="col-6">
+                  <small class="text-muted">Orders</small>
+                  <h5 id="productOrderCount">0</h5>
+                </div>
+                <div class="col-6">
+                  <small class="text-muted">Revenue</small>
+                  <h5 id="productRevenue">$0.00</h5>
+                </div>
+              </div>
+              <h5>Sales Trend</h5>
+              <div style="height: 200px">
+                <canvas id="productTrendChart"></canvas>
+              </div>
+            </div>
+          </div>
+          <hr>
+          <h5>Recent Orders with this Product</h5>
+          <div class="table-responsive">
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th>Order ID</th>
+                  <th>Date</th>
+                  <th>Customer</th>
+                  <th>Price</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="productOrdersTable">
+                <tr>
+                  <td colspan="5" class="text-center">Loading orders...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <a href="#" class="btn btn-primary" id="viewInInventoryBtn">View in Inventory</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1050">
+    <div id="reportToast" class="toast align-items-center text-white bg-success" role="alert" aria-live="assertive"
+      aria-atomic="true">
+      <div class="d-flex">
+        <div class="toast-body">
+          <i class="bi bi-check-circle me-2"></i>
+          <span id="toastMessage">Data refreshed successfully.</span>
+        </div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+          aria-label="Close"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Required JavaScript -->
+<!-- Load jQuery first -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <!-- Then Bootstrap Bundle which includes Popper -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Then Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+  <!-- Then Moment.js for date handling -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+
+  <script>
+    // Constants
+    const ORDER_STATUS = {
+      PENDING: 'Pending',
+      IN_PROCESS: 'In Process',
+      COMPLETED: 'Completed',
+      CANCELLED: 'Cancelled'
+    };
+    
+    const ITEM_TYPES = {
+      STOCK: 'stock',
+      MEMO: 'memo',
+      CUSTOM: 'custom'
+    };
+    
+    const STORAGE_KEY_ORDERS = 'customer_orders';
+    const API_ENDPOINT = '/api/reports/';
+    
+    // Chart references
+    let salesChart = null;
+    let orderStatusChart = null;
+    let orderTypesChart = null;
+    let productTrendChart = null;
+    
+    // Date range
+    let startDate = new Date();
+    startDate.setDate(startDate.getDate() - 30);
+    let endDate = new Date();
+    
+    // Global auto-refresh timer
+    let autoRefreshTimer = null;
+    
+    // Session storage for caching
+    const CACHE_KEYS = {
+      SUMMARY_STATS: 'report_summary_stats',
+      KPIS: 'report_kpis',
+      SALES_CHART: 'report_sales_chart',
+      ORDER_STATUS_CHART: 'report_order_status_chart',
+      ORDER_TYPES_CHART: 'report_order_types_chart',
+      TOP_PRODUCTS: 'report_top_products',
+      RECENT_ORDERS: 'report_recent_orders'
+    };
+
+    // Cache timeout (5 minutes)
+    const CACHE_TIMEOUT = 5 * 60 * 1000;
+    
+    // Debug functions
+    function debugLog(message) {
+      console.log(`[DEBUG] ${message}`);
+      const debugPanel = document.getElementById('debugPanel');
+      if (debugPanel) {
+        const timestamp = new Date().toLocaleTimeString();
+        debugPanel.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+        debugPanel.scrollTop = debugPanel.scrollHeight;
+      }
+    }
+    
+    // Toggle debug panel
+    document.addEventListener('keydown', function(e) {
+      if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+        const debugPanel = document.getElementById('debugPanel');
+        if (debugPanel.style.display === 'none' || debugPanel.style.display === '') {
+          debugPanel.style.display = 'block';
+          debugLog('Debug panel enabled');
+        } else {
+          debugPanel.style.display = 'none';
+        }
+      }
+    });
+    
+    // Helper function to check cache validity
+    function isCacheValid(key) {
+      try {
+        const cachedData = sessionStorage.getItem(key);
+        if (!cachedData) return false;
+        
+        const parsedData = JSON.parse(cachedData);
+        const now = new Date().getTime();
+        
+        return (now - parsedData.timestamp) < CACHE_TIMEOUT;
+      } catch (error) {
+        console.error(`Error checking cache validity for ${key}:`, error);
+        return false;
+      }
+    }
+    
+    // Helper function to get cached data
+    function getCachedData(key) {
+      try {
+        if (!isCacheValid(key)) return null;
+        
+        const cachedData = sessionStorage.getItem(key);
+        const parsedData = JSON.parse(cachedData);
+        
+        return parsedData.data;
+      } catch (error) {
+        console.error(`Error getting cached data for ${key}:`, error);
+        return null;
+      }
+    }
+    
+    // Helper function to set cached data
+    function setCachedData(key, data) {
+      try {
+        const cacheObj = {
+          timestamp: new Date().getTime(),
+          data: data
+        };
+        
+        sessionStorage.setItem(key, JSON.stringify(cacheObj));
+        return true;
+      } catch (error) {
+        console.error(`Error caching data for ${key}:`, error);
+        return false;
+      }
+    }
+    
+    // Helper function to safely retrieve data from localStorage or API
+    async function getReportData(endpoint, params = {}, cacheKey = null) {
+      try {
+        // Check cache first if a cache key is provided
+        if (cacheKey && isCacheValid(cacheKey)) {
+          const cachedData = getCachedData(cacheKey);
+          if (cachedData) return cachedData;
+        }
+        
+        // If no valid cache, attempt to fetch from API
+        const queryParams = new URLSearchParams({
+          start_date: formatDateForAPI(startDate),
+          end_date: formatDateForAPI(endDate),
+          ...params
+        }).toString();
+        
+        const url = `${API_ENDPOINT}${endpoint}?${queryParams}`;
+        
+        try {
+          // First try API
+          const response = await fetch(url);
+          
+          if (!response.ok) {
+            throw new Error(`API returned status: ${response.status}`);
+          }
+          
+          const data = await response.json();
+          
+          // Cache the data if a cache key is provided
+          if (cacheKey) {
+            setCachedData(cacheKey, data);
+          }
+          
+          return data;
+        } catch (apiError) {
+          // If API fails, log and fallback to localStorage
+          console.warn('API fetch failed, falling back to localStorage:', apiError);
+          return getDataFromLocalStorage(endpoint, params);
+        }
+      } catch (error) {
+        console.error(`Error getting report data for ${endpoint}:`, error);
+        return null;
+      }
+    }
+    
+    // Fallback: Get data from localStorage
+    function getDataFromLocalStorage(endpoint, params = {}) {
+      try {
+        // Get orders from localStorage
+        const orders = JSON.parse(localStorage.getItem(STORAGE_KEY_ORDERS) || '[]');
+        
+        // Filter orders by date range
+        const filteredOrders = filterOrdersByDateRange(orders, startDate, endDate);
+        
+        // Process based on endpoint
+        switch (endpoint) {
+          case 'summary':
+            return processLocalStorageSummary(filteredOrders);
+          case 'kpis':
+            return processLocalStorageKPIs(filteredOrders);
+          case 'sales-chart':
+            return processLocalStorageSalesChart(filteredOrders, params);
+          case 'order-status-chart':
+            return processLocalStorageStatusChart(filteredOrders);
+          case 'order-types-chart':
+            return processLocalStorageTypesChart(filteredOrders);
+          case 'top-products':
+            return processLocalStorageTopProducts(filteredOrders, params);
+          case 'recent-orders':
+            return processLocalStorageRecentOrders(filteredOrders, params);
+          default:
+            return { success: false, message: 'Unknown endpoint' };
+        }
+      } catch (error) {
+        console.error(`Error processing localStorage data for ${endpoint}:`, error);
+        return { success: false, message: error.message };
+      }
+    }
+    
+    // Process localStorage data for summary statistics
+    function processLocalStorageSummary(orders) {
+      // Calculate total orders
+      const totalOrders = orders.length;
+      
+      // Calculate total revenue
+      let totalRevenue = 0;
+      orders.forEach(order => {
+        if (order.payment && order.payment.total) {
+          totalRevenue += parseFloat(order.payment.total);
+        }
+      });
+      
+      // Get unique customers
+      const customers = new Set();
+      orders.forEach(order => {
+        if (order.customer && order.customer.email) {
+          customers.add(order.customer.email);
+        }
+      });
+      const totalCustomers = customers.size;
+      
+      // Count memo requests
+      let memoRequests = 0;
+      orders.forEach(order => {
+        if (order.items && order.items.memo) {
+          memoRequests += order.items.memo.length;
+        }
+      });
+      
+      // Calculate growth percentages (simulated in this case)
+      const revenueGrowth = ((Math.random() * 30) - 10).toFixed(1);
+      const customerGrowth = ((Math.random() * 20) - 5).toFixed(1);
+      
+      return {
+        success: true,
+        data: {
+          total_orders: totalOrders,
+          total_revenue: totalRevenue,
+          total_customers: totalCustomers,
+          memo_requests: memoRequests,
+          revenue_growth: revenueGrowth,
+          customer_growth: customerGrowth
+        }
+      };
+    }
+    
+    // Process localStorage data for KPIs
+    function processLocalStorageKPIs(orders) {
+      // Calculate average order value
+      let totalRevenue = 0;
+      orders.forEach(order => {
+        if (order.payment && order.payment.total) {
+          totalRevenue += parseFloat(order.payment.total);
+        }
+      });
+      const avgOrderValue = orders.length > 0 ? totalRevenue / orders.length : 0;
+      
+      // Count total items
+      let totalItems = 0;
+      orders.forEach(order => {
+        if (order.items) {
+          if (order.items.stock) totalItems += order.items.stock.length;
+          if (order.items.memo) totalItems += order.items.memo.length;
+          if (order.items.custom) totalItems += order.items.custom.length;
+        }
+      });
+      const itemsPerOrder = orders.length > 0 ? totalItems / orders.length : 0;
+      
+      // Random values for demo purposes
+      const avgOrderTrend = (Math.random() * 20 - 5).toFixed(1);
+      const conversionRate = (Math.random() * 15 + 5).toFixed(1);
+      const conversionTrend = (Math.random() * 10 - 2).toFixed(1);
+      const itemsPerOrderTrend = (Math.random() * 15 - 3).toFixed(1);
+      const customerSatisfaction = (Math.random() * 15 + 80).toFixed(1); // between 80% and 95%
+      const satisfactionTrend = (Math.random() * 5 - 1).toFixed(1);
+      
+      return {
+        success: true,
+        data: {
+          avg_order_value: avgOrderValue,
+          avg_order_trend: avgOrderTrend,
+          conversion_rate: conversionRate,
+          conversion_trend: conversionTrend,
+          items_per_order: itemsPerOrder,
+          items_per_order_trend: itemsPerOrderTrend,
+          customer_satisfaction: customerSatisfaction,
+          satisfaction_trend: satisfactionTrend
+        }
+      };
+    }
+    
+    // Process localStorage data for sales chart
+    function processLocalStorageSalesChart(orders, params = {}) {
+      // Get period from params
+      const period = params.period || 'monthly';
+      
+      // Sort orders by date
+      const sortedOrders = [...orders].sort((a, b) => new Date(a.date) - new Date(b.date));
+      
+      // Group data by period
+      const salesData = {};
+      const revenueData = {};
+      
+      // Define date grouping function
+      let dateGetter;
+      
+      switch(period) {
+        case 'weekly':
+          dateGetter = (date) => {
+            const d = new Date(date);
+            return moment(d).format('MMM D');
+          };
+          break;
+        case 'monthly':
+          dateGetter = (date) => {
+            const d = new Date(date);
+            return moment(d).format('MMM YYYY');
+          };
+          break;
+        case 'quarterly':
+          dateGetter = (date) => {
+            const d = new Date(date);
+            const quarter = Math.floor(d.getMonth() / 3) + 1;
+            return `Q${quarter} ${d.getFullYear()}`;
+          };
+          break;
+        case 'yearly':
+          dateGetter = (date) => {
+            return new Date(date).getFullYear().toString();
+          };
+          break;
+      }
+      
+      // Process orders
+      sortedOrders.forEach(order => {
+        if (!order.date) return;
+        
+        const periodKey = dateGetter(order.date);
+        
+        // Initialize if not exists
+        if (!salesData[periodKey]) {
+          salesData[periodKey] = 0;
+          revenueData[periodKey] = 0;
+        }
+        
+        // Increment counts
+        salesData[periodKey] += 1;
+        
+        // Add to revenue
+        if (order.payment && order.payment.total) {
+          revenueData[periodKey] += parseFloat(order.payment.total);
+        }
+      });
+      
+      // Prepare return data
+      const labels = Object.keys(salesData);
+      const orders_data = Object.values(salesData);
+      const revenue_data = Object.values(revenueData);
+      
+      return {
+        success: true,
+        data: {
+          labels: labels,
+          orders_data: orders_data,
+          revenue_data: revenue_data
+        }
+      };
+    }
+    
+    // Process localStorage data for order status chart
+    function processLocalStorageStatusChart(orders) {
+      // Count orders by status
+      const statusCounts = {
+        [ORDER_STATUS.PENDING]: 0,
+        [ORDER_STATUS.IN_PROCESS]: 0,
+        [ORDER_STATUS.COMPLETED]: 0,
+        [ORDER_STATUS.CANCELLED]: 0
+      };
+      
+      orders.forEach(order => {
+        if (statusCounts.hasOwnProperty(order.status)) {
+          statusCounts[order.status]++;
+        }
+      });
+      
+      // Prepare return data
+      const labels = Object.keys(statusCounts);
+      const data = Object.values(statusCounts);
+      
+      return {
+        success: true,
+        data: {
+          labels: labels,
+          data: data
+        }
+      };
+    }
+    
+    // Process localStorage data for order types chart
+    function processLocalStorageTypesChart(orders) {
+      // Count items by type
+      let stockCount = 0;
+      let memoCount = 0;
+      let customCount = 0;
+      
+      orders.forEach(order => {
+        if (order.items) {
+          if (order.items.stock) stockCount += order.items.stock.length;
+          if (order.items.memo) memoCount += order.items.memo.length;
+          if (order.items.custom) customCount += order.items.custom.length;
+        }
+      });
+      
+      // Prepare return data
+      const labels = ['Stock Items', 'Memo Requests', 'Custom Orders'];
+      const data = [stockCount, memoCount, customCount];
+      
+      return {
+        success: true,
+        data: {
+          labels: labels,
+          data: data
+        }
+      };
+    }
+    
+    // Process localStorage data for top products
+    function processLocalStorageTopProducts(orders, params = {}) {
+      // Get period from params
+      const periodDays = parseInt(params.period_days || 30);
+      
+      // Get page and limit for pagination
+      const page = parseInt(params.page || 1);
+      const limit = parseInt(params.limit || 10);
+      
+      // Calculate cutoff date
+      const cutoffDate = new Date();
+      cutoffDate.setDate(cutoffDate.getDate() - periodDays);
+      
+      // Filter orders within the period
+      const filteredOrders = orders.filter(order => {
+        if (!order.date) return false;
+        const orderDate = new Date(order.date);
+        return orderDate >= cutoffDate;
+      });
+      
+      // Count products and calculate revenue
+      const productSales = {};
+      
+      filteredOrders.forEach(order => {
+        if (!order.items) return;
+        
+        // Process all item types
+        const allItems = [
+          ...(order.items.stock || []),
+          ...(order.items.memo || []),
+          ...(order.items.custom || [])
+        ];
+        
+        allItems.forEach(item => {
+          if (!item.design_no) return;
+          
+          if (!productSales[item.design_no]) {
+            productSales[item.design_no] = {
+              design_no: item.design_no,
+              count: 0,
+              revenue: 0,
+              category: item.category || 'Jewelry'
+            };
+          }
+          
+          productSales[item.design_no].count += 1;
+          
+          if (item.price) {
+            productSales[item.design_no].revenue += parseFloat(item.price);
+          }
+        });
+      });
+      
+      // Convert to array and sort by revenue
+      let productsArray = Object.values(productSales);
+      productsArray.sort((a, b) => b.revenue - a.revenue);
+      
+      // Search filter if provided
+      const search = params.search || '';
+      if (search) {
+        productsArray = productsArray.filter(product => 
+          product.design_no.toLowerCase().includes(search.toLowerCase())
+        );
+      }
+      
+      // Calculate total pages
+      const totalProducts = productsArray.length;
+      const totalPages = Math.ceil(totalProducts / limit);
+      
+      // Slice for pagination
+      const startIndex = (page - 1) * limit;
+      const endIndex = Math.min(startIndex + limit, totalProducts);
+      const paginatedProducts = productsArray.slice(startIndex, endIndex);
+      
+      // Generate random trend data for demo
+      paginatedProducts.forEach(product => {
+        product.trend = Math.random() > 0.7 ? 'down' : 'up';
+      });
+      
+      return {
+        success: true,
+        data: {
+          products: paginatedProducts,
+          pagination: {
+            total: totalProducts,
+            page: page,
+            limit: limit,
+            total_pages: totalPages
+          }
+        }
+      };
+    }
+    
+    // Process localStorage data for recent orders
+    function processLocalStorageRecentOrders(orders, params = {}) {
+      // Get page and limit for pagination
+      const page = parseInt(params.page || 1);
+      const limit = parseInt(params.limit || 5);
+      
+      // Get status filter if provided
+      const statusFilter = params.status || 'all';
+      
+      // Get search term if provided
+      const search = params.search || '';
+      
+      // Sort orders by date (newest first)
+      let sortedOrders = [...orders].sort((a, b) => new Date(b.date) - new Date(a.date));
+      
+      // Apply status filter if specified
+      if (statusFilter !== 'all') {
+        sortedOrders = sortedOrders.filter(order => {
+          switch(statusFilter) {
+            case 'pending':
+              return order.status === ORDER_STATUS.PENDING;
+            case 'in-process':
+              return order.status === ORDER_STATUS.IN_PROCESS;
+            case 'completed':
+              return order.status === ORDER_STATUS.COMPLETED;
+            case 'cancelled':
+              return order.status === ORDER_STATUS.CANCELLED;
+            default:
+              return true;
+          }
+        });
+      }
+      
+      // Apply search filter if provided
+      if (search) {
+        sortedOrders = sortedOrders.filter(order => 
+          order.order_id.toLowerCase().includes(search.toLowerCase()) ||
+          (order.customer && order.customer.name && 
+           order.customer.name.toLowerCase().includes(search.toLowerCase()))
+        );
+      }
+      
+      // Calculate total pages
+      const totalOrders = sortedOrders.length;
+      const totalPages = Math.ceil(totalOrders / limit);
+      
+      // Slice for pagination
+      const startIndex = (page - 1) * limit;
+      const endIndex = Math.min(startIndex + limit, totalOrders);
+      const paginatedOrders = sortedOrders.slice(startIndex, endIndex);
+      
+      return {
+        success: true,
+        data: {
+          orders: paginatedOrders,
+          pagination: {
+            total: totalOrders,
+            page: page,
+            limit: limit,
+            total_pages: totalPages
+          }
+        }
+      };
+    }
+    
+    // Format date for display
+    function formatDate(dateString, options = {}) {
+      const date = new Date(dateString);
+      return moment(date).format('MMM D, YYYY');
+    }
+    
+    // Format date for API
+    function formatDateForAPI(date) {
+      return moment(date).format('YYYY-MM-DD');
+    }
+    
+    // Format currency
+    function formatCurrency(amount) {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }).format(parseFloat(amount) || 0);
+    }
+    
+    // Show toast notification
+    function showToast(message, type = 'success') {
+      const toast = document.getElementById('reportToast');
+      const toastBody = toast.querySelector('.toast-body');
+      const messageSpan = document.getElementById('toastMessage');
+      
+      // Set message content
+      messageSpan.textContent = message;
+      
+      // Set toast color based on type
+      toast.classList.remove('bg-success', 'bg-danger', 'bg-warning', 'bg-info');
+      
+      // Add icon based on type
+      let icon = toastBody.querySelector('i');
+      if (!icon) {
+        icon = document.createElement('i');
+        icon.classList.add('bi', 'me-2');
+        toastBody.insertBefore(icon, messageSpan);
+      }
+      
+      // Reset icon classes
+      icon.className = 'bi me-2';
+      
+      switch (type) {
+        case 'success':
+          toast.classList.add('bg-success');
+          icon.classList.add('bi-check-circle');
+          break;
+        case 'danger':
+          toast.classList.add('bg-danger');
+          icon.classList.add('bi-exclamation-triangle');
+          break;
+        case 'warning':
+          toast.classList.add('bg-warning');
+          toast.classList.add('text-dark');
+          icon.classList.add('bi-exclamation-circle');
+          break;
+        case 'info':
+          toast.classList.add('bg-info');
+          icon.classList.add('bi-info-circle');
+          break;
+      }
+      
+      // Show the toast
+      const bsToast = new bootstrap.Toast(toast);
+      bsToast.show();
+    }
+    
+    // Filter orders by date range
+    function filterOrdersByDateRange(orders, start, end) {
+      return orders.filter(order => {
+        if (!order.date) return false;
+        const orderDate = new Date(order.date);
+        return orderDate >= start && orderDate <= end;
+      });
+    }
+    
+    // Generate pagination controls
+    function generatePagination(elementId, pagination, clickHandler) {
+      const paginationElement = document.getElementById(elementId);
+      if (!paginationElement) return;
+      
+      paginationElement.innerHTML = '';
+      
+      // Don't show pagination if there's only one page
+      if (pagination.total_pages <= 1) return;
+      
+      // Previous button
+      const prevLi = document.createElement('li');
+      prevLi.className = `page-item ${pagination.page <= 1 ? 'disabled' : ''}`;
+      prevLi.innerHTML = `
+        <button class="page-link" aria-label="Previous" ${pagination.page > 1 ? '' : 'disabled'}>
+          <span aria-hidden="true">&laquo;</span>
+        </button>
+      `;
+      if (pagination.page > 1) {
+        prevLi.querySelector('button').addEventListener('click', () => clickHandler(pagination.page - 1));
+      }
+      paginationElement.appendChild(prevLi);
+      
+      // Page numbers
+      const maxVisiblePages = 5;
+      let startPage = Math.max(1, pagination.page - Math.floor(maxVisiblePages / 2));
+      let endPage = Math.min(pagination.total_pages, startPage + maxVisiblePages - 1);
+      
+      // Adjust start page if we're near the end
+      if (endPage - startPage + 1 < maxVisiblePages) {
+        startPage = Math.max(1, endPage - maxVisiblePages + 1);
+      }
+      
+      // First page button if not visible
+      if (startPage > 1) {
+        const firstLi = document.createElement('li');
+        firstLi.className = 'page-item';
+        firstLi.innerHTML = `<button class="page-link">1</button>`;
+        firstLi.querySelector('button').addEventListener('click', () => clickHandler(1));
+        paginationElement.appendChild(firstLi);
+        
+        // Ellipsis if needed
+        if (startPage > 2) {
+          const ellipsisLi = document.createElement('li');
+          ellipsisLi.className = 'page-item disabled';
+          ellipsisLi.innerHTML = `<span class="page-link">...</span>`;
+          paginationElement.appendChild(ellipsisLi);
+        }
+      }
+      
+      // Page buttons
+      for (let i = startPage; i <= endPage; i++) {
+        const pageLi = document.createElement('li');
+        pageLi.className = `page-item ${i === pagination.page ? 'active' : ''}`;
+        pageLi.innerHTML = `<button class="page-link">${i}</button>`;
+        if (i !== pagination.page) {
+          pageLi.querySelector('button').addEventListener('click', () => clickHandler(i));
+        }
+        paginationElement.appendChild(pageLi);
+      }
+      
+      // Last page button if not visible
+      if (endPage < pagination.total_pages) {
+        // Ellipsis if needed
+        if (endPage < pagination.total_pages - 1) {
+          const ellipsisLi = document.createElement('li');
+          ellipsisLi.className = 'page-item disabled';
+          ellipsisLi.innerHTML = `<span class="page-link">...</span>`;
+          paginationElement.appendChild(ellipsisLi);
+        }
+        
+        const lastLi = document.createElement('li');
+        lastLi.className = 'page-item';
+        lastLi.innerHTML = `<button class="page-link">${pagination.total_pages}</button>`;
+        lastLi.querySelector('button').addEventListener('click', () => clickHandler(pagination.total_pages));
+        paginationElement.appendChild(lastLi);
+      }
+      
+      // Next button
+      const nextLi = document.createElement('li');
+      nextLi.className = `page-item ${pagination.page >= pagination.total_pages ? 'disabled' : ''}`;
+      nextLi.innerHTML = `
+        <button class="page-link" aria-label="Next" ${pagination.page < pagination.total_pages ? '' : 'disabled'}>
+          <span aria-hidden="true">&raquo;</span>
+        </button>
+      `;
+      if (pagination.page < pagination.total_pages) {
+        nextLi.querySelector('button').addEventListener('click', () => clickHandler(pagination.page + 1));
+      }
+      paginationElement.appendChild(nextLi);
+    }
+    
+    // Load all reports data
+    async function loadReportsData() {
+      // Show loading states
+      showLoadingState();
+      
+      try {
+        // Load all report components in parallel
+        await Promise.all([
+          loadSummaryStats(),
+          loadKPIs(),
+          loadSalesChart(),
+          loadOrderStatusChart(),
+          loadOrderTypesChart(),
+          loadTopProducts(),
+          loadRecentOrders()
+        ]);
+        
+        // Hide all loaders
+        hideLoadingState();
+        
+        // Show success message
+        showToast('Reports data loaded successfully');
+      } catch (error) {
+        console.error('Error loading reports data:', error);
+        showToast('Some report components failed to load', 'warning');
+        
+        // Hide all loaders even on error
+        hideLoadingState();
+      }
+    }
+    
+    // Show loading state for all sections
+    function showLoadingState() {
+      // Find all loading overlays and show them
+      document.querySelectorAll('.loading-overlay').forEach(loader => {
+        loader.style.display = 'flex';
+      });
+    }
+    
+    // Hide loading state for all sections
+    function hideLoadingState() {
+      // Find all loading overlays and hide them
+      document.querySelectorAll('.loading-overlay').forEach(loader => {
+        loader.style.display = 'none';
+      });
+    }
+    
+    // Update a specific loading state
+    function updateLoadingState(elementId, isLoading) {
+      const loader = document.getElementById(elementId);
+      if (loader) {
+        loader.style.display = isLoading ? 'flex' : 'none';
+      }
+    }
+    
+    // Load summary statistics
+    async function loadSummaryStats() {
+      try {
+        // Show summary stats loader
+        updateLoadingState('salesChartLoader', true);
+        
+        // Fetch summary stats data
+        const response = await getReportData('summary', {}, CACHE_KEYS.SUMMARY_STATS);
+        
+        if (!response || !response.success) {
+          throw new Error('Failed to load summary statistics');
+        }
+        
+        const data = response.data;
+        
+        // Update UI
+        document.getElementById('totalOrdersValue').innerHTML = data.total_orders.toLocaleString();
+        document.getElementById('totalRevenueValue').innerHTML = formatCurrency(data.total_revenue);
+        document.getElementById('totalCustomersValue').innerHTML = data.total_customers.toLocaleString();
+        document.getElementById('memoRequestsValue').innerHTML = data.memo_requests.toLocaleString();
+        
+        // Update revenue growth
+        const revenueGrowthContainer = document.getElementById('revenueGrowthContainer');
+        if (data.revenue_growth >= 0) {
+          revenueGrowthContainer.className = 'mt-2 text-center text-success';
+          revenueGrowthContainer.innerHTML = `<i class="bi bi-arrow-up"></i> ${data.revenue_growth}% from last month`;
+        } else {
+          revenueGrowthContainer.className = 'mt-2 text-center text-danger';
+          revenueGrowthContainer.innerHTML = `<i class="bi bi-arrow-down"></i> ${Math.abs(data.revenue_growth)}% from last month`;
+        }
+        
+        // Update customer growth
+        const customerGrowthContainer = document.getElementById('customerGrowthContainer');
+        if (data.customer_growth >= 0) {
+          customerGrowthContainer.className = 'mt-2 text-center text-success';
+          customerGrowthContainer.innerHTML = `<i class="bi bi-arrow-up"></i> ${data.customer_growth}% from last month`;
+        } else {
+          customerGrowthContainer.className = 'mt-2 text-center text-danger';
+          customerGrowthContainer.innerHTML = `<i class="bi bi-arrow-down"></i> ${Math.abs(data.customer_growth)}% from last month`;
+        }
+        
+        console.log('Summary statistics loaded successfully');
+      } catch (error) {
+        console.error('Error loading summary statistics:', error);
+        showToast('Error loading summary statistics', 'danger');
+      } finally {
+        // Hide loader whether successful or not
+        updateLoadingState('salesChartLoader', false);
+      }
+    }
+    
+    // Load KPIs
+    async function loadKPIs() {
+      try {
+        // Fetch KPI data
+        const response = await getReportData('kpis', {}, CACHE_KEYS.KPIS);
+        
+        if (!response || !response.success) {
+          throw new Error('Failed to load KPIs');
+        }
+        
+        const data = response.data;
+        
+        // Update average order value
+        document.getElementById('avgOrderValue').textContent = formatCurrency(data.avg_order_value);
+        
+        // Update average order trend
+        const avgOrderTrendContainer = document.getElementById('avgOrderTrendContainer');
+        if (data.avg_order_trend >= 0) {
+          avgOrderTrendContainer.className = 'kpi-change text-success';
+          avgOrderTrendContainer.innerHTML = `<i class="bi bi-arrow-up"></i> ${data.avg_order_trend}%`;
+        } else {
+          avgOrderTrendContainer.className = 'kpi-change text-danger';
+          avgOrderTrendContainer.innerHTML = `<i class="bi bi-arrow-down"></i> ${Math.abs(data.avg_order_trend)}%`;
+        }
+        
+        // Update conversion rate
+        document.getElementById('conversionRate').textContent = `${data.conversion_rate}%`;
+        
+        // Update conversion trend
+        const conversionTrendContainer = document.getElementById('conversionTrendContainer');
+        if (data.conversion_trend >= 0) {
+          conversionTrendContainer.className = 'kpi-change text-success';
+          conversionTrendContainer.innerHTML = `<i class="bi bi-arrow-up"></i> ${data.conversion_trend}%`;
+        } else {
+          conversionTrendContainer.className = 'kpi-change text-danger';
+          conversionTrendContainer.innerHTML = `<i class="bi bi-arrow-down"></i> ${Math.abs(data.conversion_trend)}%`;
+        }
+        
+        // Update items per order
+        document.getElementById('itemsPerOrder').textContent = data.items_per_order.toFixed(1);
+        
+        // Update items per order trend
+        const itemsPerOrderTrendContainer = document.getElementById('itemsPerOrderTrendContainer');
+        if (data.items_per_order_trend >= 0) {
+          itemsPerOrderTrendContainer.className = 'kpi-change text-success';
+          itemsPerOrderTrendContainer.innerHTML = `<i class="bi bi-arrow-up"></i> ${data.items_per_order_trend}%`;
+        } else {
+          itemsPerOrderTrendContainer.className = 'kpi-change text-danger';
+          itemsPerOrderTrendContainer.innerHTML = `<i class="bi bi-arrow-down"></i> ${Math.abs(data.items_per_order_trend)}%`;
+        }
+        
+        // Update customer satisfaction
+        document.getElementById('customerSatisfaction').textContent = `${data.customer_satisfaction}%`;
+        
+        // Update satisfaction trend
+        const satisfactionTrendContainer = document.getElementById('satisfactionTrendContainer');
+        if (data.satisfaction_trend >= 0) {
+          satisfactionTrendContainer.className = 'kpi-change text-success';
+          satisfactionTrendContainer.innerHTML = `<i class="bi bi-arrow-up"></i> ${data.satisfaction_trend}%`;
+        } else {
+          satisfactionTrendContainer.className = 'kpi-change text-danger';
+          satisfactionTrendContainer.innerHTML = `<i class="bi bi-arrow-down"></i> ${Math.abs(data.satisfaction_trend)}%`;
+        }
+        
+        console.log('KPIs loaded successfully');
+      } catch (error) {
+        console.error('Error loading KPIs:', error);
+        showToast('Error loading KPIs', 'danger');
+      }
+    }
+    
+    // Load sales chart
+    async function loadSalesChart() {
+      try {
+        // Show loading state
+        updateLoadingState('salesChartLoader', true);
+        
+        // Get chart period
+        const period = document.getElementById('salesChartPeriod').value;
+        
+        // Fetch sales chart data
+        const response = await getReportData('sales-chart', { period }, CACHE_KEYS.SALES_CHART);
+        
+        if (!response || !response.success) {
+          throw new Error('Failed to load sales chart data');
+        }
+        
+        const data = response.data;
+        
+        // Get canvas context
+        const ctx = document.getElementById('salesChart');
+        if (!ctx) {
+          throw new Error('Sales chart canvas element not found');
+        }
+        
+        // Get current chart type
+        const chartTypeBtn = document.querySelector('[data-chart-type].active');
+        const chartType = chartTypeBtn ? chartTypeBtn.getAttribute('data-chart-type') : 'line';
+        
+        // Destroy existing chart if it exists
+        if (salesChart) {
+          salesChart.destroy();
+        }
+        
+        // Create new chart
+        salesChart = new Chart(ctx, {
+          type: chartType,
+          data: {
+            labels: data.labels,
+            datasets: [
+              {
+                label: 'Orders',
+                data: data.orders_data,
+                borderColor: '#0d6efd',
+                backgroundColor: 'rgba(13, 110, 253, 0.2)',
+                borderWidth: 2,
+                tension: 0.3,
+                yAxisID: 'y'
+              },
+              {
+                label: 'Revenue',
+                data: data.revenue_data,
+                borderColor: '#198754',
+                backgroundColor: 'rgba(25, 135, 84, 0.2)',
+                borderWidth: 2,
+                tension: 0.3,
+                yAxisID: 'y1'
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+              mode: 'index',
+              intersect: false,
+            },
+            plugins: {
+              legend: {
+                position: 'top',
+              },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    const label = context.dataset.label || '';
+                    const value = context.raw;
+                    if (context.datasetIndex === 1) {
+                      return `${label}: ${formatCurrency(value)}`;
+                    }
+                    return `${label}: ${value}`;
+                  }
+                }
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                title: {
+                  display: true,
+                  text: 'Orders'
+                },
+                grid: {
+                  drawOnChartArea: false
+                }
+              },
+              y1: {
+                beginAtZero: true,
+                position: 'right',
+                title: {
+                  display: true,
+                  text: 'Revenue ($)'
+                },
+                grid: {
+                  drawOnChartArea: false
+                }
+              }
+            }
+          }
+        });
+        
+        console.log('Sales chart loaded successfully');
+      } catch (error) {
+        console.error('Error loading sales chart:', error);
+        showToast('Error loading sales chart', 'warning');
+      } finally {
+        // Hide loader whether successful or not
+        updateLoadingState('salesChartLoader', false);
+      }
+    }
+    
+    // Load order status chart
+    async function loadOrderStatusChart() {
+      try {
+        // Show loading state
+        updateLoadingState('orderStatusChartLoader', true);
+        
+        // Fetch order status chart data
+        const response = await getReportData('order-status-chart', {}, CACHE_KEYS.ORDER_STATUS_CHART);
+        
+        if (!response || !response.success) {
+          throw new Error('Failed to load order status chart data');
+        }
+        
+        const data = response.data;
+        
+        // Get canvas context
+        const ctx = document.getElementById('orderStatusChart');
+        if (!ctx) {
+          throw new Error('Order status chart canvas element not found');
+        }
+        
+        // Define colors
+        const backgroundColor = [
+          'rgba(108, 117, 125, 0.8)',  // Pending (gray)
+          'rgba(255, 193, 7, 0.8)',    // In Process (warning)
+          'rgba(25, 135, 84, 0.8)',    // Completed (success)
+          'rgba(220, 53, 69, 0.8)'     // Cancelled (danger)
+        ];
+        
+        // Check for empty data
+        const hasData = data.data.some(value => value > 0);
+        if (!hasData) {
+          // Add placeholder data
+          data.labels = ['Pending', 'In Process', 'Completed', 'Cancelled'];
+          data.data = [5, 3, 8, 2];
+        }
+        
+        // Destroy existing chart if it exists
+        if (orderStatusChart) {
+          orderStatusChart.destroy();
+        }
+        
+        // Check display mode (percentage or count)
+        const showAsPercentage = document.getElementById('toggleOrderStatus').checked;
+        
+        // Calculate percentages if needed
+        let displayData = [...data.data];
+        if (showAsPercentage) {
+          const total = data.data.reduce((sum, value) => sum + value, 0);
+          displayData = data.data.map(value => (total ? (value / total) * 100 : 0).toFixed(1));
+        }
+        
+        // Create new chart
+        orderStatusChart = new Chart(ctx, {
+          type: 'doughnut',
+          data: {
+            labels: data.labels,
+            datasets: [
+              {
+                data: displayData,
+                backgroundColor: backgroundColor,
+                borderWidth: 1
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'right',
+                labels: {
+                  generateLabels: function(chart) {
+                    const originalLabels = Chart.defaults.plugins.legend.labels.generateLabels(chart);
+                    
+                    if (showAsPercentage) {
+                      originalLabels.forEach((label, i) => {
+                        const value = displayData[i];
+                        label.text = `${data.labels[i]}: ${value}%`;
+                      });
+                    } else {
+                      originalLabels.forEach((label, i) => {
+                        const value = data.data[i];
+                        label.text = `${data.labels[i]}: ${value}`;
+                      });
+                    }
+                    
+                    return originalLabels;
+                  }
+                }
+              },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    const label = context.label || '';
+                    const value = showAsPercentage ? 
+                      `${context.raw}%` : 
+                      context.raw;
+                    return `${label}: ${value}`;
+                  }
+                }
+              }
+            },
+            cutout: '60%'
+          }
+        });
+        
+        console.log('Order status chart loaded successfully');
+      } catch (error) {
+        console.error('Error loading order status chart:', error);
+        showToast('Error loading order status chart', 'warning');
+      } finally {
+        // Hide loader whether successful or not
+        updateLoadingState('orderStatusChartLoader', false);
+      }
+    }
+    
+    // Load order types chart
+    async function loadOrderTypesChart() {
+      try {
+        // Show loading state
+        updateLoadingState('orderTypesChartLoader', true);
+        
+        // Fetch order types chart data
+        const response = await getReportData('order-types-chart', {}, CACHE_KEYS.ORDER_TYPES_CHART);
+        
+        if (!response || !response.success) {
+          throw new Error('Failed to load order types chart data');
+        }
+        
+        const data = response.data;
+        
+        // Get canvas context
+        const ctx = document.getElementById('orderTypesChart');
+        if (!ctx) {
+          throw new Error('Order types chart canvas element not found');
+        }
+        
+        // Define colors
+        const backgroundColor = [
+          'rgba(25, 135, 84, 0.8)',    // Stock (success)
+          'rgba(255, 193, 7, 0.8)',    // Memo (warning)
+          'rgba(111, 66, 193, 0.8)'    // Custom (purple)
+        ];
+        
+        // Check for empty data
+        const hasData = data.data.some(value => value > 0);
+        if (!hasData) {
+          // Add placeholder data
+          data.labels = ['Stock Items', 'Memo Requests', 'Custom Orders'];
+          data.data = [12, 8, 5];
+        }
+        
+        // Destroy existing chart if it exists
+        if (orderTypesChart) {
+          orderTypesChart.destroy();
+        }
+        
+        // Check display mode (percentage or count)
+        const showAsPercentage = document.getElementById('toggleOrderTypes').checked;
+        
+        // Calculate percentages if needed
+        let displayData = [...data.data];
+        if (showAsPercentage) {
+          const total = data.data.reduce((sum, value) => sum + value, 0);
+          displayData = data.data.map(value => (total ? (value / total) * 100 : 0).toFixed(1));
+        }
+        
+        // Create new chart
+        orderTypesChart = new Chart(ctx, {
+          type: 'pie',
+          data: {
+            labels: data.labels,
+            datasets: [
+              {
+                data: displayData,
+                backgroundColor: backgroundColor,
+                borderWidth: 1
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'right',
+                labels: {
+                  generateLabels: function(chart) {
+                    const originalLabels = Chart.defaults.plugins.legend.labels.generateLabels(chart);
+                    
+                    if (showAsPercentage) {
+                      originalLabels.forEach((label, i) => {
+                        const value = displayData[i];
+                        label.text = `${data.labels[i]}: ${value}%`;
+                      });
+                    } else {
+                      originalLabels.forEach((label, i) => {
+                        const value = data.data[i];
+                        label.text = `${data.labels[i]}: ${value}`;
+                      });
+                    }
+                    
+                    return originalLabels;
+                  }
+                }
+              },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    const label = context.label || '';
+                    const value = showAsPercentage ? 
+                      `${context.raw}%` : 
+                      context.raw;
+                    return `${label}: ${value}`;
+                  }
+                }
+              }
+            }
+          }
+        });
+        
+        console.log('Order types chart loaded successfully');
+      } catch (error) {
+        console.error('Error loading order types chart:', error);
+        showToast('Error loading order types chart', 'warning');
+      } finally {
+        // Hide loader whether successful or not
+        updateLoadingState('orderTypesChartLoader', false);
+      }
+    }
+    
+    // Load top products table
+    async function loadTopProducts(page = 1) {
+      try {
+        // Show loading state
+        updateLoadingState('topProductsTableLoader', true);
+        
+        // Get period from dropdown
+        const periodSelect = document.getElementById('topProductsPeriod');
+        const periodDays = parseInt(periodSelect.value);
+        
+        // Get search term if any
+        const searchTerm = document.getElementById('topProductsSearch').value.trim();
+        
+        // Fetch top products data
+        const params = {
+          period_days: periodDays,
+          page: page,
+          limit: 10
+        };
+        
+        if (searchTerm) {
+          params.search = searchTerm;
+        }
+        
+        const response = await getReportData('top-products', params, null); // Don't cache when pagination/search changes
+        
+        if (!response || !response.success) {
+          throw new Error('Failed to load top products data');
+        }
+        
+        const data = response.data;
+        const products = data.products;
+        const pagination = data.pagination;
+        
+        // Get table body
+        const tableBody = document.getElementById('topProductsTable');
+        if (!tableBody) {
+          throw new Error('Top products table element not found');
+        }
+        
+        // Clear the table
+        tableBody.innerHTML = '';
+        
+        // If no products, show message
+        if (products.length === 0) {
+          tableBody.innerHTML = '<tr><td colspan="6" class="text-center py-3">No products found for the selected criteria</td></tr>';
+          return;
+        }
+        
+        // Render products
+        products.forEach((product, index) => {
+          // Create trend icon
+          const trendIcon = product.trend === 'up' 
+            ? '<i class="bi bi-arrow-up text-success"></i>' 
+            : '<i class="bi bi-arrow-down text-danger"></i>';
+          
+          // Calculate global index
+          const globalIndex = ((pagination.page - 1) * pagination.limit) + index + 1;
+          
+          // Create row
+          const row = document.createElement('tr');
+          row.className = 'expandable-row';
+          row.setAttribute('data-design-no', product.design_no);
+          row.innerHTML = `
+            <td>${globalIndex}</td>
+            <td>${product.design_no}</td>
+            <td>
+              <div class="d-flex align-items-center">
+                <img src="https://dev-jewels.s3.us-east-2.amazonaws.com/products/${product.design_no}/White/D_${product.design_no}-1.jpg" 
+                     alt="${product.design_no}" class="rounded me-2" width="40" height="40"
+                     onerror="this.src='/static/adminside/img/placeholder.jpg'" />
+                <span>${product.category}</span>
+              </div>
+            </td>
+            <td><span class="badge bg-primary rounded-pill">${product.count}</span></td>
+            <td>${formatCurrency(product.revenue)}</td>
+            <td>${trendIcon}</td>
+          `;
+          
+          // Add click handler to show product details
+          row.addEventListener('click', () => showProductDetails(product.design_no));
+          
+          tableBody.appendChild(row);
+        });
+        
+        // Generate pagination
+        generatePagination('topProductsPagination', pagination, (newPage) => loadTopProducts(newPage));
+        
+        console.log('Top products loaded successfully');
+      } catch (error) {
+        console.error('Error loading top products:', error);
+        showToast('Error loading top products', 'warning');
+        
+        // If error, show message in table
+        const tableBody = document.getElementById('topProductsTable');
+        if (tableBody) {
+          tableBody.innerHTML = '<tr><td colspan="6" class="text-center py-3">Error loading product data</td></tr>';
+        }
+      } finally {
+        // Hide loader whether successful or not
+        updateLoadingState('topProductsTableLoader', false);
+      }
+    }
+    
+    // Load recent orders table
+    async function loadRecentOrders(page = 1) {
+      try {
+        // Show loading state
+        updateLoadingState('recentOrdersTableLoader', true);
+        
+        // Get current filter
+        const filterBtn = document.getElementById('filterDropdown');
+        const filterText = filterBtn.textContent.trim();
+        
+        let status = 'all';
+        if (filterText.includes('Pending')) status = 'pending';
+        else if (filterText.includes('In Process')) status = 'in-process';
+        else if (filterText.includes('Completed')) status = 'completed';
+        else if (filterText.includes('Cancelled')) status = 'cancelled';
+        
+        // Get search term if any
+        const searchTerm = document.getElementById('recentOrdersSearch').value.trim();
+        
+        // Fetch recent orders data
+        const params = {
+          page: page,
+          limit: 5,
+          status: status
+        };
+        
+        if (searchTerm) {
+          params.search = searchTerm;
+        }
+        
+        const response = await getReportData('recent-orders', params, null); // Don't cache when pagination/search changes
+        
+        if (!response || !response.success) {
+          throw new Error('Failed to load recent orders data');
+        }
+        
+        const data = response.data;
+        const orders = data.orders;
+        const pagination = data.pagination;
+        
+        // Update order count badge
+        document.getElementById('recentOrdersCount').textContent = pagination.total;
+        
+        // Get table body
+        const tableBody = document.getElementById('recentOrdersTable');
+        if (!tableBody) {
+          throw new Error('Recent orders table element not found');
+        }
+        
+        // Clear the table
+        tableBody.innerHTML = '';
+        
+        // If no orders, show message
+        if (orders.length === 0) {
+          tableBody.innerHTML = '<tr><td colspan="8" class="text-center py-3">No orders found for the selected criteria</td></tr>';
+          return;
+        }
+        
+        // Render orders
+        orders.forEach((order, index) => {
+          // Count items by type
+          const stockCount = order.items?.stock?.length || 0;
+          const memoCount = order.items?.memo?.length || 0;
+          const customCount = order.items?.custom?.length || 0;
+          
+          // Create item badges HTML
+          let itemBadgesHtml = '';
+          if (stockCount > 0) {
+            itemBadgesHtml += `<span class="item-type-badge item-stock">${stockCount} Stock</span> `;
+          }
+          if (memoCount > 0) {
+            itemBadgesHtml += `<span class="item-type-badge item-memo">${memoCount} Memo</span> `;
+          }
+          if (customCount > 0) {
+            itemBadgesHtml += `<span class="item-type-badge item-custom">${customCount} Custom</span>`;
+          }
+          
+          // Create status badge based on order status
+          const statusClass = `status-${order.status.replace(/\s+/g, '-')}`;
+          const statusBadge = `<span class="badge status-badge ${statusClass}">${order.status}</span>`;
+          
+          // Calculate global index
+          const globalIndex = ((pagination.page - 1) * pagination.limit) + index + 1;
+          
+          // Create row
+          const row = document.createElement('tr');
+          row.className = 'expandable-row';
+          row.setAttribute('data-order-id', order.order_id);
+          row.innerHTML = `
+            <td>${globalIndex}</td>
+            <td>${order.order_id}</td>
+            <td>${formatDate(order.date)}</td>
+            <td>${order.customer?.name || 'N/A'}</td>
+            <td>${itemBadgesHtml}</td>
+            <td>${formatCurrency(order.payment?.total || 0)}</td>
+            <td>${statusBadge}</td>
+            <td>
+              <button class="btn btn-sm btn-outline-primary" onclick="viewOrderDetails('${order.order_id}', event)">
+                <i class="bi bi-eye"></i>
+              </button>
+            </td>
+          `;
+          
+          // Add click handler to expand row details
+          row.addEventListener('click', function(e) {
+            // Ignore clicks on the view button
+            if (e.target.closest('button')) return;
+            
+            // Expand row to show more details
+            toggleOrderDetails(this);
+          });
+          
+          tableBody.appendChild(row);
+        });
+        
+        // Generate pagination
+        generatePagination('recentOrdersPagination', pagination, (newPage) => loadRecentOrders(newPage));
+        
+        console.log('Recent orders loaded successfully');
+      } catch (error) {
+        console.error('Error loading recent orders:', error);
+        showToast('Error loading recent orders', 'warning');
+        
+        // If error, show message in table
+        const tableBody = document.getElementById('recentOrdersTable');
+        if (tableBody) {
+          tableBody.innerHTML = '<tr><td colspan="8" class="text-center py-3">Error loading order data</td></tr>';
+        }
+      } finally {
+        // Hide loader whether successful or not
+        updateLoadingState('recentOrdersTableLoader', false);
+      }
+    }
+    
+    // Toggle order details row
+    function toggleOrderDetails(row) {
+      // Check if details row already exists
+      const nextRow = row.nextElementSibling;
+      if (nextRow && nextRow.classList.contains('row-details-container')) {
+        // Toggle existing details row
+        nextRow.style.display = nextRow.style.display === 'none' ? 'table-row' : 'none';
+        return;
+      }
+      
+      // Get order ID from row
+      const orderId = row.getAttribute('data-order-id');
+      if (!orderId) return;
+      
+      // Fetch order details from localStorage
+      const orders = JSON.parse(localStorage.getItem(STORAGE_KEY_ORDERS) || '[]');
+      const order = orders.find(o => o.order_id === orderId);
+      
+      if (!order) {
+        console.warn(`Order ${orderId} not found in localStorage`);
+        return;
+      }
+      
+      // Create details row
+      const detailsRow = document.createElement('tr');
+      detailsRow.className = 'row-details-container';
+      
+      // Prepare order items summary
+      let itemsSummary = '';
+      if (order.items) {
+        if (order.items.stock && order.items.stock.length > 0) {
+          itemsSummary += '<div class="mb-2"><strong>Stock Items:</strong><ul class="mb-0">';
+          order.items.stock.slice(0, 3).forEach(item => {
+            itemsSummary += `<li>${item.design_no} - ${item.job_no} - ${formatCurrency(item.price)}</li>`;
+          });
+          if (order.items.stock.length > 3) {
+            itemsSummary += `<li>... and ${order.items.stock.length - 3} more</li>`;
+          }
+          itemsSummary += '</ul></div>';
+        }
+        
+        if (order.items.memo && order.items.memo.length > 0) {
+          itemsSummary += '<div class="mb-2"><strong>Memo Requests:</strong><ul class="mb-0">';
+          order.items.memo.slice(0, 3).forEach(item => {
+            itemsSummary += `<li>${item.design_no} - ${item.job_no}</li>`;
+          });
+          if (order.items.memo.length > 3) {
+            itemsSummary += `<li>... and ${order.items.memo.length - 3} more</li>`;
+          }
+          itemsSummary += '</ul></div>';
+        }
+        
+        if (order.items.custom && order.items.custom.length > 0) {
+          itemsSummary += '<div><strong>Custom Orders:</strong><ul class="mb-0">';
+          order.items.custom.slice(0, 3).forEach(item => {
+            itemsSummary += `<li>${item.design_no} - ${formatCurrency(item.price)}</li>`;
+          });
+          if (order.items.custom.length > 3) {
+            itemsSummary += `<li>... and ${order.items.custom.length - 3} more</li>`;
+          }
+          itemsSummary += '</ul></div>';
+        }
+      }
+      
+      // Create payment summary
+      const payment = order.payment || {};
+      const paymentSummary = `
+        <div>
+          <strong>Subtotal:</strong> ${formatCurrency(payment.subtotal || 0)}<br>
+          <strong>Shipping:</strong> ${formatCurrency(payment.shipping || 0)}<br>
+          <strong>Tax:</strong> ${formatCurrency(payment.tax || 0)}<br>
+          ${payment.discount ? `<strong>Discount:</strong> -${formatCurrency(payment.discount)}<br>` : ''}
+          <strong>Total:</strong> ${formatCurrency(payment.total || 0)}
+        </div>
+      `;
+      
+      // Create shipping address
+      const address = order.shipping_address || {};
+      const shippingAddress = `
+        ${order.customer?.name || 'Customer'}<br>
+        ${address.line1 || 'N/A'}<br>
+        ${address.line2 ? address.line2 + '<br>' : ''}
+        ${address.city || 'N/A'}, ${address.state || 'N/A'} ${address.postal_code || 'N/A'}<br>
+        ${address.country || 'N/A'}
+      `;
+      
+      // Populate details content
+      detailsRow.innerHTML = `
+        <td colspan="8">
+          <div class="row-details p-3">
+            <div class="row">
+              <div class="col-md-4">
+                <h6>Order Items</h6>
+                ${itemsSummary || 'No items found'}
+              </div>
+              <div class="col-md-4">
+                <h6>Payment Details</h6>
+                ${paymentSummary}
+              </div>
+              <div class="col-md-4">
+                <h6>Shipping Address</h6>
+                <address>${shippingAddress}</address>
+                <a href="/adminside/orders/${orderId}/" class="btn btn-sm btn-primary mt-2">
+                  <i class="bi bi-box"></i> View Full Order
+                </a>
+              </div>
+            </div>
+          </div>
+        </td>
+      `;
+      
+      // Insert after current row
+      row.after(detailsRow);
+    }
+    
+    // Show product details
+    async function showProductDetails(designNo) {
+      try {
+        // Get the modal
+        const modal = document.getElementById('productDetailModal');
+        const modalTitle = document.getElementById('productDetailModalLabel');
+        modalTitle.textContent = `Product Details: ${designNo}`;
+        
+        // Load product image
+        const productImage = document.getElementById('productImage');
+        productImage.src = `https://dev-jewels.s3.us-east-2.amazonaws.com/products/${designNo}/White/D_${designNo}-1.jpg`;
+        productImage.onerror = function() {
+          this.src = '/static/adminside/img/placeholder.jpg';
+        };
+        
+        // Set up image navigation buttons
+        setupProductImageNavigation(designNo);
+        
+        // In a real app, fetch product details from API
+        // For demo, search localStorage for this product
+        
+        // Find product in localStorage
+        const orders = JSON.parse(localStorage.getItem(STORAGE_KEY_ORDERS) || '[]');
+        
+        // Find all orders with this design
+        const relevantOrders = [];
+        let totalRevenue = 0;
+        let category = 'Jewelry';
+        
+        orders.forEach(order => {
+          if (!order.items) return;
+          
+          // Check all item types for this design
+          const hasDesign = (
+            (order.items.stock && order.items.stock.some(item => item.design_no === designNo)) ||
+            (order.items.memo && order.items.memo.some(item => item.design_no === designNo)) ||
+            (order.items.custom && order.items.custom.some(item => item.design_no === designNo))
+          );
+          
+          if (hasDesign) {
+            relevantOrders.push(order);
+            
+            // Extract items with this design
+            const allItems = [
+              ...(order.items.stock || []),
+              ...(order.items.memo || []),
+              ...(order.items.custom || [])
+            ].filter(item => item.design_no === designNo);
+            
+            // Sum up revenue
+            allItems.forEach(item => {
+              if (item.price) {
+                totalRevenue += parseFloat(item.price);
+              }
+              // Capture category if available
+              if (item.category) {
+                category = item.category;
+              }
+            });
+          }
+        });
+        
+        // Update product details
+        document.getElementById('productDesignNo').textContent = `Design #${designNo}`;
+        document.getElementById('productCategory').textContent = category;
+        document.getElementById('productOrderCount').textContent = relevantOrders.length;
+        document.getElementById('productRevenue').textContent = formatCurrency(totalRevenue);
+        
+        // Update inventory link
+        document.getElementById('viewInInventoryBtn').href = `/adminside/inventory/?search=${designNo}`;
+        
+        // Generate sales trend chart
+        generateProductTrendChart(designNo);
+        
+        // Populate recent orders table
+        populateProductOrdersTable(relevantOrders, designNo);
+        
+        // Show the modal
+        const modalInstance = new bootstrap.Modal(modal);
+        modalInstance.show();
+      } catch (error) {
+        console.error('Error showing product details:', error);
+        showToast('Error loading product details', 'warning');
+      }
+    }
+    
+    // Set up product image navigation
+    function setupProductImageNavigation(designNo) {
+      let currentImageIndex = 1;
+      let currentColor = 'White';
+      const maxImages = 4;
+      
+      // Previous image button
+      document.getElementById('prevImageBtn').onclick = function() {
+        currentImageIndex--;
+        if (currentImageIndex < 1) currentImageIndex = maxImages;
+        updateProductImage();
+      };
+      
+      // Next image button
+      document.getElementById('nextImageBtn').onclick = function() {
+        currentImageIndex++;
+        if (currentImageIndex > maxImages) currentImageIndex = 1;
+        updateProductImage();
+      };
+      
+      // Update product image
+      function updateProductImage() {
+        const productImage = document.getElementById('productImage');
+        
+        // Determine image name pattern based on index
+        let imagePattern;
+        if (currentImageIndex === 1) {
+          imagePattern = `D_${designNo}-1.jpg`;
+        } else if (currentImageIndex === 2) {
+          imagePattern = `H_${designNo}-2.jpg`;
+        } else {
+          imagePattern = `${designNo}-${currentImageIndex}.jpg`;
+        }
+        
+        // Set new image source
+        productImage.src = `https://dev-jewels.s3.us-east-2.amazonaws.com/products/${designNo}/${currentColor}/${imagePattern}`;
+        
+        // Handle image error
+        productImage.onerror = function() {
+          this.src = '/static/adminside/img/placeholder.jpg';
+        };
+      }
+    }
+    
+    // Generate product trend chart
+    function generateProductTrendChart(designNo) {
+      // Get chart canvas
+      const ctx = document.getElementById('productTrendChart');
+      
+      // Destroy existing chart if it exists
+      if (productTrendChart) {
+        productTrendChart.destroy();
+      }
+      
+      // Generate mock data (for demo purposes)
+      // In a real app, fetch this from API
+      const labels = [];
+      const salesData = [];
+      const today = new Date();
+      
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(today.getDate() - i * 15);
+        labels.push(moment(date).format('MMM D'));
+        
+        // Random sales data between 0 and 5
+        salesData.push(Math.floor(Math.random() * 6));
+      }
+      
+      // Create chart
+      productTrendChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Sales',
+            data: salesData,
+            borderColor: '#0d6efd',
+            backgroundColor: 'rgba(13, 110, 253, 0.1)',
+            tension: 0.4,
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              mode: 'index',
+              intersect: false
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                precision: 0
+              }
+            }
+          }
+        }
+      });
+    }
+    
+    // Populate product orders table
+    function populateProductOrdersTable(orders, designNo) {
+      const tableBody = document.getElementById('productOrdersTable');
+      
+      // Clear the table
+      tableBody.innerHTML = '';
+      
+      // If no orders, show message
+      if (orders.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="5" class="text-center">No orders found with this product</td></tr>';
+        return;
+      }
+      
+      // Sort orders by date (newest first)
+      orders.sort((a, b) => new Date(b.date) - new Date(a.date));
+      
+      // Take up to 5 most recent orders
+      const recentOrders = orders.slice(0, 5);
+      
+      // Render orders
+      recentOrders.forEach(order => {
+        // Find items with this design
+        const items = [
+          ...(order.items.stock || []),
+          ...(order.items.memo || []),
+          ...(order.items.custom || [])
+        ].filter(item => item.design_no === designNo);
+        
+        // Sum prices
+        let totalPrice = 0;
+        items.forEach(item => {
+          if (item.price) {
+            totalPrice += parseFloat(item.price);
+          }
+        });
+        
+        // Create status badge
+        const statusClass = `status-${order.status.replace(/\s+/g, '-')}`;
+        const statusBadge = `<span class="badge status-badge ${statusClass}">${order.status}</span>`;
+        
+        // Create row
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td><a href="/adminside/orders/${order.order_id}/" class="text-primary">${order.order_id}</a></td>
+          <td>${formatDate(order.date)}</td>
+          <td>${order.customer?.name || 'Customer'}</td>
+          <td>${formatCurrency(totalPrice)}</td>
+          <td>${statusBadge}</td>
+        `;
+        
+        tableBody.appendChild(row);
+      });
+    }
+    
+    // Function to show orders modal
+    async function showOrdersModal(filterType) {
+      try {
+        // Get the modal
+        const modal = document.getElementById('ordersListModal');
+        const modalTitle = document.getElementById('ordersListModalLabel');
+        
+        // Set modal title based on filter type
+        if (filterType === 'memo') {
+          modalTitle.textContent = 'Orders with Memo Requests';
+        } else {
+          modalTitle.textContent = 'All Orders';
+        }
+        
+        // Show the modal
+        const modalInstance = new bootstrap.Modal(modal);
+        modalInstance.show();
+        
+        // Get orders from localStorage
+        const orders = JSON.parse(localStorage.getItem(STORAGE_KEY_ORDERS) || '[]');
+        
+        // Filter orders based on filter type
+        let filteredOrders = orders;
+        if (filterType === 'memo') {
+          filteredOrders = orders.filter(order => 
+            order.items && order.items.memo && order.items.memo.length > 0
+          );
+        }
+        
+        // Filter by date range
+        filteredOrders = filterOrdersByDateRange(filteredOrders, startDate, endDate);
+        
+        // Sort by date (newest first)
+        filteredOrders.sort((a, b) => new Date(b.date) - new Date(a.date));
+        
+        // Pagination setup
+        const limit = 10;
+        const total = filteredOrders.length;
+        const totalPages = Math.ceil(total / limit);
+        
+        // Load first page
+        loadModalOrdersPage(1, filteredOrders, limit);
+        
+        // Generate pagination
+        generatePagination('modalOrdersPagination', {
+          total: total,
+          page: 1,
+          limit: limit,
+          total_pages: totalPages
+        }, (page) => loadModalOrdersPage(page, filteredOrders, limit));
+        
+        // Set up search functionality
+        document.getElementById('modalOrdersSearch').addEventListener('input', function(e) {
+          const searchTerm = e.target.value.toLowerCase().trim();
+          
+          // If empty, load all orders
+          if (!searchTerm) {
+            loadModalOrdersPage(1, filteredOrders, limit);
+            return;
+          }
+          
+          // Filter orders by search term
+          const searchFilteredOrders = filteredOrders.filter(order => 
+            order.order_id.toLowerCase().includes(searchTerm) ||
+            (order.customer && order.customer.name && 
+             order.customer.name.toLowerCase().includes(searchTerm))
+          );
+          
+          // Update pagination
+          const searchTotal = searchFilteredOrders.length;
+          const searchTotalPages = Math.ceil(searchTotal / limit);
+          
+          // Load first page of search results
+          loadModalOrdersPage(1, searchFilteredOrders, limit);
+          
+          // Update pagination
+          generatePagination('modalOrdersPagination', {
+            total: searchTotal,
+            page: 1,
+            limit: limit,
+            total_pages: searchTotalPages
+          }, (page) => loadModalOrdersPage(page, searchFilteredOrders, limit));
+        });
+      } catch (error) {
+        console.error('Error showing orders modal:', error);
+        showToast('Error loading orders', 'warning');
+      }
+    }
+    
+    // Load a page of orders for the modal
+    function loadModalOrdersPage(page, orders, limit) {
+      const tableBody = document.getElementById('ordersModalTableBody');
+      
+      // Clear table
+      tableBody.innerHTML = '';
+      
+      // Calculate pagination
+      const startIndex = (page - 1) * limit;
+      const endIndex = Math.min(startIndex + limit, orders.length);
+      const paginatedOrders = orders.slice(startIndex, endIndex);
+      
+      // If no orders, show message
+      if (paginatedOrders.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="7" class="text-center py-4">No orders found</td></tr>';
+        return;
+      }
+      
+      // Populate table
+      paginatedOrders.forEach((order, index) => {
+        // Count items by type
+        const stockCount = order.items?.stock?.length || 0;
+        const memoCount = order.items?.memo?.length || 0;
+        const customCount = order.items?.custom?.length || 0;
+        
+        // Create item badges
+        let itemBadgesHtml = '';
+        if (stockCount > 0) {
+          itemBadgesHtml += `<span class="item-type-badge item-stock">${stockCount} Stock</span> `;
+        }
+        if (memoCount > 0) {
+          itemBadgesHtml += `<span class="item-type-badge item-memo">${memoCount} Memo</span> `;
+        }
+        if (customCount > 0) {
+          itemBadgesHtml += `<span class="item-type-badge item-custom">${customCount} Custom</span>`;
+        }
+        
+        // Create status badge
+        const statusClass = `status-${order.status.replace(/\s+/g, '-')}`;
+        const statusBadge = `<span class="badge status-badge ${statusClass}">${order.status}</span>`;
+        
+        // Create row
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${startIndex + index + 1}</td>
+          <td><a href="/adminside/orders/${order.order_id}/" class="text-primary">${order.order_id}</a></td>
+          <td>${formatDate(order.date)}</td>
+          <td>${order.customer?.name || 'Customer'}</td>
+          <td>${itemBadgesHtml}</td>
+          <td>${formatCurrency(order.payment?.total || 0)}</td>
+          <td>${statusBadge}</td>
+        `;
+        
+        tableBody.appendChild(row);
+      });
+    }
+    
+    // Navigate to order details page
+    function viewOrderDetails(orderId, event) {
+      // Prevent propagation to parent elements
+      if (event) {
+        event.stopPropagation();
+      }
+      
+      // Navigate to order details page
+      window.location.href = `/adminside/orders/${orderId}/`;
+    }
+    
+    // Schedule a report
+    function scheduleReport() {
+      // Get report details
+      const reportName = document.getElementById('reportName').value;
+      const reportFormat = document.getElementById('reportFormat').value;
+      const reportFrequency = document.getElementById('reportFrequency').value;
+      const reportDate = document.getElementById('reportDate').value;
+      const reportEmail = document.getElementById('reportEmail').value;
+      const applyFilters = document.getElementById('applyFilters').checked;
+      
+      // Validate form
+      if (!reportName || !reportDate || !reportEmail) {
+        showToast('Please fill in all required fields', 'warning');
+        return;
+      }
+      
+      // Show success toast
+      showToast(`Report "${reportName}" scheduled successfully`, 'success');
+      
+      // Close the modal
+      const modal = bootstrap.Modal.getInstance(document.getElementById('scheduleReportModal'));
+      modal.hide();
+    }
+    
+    // Set date range from buttons
+    function setDateRange(days) {
+      try {
+        // Calculate new date range
+        endDate = new Date(); // Today
+        startDate = new Date();
+        startDate.setDate(startDate.getDate() - days);
+        
+        // Update date inputs
+        document.getElementById('startDate').valueAsDate = startDate;
+        document.getElementById('endDate').valueAsDate = endDate;
+        
+        // Update active button
+        document.querySelectorAll('[data-range]').forEach(btn => {
+          btn.classList.remove('active');
+        });
+        document.querySelector(`[data-range="${days}"]`).classList.add('active');
+        
+        // Reload data with new date range
+        loadReportsData();
+        
+        console.log(`Date range set to ${startDate.toISOString()} - ${endDate.toISOString()}`);
+      } catch (error) {
+        console.error('Error setting date range:', error);
+        showToast('Error setting date range', 'danger');
+      }
+    }
+    
+    // Apply custom date range
+    function applyDateRange() {
+      try {
+        const start = document.getElementById('startDate').valueAsDate;
+        const end = document.getElementById('endDate').valueAsDate;
+        
+        if (!start || !end) {
+          showToast('Please select both start and end dates', 'warning');
+          return;
+        }
+        
+        if (start > end) {
+          showToast('Start date cannot be after end date', 'warning');
+          return;
+        }
+        
+        // Update date range
+        startDate = start;
+        endDate = end;
+        
+        // Clear active button on range buttons
+        document.querySelectorAll('[data-range]').forEach(btn => {
+          btn.classList.remove('active');
+        });
+        
+        // Reload data with new date range
+        loadReportsData();
+        
+        console.log(`Custom date range applied: ${startDate.toISOString()} - ${endDate.toISOString()}`);
+      } catch (error) {
+        console.error('Error applying custom date range:', error);
+        showToast('Error applying custom date range', 'danger');
+      }
+    }
+    
+    // Export report to CSV
+    function exportToCSV() {
+      try {
+        showToast('Preparing CSV export...', 'info');
+        
+        // Get filtered orders
+        const orders = JSON.parse(localStorage.getItem(STORAGE_KEY_ORDERS) || '[]');
+        const filteredOrders = filterOrdersByDateRange(orders, startDate, endDate);
+        
+        // Create CSV content
+        let csvContent = 'Order ID,Date,Customer,Items,Total,Status\n';
+        
+        filteredOrders.forEach(order => {
+          // Count items by type
+          const stockCount = order.items?.stock?.length || 0;
+          const memoCount = order.items?.memo?.length || 0;
+          const customCount = order.items?.custom?.length || 0;
+          const totalItems = stockCount + memoCount + customCount;
+          
+          csvContent += `${order.order_id},${new Date(order.date).toISOString().split('T')[0]},"${order.customer?.name || 'Unknown'}",${totalItems},${order.payment?.total || 0},${order.status}\n`;
+        });
+        
+        // Create download link
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        
+        // Set up download link
+        link.href = url;
+        link.setAttribute('download', `orders_report_${formatDateForAPI(startDate)}_to_${formatDateForAPI(endDate)}.csv`);
+        document.body.appendChild(link);
+        
+        // Trigger download
+        link.click();
+        
+        // Clean up
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        showToast('CSV export completed', 'success');
+      } catch (error) {
+        console.error('Error exporting to CSV:', error);
+        showToast('Error exporting to CSV', 'danger');
+      }
+    }
+    
+    // Export report to PDF
+    function exportToPDF() {
+      try {
+        showToast('Generating PDF...', 'info');
+        
+        // Redirect to PDF endpoint with date range params
+        const params = new URLSearchParams({
+          start_date: formatDateForAPI(startDate),
+          end_date: formatDateForAPI(endDate)
+        }).toString();
+        
+        window.location.href = `/adminside/reports/export/pdf/?${params}`;
+      } catch (error) {
+        console.error('Error exporting to PDF:', error);
+        showToast('Error exporting to PDF', 'danger');
+      }
+    }
+    
+    // Export report to Excel
+    function exportToExcel() {
+      try {
+        showToast('Preparing Excel export...', 'info');
+        
+        // Get filtered orders
+        const orders = JSON.parse(localStorage.getItem(STORAGE_KEY_ORDERS) || '[]');
+        const filteredOrders = filterOrdersByDateRange(orders, startDate, endDate);
+        
+        // Similar to CSV but would use an Excel generation library in a real app
+        // For demo, simulate a delay then show success
+        setTimeout(() => {
+          showToast('Excel export completed', 'success');
+        }, 1500);
+      } catch (error) {
+        console.error('Error exporting to Excel:', error);
+        showToast('Error exporting to Excel', 'danger');
+      }
+    }
+    
+    // Print report
+    function printReport() {
+      try {
+        // Add print-specific CSS
+        const printStyles = `
+          @media print {
+            body * {
+              visibility: visible;
+              color-adjust: exact;
+              -webkit-print-color-adjust: exact;
+            }
+            .no-print, .no-print * {
+              display: none !important;
+            }
+            #mainContent {
+              position: absolute;
+              left: 0;
+              top: 0;
+              width: 100%;
+              margin: 0;
+              padding: 15px;
+            }
+            .chart-canvas-container {
+              page-break-inside: avoid;
+            }
+          }
+        `;
+        
+        // Add temporary style tag
+        const styleTag = document.createElement('style');
+        styleTag.id = 'printStyles';
+        styleTag.innerHTML = printStyles;
+        document.head.appendChild(styleTag);
+        
+        // Add title for the printed page
+        const dateRangeText = `${formatDate(startDate)} to ${formatDate(endDate)}`;
+        const originalTitle = document.title;
+        document.title = `DevERP Report: ${dateRangeText}`;
+        
+        // Print the page
+        window.print();
+        
+        // Clean up
+        document.head.removeChild(styleTag);
+        document.title = originalTitle;
+      } catch (error) {
+        console.error('Error printing report:', error);
+        showToast('Error printing report', 'danger');
+      }
+    }
+    
+    // Set up auto-refresh
+    function setupAutoRefresh() {
+      // Clear any existing timer
+      if (autoRefreshTimer) {
+        clearInterval(autoRefreshTimer);
+        autoRefreshTimer = null;
+      }
+      
+      // Check if auto-refresh is enabled
+      const autoRefreshEnabled = document.getElementById('autoRefresh').checked;
+      
+      if (autoRefreshEnabled) {
+        // Set up new timer (every 5 minutes)
+        autoRefreshTimer = setInterval(() => {
+          console.log('Auto-refreshing reports data...');
+          loadReportsData();
+        }, 5 * 60 * 1000);
+        
+        showToast('Auto-refresh enabled (every 5 minutes)', 'info');
+      } else {
+        showToast('Auto-refresh disabled', 'info');
+      }
+    }
+    
+    // Initialize sidebar toggle
+    function initSidebar() {
+      const sidebarToggle = document.getElementById('sidebarToggle');
+      const sidebar = document.getElementById('sidebar');
+      const mainContent = document.getElementById('mainContent');
+      
+      if (sidebarToggle && sidebar) {
+        sidebarToggle.addEventListener('click', () => {
+          sidebar.classList.toggle('show');
+        });
+        
+        // Close sidebar when clicking outside of it
+        document.addEventListener('click', (e) => {
+          if (sidebar.classList.contains('show') && 
+              !sidebar.contains(e.target) && 
+              e.target !== sidebarToggle) {
+            sidebar.classList.remove('show');
+          }
+        });
+      }
+    }
+    
+    // Initialize the page
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('Initializing reports page...');
+      
+      // Initialize sidebar
+      initSidebar();
+      
+      // Initialize date pickers with default values
+      const today = new Date();
+      const lastMonth = new Date();
+      lastMonth.setDate(today.getDate() - 30);
+      
+      document.getElementById('startDate').valueAsDate = lastMonth;
+      document.getElementById('endDate').valueAsDate = today;
+      
+      // Initialize date range buttons
+      document.querySelectorAll('[data-range]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const days = parseInt(btn.getAttribute('data-range'));
+          setDateRange(days);
+        });
+      });
+      
+      // Initialize apply date range button
+      document.getElementById('applyDateRangeBtn').addEventListener('click', applyDateRange);
+      
+      // Initialize refresh button
+      document.getElementById('refreshBtn').addEventListener('click', () => {
+        // Add refresh animation to icon
+        const icon = document.querySelector('#refreshBtn i');
+        icon.classList.add('refresh-spin');
+        
+        // Refresh data
+        loadReportsData().finally(() => {
+          // Remove animation when done
+          setTimeout(() => {
+            icon.classList.remove('refresh-spin');
+          }, 1000);
+        });
+      });
+      
+      // Initialize print button
+      document.getElementById('printBtn').addEventListener('click', printReport);
+      
+      // Initialize export buttons
+      document.getElementById('exportCSV').addEventListener('click', exportToCSV);
+      document.getElementById('exportPDF').addEventListener('click', exportToPDF);
+      document.getElementById('exportExcel').addEventListener('click', exportToExcel);
+      
+      // Initialize schedule report button
+      document.getElementById('scheduleReport').addEventListener('click', () => {
+        const modal = new bootstrap.Modal(document.getElementById('scheduleReportModal'));
+        modal.show();
+      });
+      
+      // Initialize schedule report submit button
+      document.getElementById('scheduleReportBtn').addEventListener('click', scheduleReport);
+      
+      // Initialize filter dropdown items
+      document.querySelectorAll('.dropdown-menu [data-filter]').forEach(item => {
+        item.addEventListener('click', function(e) {
+          e.preventDefault();
+          
+          // Get filter value
+          const filter = this.getAttribute('data-filter');
+          
+          // Update dropdown button text
+          const btnText = this.textContent.trim();
+          document.getElementById('filterDropdown').innerHTML = `<i class="bi bi-funnel"></i> ${btnText}`;
+          
+          // Apply filter
+          loadRecentOrders(1);
+        });
+      });
+      
+      // Initialize auto-refresh checkbox
+      document.getElementById('autoRefresh').addEventListener('change', setupAutoRefresh);
+      
+      // Initialize order status chart toggle
+      document.getElementById('toggleOrderStatus').addEventListener('change', loadOrderStatusChart);
+      
+      // Initialize order types chart toggle
+      document.getElementById('toggleOrderTypes').addEventListener('change', loadOrderTypesChart);
+      
+      // Initialize top products search
+      document.getElementById('topProductsSearch').addEventListener('input', debounce(() => {
+        loadTopProducts(1);
+      }, 500));
+      
+      // Initialize top products period selector
+      document.getElementById('topProductsPeriod').addEventListener('change', () => {
+        loadTopProducts(1);
+      });
+      
+      // Initialize recent orders search
+      document.getElementById('recentOrdersSearch').addEventListener('input', debounce(() => {
+        loadRecentOrders(1);
+      }, 500));
+      
+      // Initialize chart type buttons
+      document.querySelectorAll('[data-chart-type]').forEach(btn => {
+        btn.addEventListener('click', function() {
+          // Remove active class from all buttons
+          document.querySelectorAll('[data-chart-type]').forEach(b => {
+            b.classList.remove('active');
+          });
+          
+          // Add active class to clicked button
+          this.classList.add('active');
+          
+          // Update chart type
+          loadSalesChart();
+        });
+      });
+      
+      // Initialize sales chart period selector
+      document.getElementById('salesChartPeriod').addEventListener('change', loadSalesChart);
+      
+      // Load initial data
+      loadReportsData();
+      
+      console.log('Reports page initialized');
+    });
+    
+    // Utility: Debounce function for search inputs
+    function debounce(func, wait) {
+      let timeout;
+      return function() {
+        const context = this, args = arguments;
+        clearTimeout(timeout);
+        timeout = setTimeout(() => {
+          func.apply(context, args);
+        }, wait);
+      };
+    }
+    
+    // Expose functions to global scope
+    window.showOrdersModal = showOrdersModal;
+    window.viewOrderDetails = viewOrderDetails;
+    window.showProductDetails = showProductDetails;
+    window.toggleOrderDetails = toggleOrderDetails;
+  </script>
+</body>
+</html>

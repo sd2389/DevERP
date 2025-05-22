@@ -1,0 +1,1327 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>DevERP Admin - Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.css">
+  <style>
+    /* Sidebar styling */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 100;
+      padding: 48px 0 0;
+      box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+      background-color: #f8f9fa;
+      width: 240px;
+      transition: all 0.3s;
+    }
+
+    .sidebar-sticky {
+      position: relative;
+      top: 0;
+      height: calc(100vh - 48px);
+      padding-top: 0.5rem;
+      overflow-x: hidden;
+      overflow-y: auto;
+    }
+
+    .sidebar .nav-link {
+      font-weight: 500;
+      color: #333;
+      padding: 0.75rem 1rem;
+    }
+
+    .sidebar .nav-link.active {
+      color: #0d6efd;
+    }
+
+    .sidebar .nav-link:hover {
+      color: #0a58ca;
+      background-color: #e9ecef;
+    }
+
+    .sidebar .nav-link .bi {
+      margin-right: 0.5rem;
+    }
+
+    /* Main content */
+    .main-content {
+      margin-left: 240px;
+      padding: 2rem;
+      transition: margin 0.3s;
+    }
+
+    /* Mobile sidebar toggle */
+    .sidebar-toggle {
+      display: none;
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #0d6efd;
+      color: white;
+      border: none;
+      z-index: 1030;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+
+    .sidebar-backdrop {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.3);
+      z-index: 90;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 767.98px) {
+      .sidebar {
+        transform: translateX(-100%);
+        width: 280px;
+      }
+      
+      .sidebar.show {
+        transform: translateX(0);
+      }
+      
+      .sidebar-backdrop.show {
+        display: block;
+      }
+      
+      .main-content {
+        margin-left: 0;
+        padding: 1rem;
+      }
+      
+      .sidebar-toggle {
+        display: block;
+      }
+      
+      .dashboard-card {
+        margin-bottom: 1rem;
+      }
+      
+      /* Top padding for mobile content to avoid toggle overlap */
+      .main-content-header {
+        padding-top: 10px;
+      }
+      
+      /* Move sidebar toggle on scroll */
+      .sidebar-toggle.scrolled {
+        background: rgba(13, 110, 253, 0.8);
+      }
+    }
+
+    /* Card styles */
+    .dashboard-card {
+      border-radius: 0.5rem;
+      overflow: hidden;
+      box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+      border: none;
+      transition: transform 0.2s, box-shadow 0.2s;
+      height: 100%;
+    }
+
+    .dashboard-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+
+    .card-header {
+      background-color: #f8f9fa;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+      font-weight: 600;
+    }
+
+    /* Stats */
+    .stats-card {
+      text-align: center;
+      padding: 1.5rem;
+    }
+
+    .stats-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      font-size: 1.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .bg-light-primary {
+      background-color: rgba(13, 110, 253, 0.1);
+      color: #0d6efd;
+    }
+
+    .bg-light-success {
+      background-color: rgba(25, 135, 84, 0.1);
+      color: #198754;
+    }
+
+    .bg-light-warning {
+      background-color: rgba(255, 193, 7, 0.1);
+      color: #ffc107;
+    }
+
+    .bg-light-danger {
+      background-color: rgba(220, 53, 69, 0.1);
+      color: #dc3545;
+    }
+
+    .stats-value {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .stats-label {
+      font-size: 1rem;
+      color: #6c757d;
+    }
+
+    /* Recent activity */
+    .activity-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .activity-item {
+      display: flex;
+      align-items: flex-start;
+      padding: 1rem 0;
+      border-bottom: 1px solid #f1f1f1;
+    }
+
+    .activity-item:last-child {
+      border-bottom: none;
+    }
+
+    .activity-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      font-size: 1.25rem;
+      margin-right: 1rem;
+      flex-shrink: 0;
+    }
+
+    .activity-content {
+      flex-grow: 1;
+    }
+
+    .activity-title {
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .activity-time {
+      font-size: 0.875rem;
+      color: #6c757d;
+    }
+
+    /* Quick actions */
+    .quick-action {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1rem;
+      border-radius: 0.5rem;
+      background-color: #f8f9fa;
+      text-decoration: none;
+      color: #333;
+      width: 100%;
+      transition: background-color 0.2s;
+    }
+
+    .quick-action:hover {
+      background-color: #e9ecef;
+      color: #333;
+    }
+
+    .quick-action i {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+      color: #0d6efd;
+    }
+
+    /* Recent Orders Table */
+    .table {
+      margin-bottom: 0;
+    }
+
+    .table th {
+      background-color: #f8f9fa;
+      font-weight: 600;
+    }
+
+    .table td {
+      vertical-align: middle;
+    }
+
+    /* Order status badges */
+    .status-badge {
+      font-size: 0.85rem;
+      padding: 0.35em 0.65em;
+    }
+
+    .status-Pending {
+      background-color: #6c757d;
+      color: white;
+    }
+
+    .status-In-Process {
+      background-color: #fd7e14;
+      color: white;
+    }
+
+    .status-Completed {
+      background-color: #198754;
+      color: white;
+    }
+
+    .status-Cancelled {
+      background-color: #dc3545;
+      color: white;
+    }
+
+    /* Item type badges */
+    .item-type-badge {
+      font-size: 0.7rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 3px;
+      margin-right: 0.25rem;
+    }
+
+    .item-stock {
+      background-color: #28a745;
+      color: white;
+    }
+
+    .item-memo {
+      background-color: #fd7e14;
+      color: white;
+    }
+
+    .item-custom {
+      background-color: #6f42c1;
+      color: white;
+    }
+
+    /* Charts */
+    .chart-container {
+      position: relative;
+      height: 250px;
+      width: 100%;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 576px) {
+      .stats-value {
+        font-size: 1.5rem;
+      }
+
+      .stats-label {
+        font-size: 0.875rem;
+      }
+
+      .quick-action {
+        padding: 0.75rem;
+      }
+
+      .quick-action i {
+        font-size: 1.5rem;
+      }
+
+      .chart-container {
+        height: 200px;
+      }
+
+      /* For very small screens, adjust item badges */
+      .item-type-badge {
+        font-size: 0.6rem;
+        padding: 0.15rem 0.4rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Sidebar Toggle Button for Mobile -->
+  <button class="sidebar-toggle" id="sidebarToggle">
+    <i class="bi bi-list"></i>
+  </button>
+
+  <!-- Sidebar Backdrop -->
+  <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+  <!-- Sidebar -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-sticky">
+      <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+        <span>Management</span>
+      </h6>
+      <ul class="nav flex-column">
+        <li class="nav-item">
+          <a class="nav-link active" href="{% url 'adminside:dashboard' %}">
+            <i class="bi bi-speedometer2"></i> Dashboard
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'adminside:orders' %}">
+            <i class="bi bi-box"></i> Orders
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'adminside:inventory' %}">
+            <i class="bi bi-grid"></i> Inventory
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'adminside:customers' %}">
+            <i class="bi bi-people"></i> Customers
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'adminside:reports' %}">
+            <i class="bi bi-graph-up"></i> Reports
+          </a>
+        </li>
+      </ul>
+
+      <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+        <span>Settings</span>
+      </h6>
+      <ul class="nav flex-column">
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'adminside:settings' %}">
+            <i class="bi bi-gear"></i> System Settings
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'adminside:users' %}">
+            <i class="bi bi-person-gear"></i> User Management
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'logout' %}">
+            <i class="bi bi-box-arrow-right"></i> Logout
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom main-content-header">
+      <h1 class="h2"><i class="bi bi-speedometer2 me-2"></i>Dashboard</h1>
+      <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+          <button type="button" class="btn btn-sm btn-outline-secondary" id="refreshDashboard">
+            <i class="bi bi-arrow-repeat me-1"></i> Refresh
+          </button>
+          <button type="button" class="btn btn-sm btn-outline-secondary" onclick="window.print()">
+            <i class="bi bi-printer me-1"></i> Print
+          </button>
+        </div>
+        <button type="button" class="btn btn-sm btn-primary" id="dateRangeBtn">
+          <i class="bi bi-calendar3 me-1"></i> Today
+        </button>
+      </div>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="row g-4 mb-4">
+      <div class="col-lg-3 col-md-6 col-sm-6">
+        <div class="dashboard-card">
+          <div class="stats-card">
+            <div class="stats-icon bg-light-primary">
+              <i class="bi bi-bag"></i>
+            </div>
+            <div class="stats-value" id="totalOrdersValue">46</div>
+            <div class="stats-label">Total Orders</div>
+            <button class="btn btn-sm btn-outline-primary mt-2" onclick="showOrdersModal('all')">
+              View Orders <i class="bi bi-arrow-right"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-3 col-md-6 col-sm-6">
+        <div class="dashboard-card">
+          <div class="stats-card">
+            <div class="stats-icon bg-light-warning">
+              <i class="bi bi-clock-history"></i>
+            </div>
+            <div class="stats-value" id="openOrdersValue">15</div>
+            <div class="stats-label">Open Orders</div>
+            <button class="btn btn-sm btn-outline-warning mt-2" onclick="showOrdersModal('open')">
+              View Orders <i class="bi bi-arrow-right"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-3 col-md-6 col-sm-6">
+        <div class="dashboard-card">
+          <div class="stats-card">
+            <div class="stats-icon bg-light-success">
+              <i class="bi bi-check-circle"></i>
+            </div>
+            <div class="stats-value" id="completedOrdersValue">27</div>
+            <div class="stats-label">Completed Orders</div>
+            <button class="btn btn-sm btn-outline-success mt-2" onclick="showOrdersModal('completed')">
+              View Orders <i class="bi bi-arrow-right"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-3 col-md-6 col-sm-6">
+        <div class="dashboard-card">
+          <div class="stats-card">
+            <div class="stats-icon bg-light-danger">
+              <i class="bi bi-bookmark"></i>
+            </div>
+            <div class="stats-value" id="memoRequestsValue">24</div>
+            <div class="stats-label">Memo Requests</div>
+            <div class="small text-danger mt-2">
+              <i class="bi bi-arrow-down"></i> 3% from last month
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions & Recent Activity Row -->
+    <div class="row g-4 mb-4">
+      <!-- Quick Actions -->
+      <div class="col-lg-6">
+        <div class="dashboard-card h-100">
+          <div class="card-header py-3">
+            <i class="bi bi-lightning-charge me-2"></i>Quick Actions
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-md-4 col-6">
+                <a href="{% url 'adminside:orders' %}" class="quick-action">
+                  <i class="bi bi-box"></i>
+                  <span>View Orders</span>
+                </a>
+              </div>
+              <div class="col-md-4 col-6">
+                <a href="{% url 'adminside:inventory' %}" class="quick-action">
+                  <i class="bi bi-grid"></i>
+                  <span>Manage Inventory</span>
+                </a>
+              </div>
+              <div class="col-md-4 col-6">
+                <a href="{% url 'adminside:orders_export' %}" class="quick-action">
+                  <i class="bi bi-file-earmark-arrow-down"></i>
+                  <span>Export Orders</span>
+                </a>
+              </div>
+              <div class="col-md-4 col-6">
+                <a href="{% url 'adminside:email_settings' %}" class="quick-action">
+                  <i class="bi bi-envelope"></i>
+                  <span>Email Settings</span>
+                </a>
+              </div>
+              <div class="col-md-4 col-6">
+                <a href="{% url 'adminside:customers' %}" class="quick-action">
+                  <i class="bi bi-people"></i>
+                  <span>View Customers</span>
+                </a>
+              </div>
+              <div class="col-md-4 col-6">
+                <a href="{% url 'adminside:reports' %}" class="quick-action">
+                  <i class="bi bi-graph-up"></i>
+                  <span>View Reports</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Activity -->
+      <div class="col-lg-6">
+        <div class="dashboard-card h-100">
+          <div class="card-header py-3">
+            <i class="bi bi-activity me-2"></i>Recent Activity
+          </div>
+          <div class="card-body p-0">
+            <ul class="activity-list" id="activityList">
+              <li class="activity-item p-3">
+                <div class="activity-icon bg-light-primary">
+                  <i class="bi bi-box"></i>
+                </div>
+                <div class="activity-content">
+                  <div class="activity-title">New order received</div>
+                  <div class="activity-text">Order #ORD12345 placed by John Doe</div>
+                  <div class="activity-time">10 minutes ago</div>
+                </div>
+              </li>
+              <li class="activity-item p-3">
+                <div class="activity-icon bg-light-success">
+                  <i class="bi bi-check-circle"></i>
+                </div>
+                <div class="activity-content">
+                  <div class="activity-title">Order status updated</div>
+                  <div class="activity-text">Order #ORD12341 marked as completed</div>
+                  <div class="activity-time">1 hour ago</div>
+                </div>
+              </li>
+              <li class="activity-item p-3">
+                <div class="activity-icon bg-light-warning">
+                  <i class="bi bi-tools"></i>
+                </div>
+                <div class="activity-content">
+                  <div class="activity-title">Custom order started</div>
+                  <div class="activity-text">Custom order #ORD12339 entered production</div>
+                  <div class="activity-time">2 hours ago</div>
+                </div>
+              </li>
+              <li class="activity-item p-3">
+                <div class="activity-icon bg-light-danger">
+                  <i class="bi bi-bookmark"></i>
+                </div>
+                <div class="activity-content">
+                  <div class="activity-title">Memo request fulfilled</div>
+                  <div class="activity-text">Memo request for Job #12345 is now available</div>
+                  <div class="activity-time">3 hours ago</div>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row g-4 mb-4">
+      <!-- Order Trends Chart -->
+      <div class="col-lg-8">
+        <div class="dashboard-card h-100">
+          <div class="card-header py-3">
+            <i class="bi bi-graph-up me-2"></i>Order Trends
+          </div>
+          <div class="card-body">
+            <div class="chart-container">
+              <canvas id="orderTrendsChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Order Types Pie Chart -->
+      <div class="col-lg-4">
+        <div class="dashboard-card h-100">
+          <div class="card-header py-3">
+            <i class="bi bi-pie-chart me-2"></i>Order Types
+          </div>
+          <div class="card-body">
+            <div class="chart-container">
+              <canvas id="orderTypesChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Orders -->
+    <div class="row g-4">
+      <div class="col-12">
+        <div class="dashboard-card">
+          <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-box me-2"></i>Recent Orders</span>
+            <a href="{% url 'adminside:orders' %}" class="btn btn-sm btn-outline-primary">View All</a>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead>
+                  <tr>
+                    <th scope="col">Sr No.</th>
+                    <th scope="col">Order ID</th>
+                    <th scope="col">Date</th>
+                    <th scope="col">Customer</th>
+                    <th scope="col">Items</th>
+                    <th scope="col">Total</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="recentOrdersTableBody">
+                  <tr>
+                    <td colspan="8" class="text-center py-4">Loading orders...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1050">
+    <div id="dashboardToast" class="toast align-items-center text-white bg-success" role="alert" aria-live="assertive"
+      aria-atomic="true">
+      <div class="d-flex">
+        <div class="toast-body">
+          <i class="bi bi-check-circle-fill me-2"></i>
+          <span id="toastMessage">Dashboard refreshed successfully.</span>
+        </div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+          aria-label="Close"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Orders List Modal -->
+  <div class="modal fade" id="ordersListModal" tabindex="-1" aria-labelledby="ordersListModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="ordersListModalLabel">Order List</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th scope="col">Sr No.</th>
+                  <th scope="col">Order ID</th>
+                  <th scope="col">Date</th>
+                  <th scope="col">Customer</th>
+                  <th scope="col">Items</th>
+                  <th scope="col">Total</th>
+                  <th scope="col">Status</th>
+                </tr>
+              </thead>
+              <tbody id="ordersModalTableBody">
+                <tr>
+                  <td colspan="7" class="text-center py-4">Loading orders...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <a href="{% url 'adminside:orders' %}" class="btn btn-primary">View All Orders</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+  
+  <script>
+    // Constants
+    const ORDER_STATUS = {
+      PENDING: 'Pending',
+      IN_PROCESS: 'In Process',
+      COMPLETED: 'Completed',
+      CANCELLED: 'Cancelled'
+    };
+
+    // Item type constants
+    const ITEM_TYPES = {
+      STOCK: 'stock',
+      MEMO: 'memo',
+      CUSTOM: 'custom'
+    };
+
+    // Local storage key for orders
+    const STORAGE_KEY_ORDERS = 'customer_orders';
+
+    // Helper function to safely retrieve data from localStorage
+    function getStorageData(key, defaultValue = []) {
+      try {
+        const data = localStorage.getItem(key);
+        return data ? JSON.parse(data) : defaultValue;
+      } catch (error) {
+        console.error(`Error retrieving data from ${key}:`, error);
+        return defaultValue;
+      }
+    }
+
+    // Format date for display
+    function formatDate(dateString, options = {}) {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        ...options
+      });
+    }
+
+    // Format currency
+    function formatCurrency(amount) {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }).format(parseFloat(amount) || 0);
+    }
+
+    // Function to show toast notification
+    function showToast(message, type = 'success') {
+      const toast = document.getElementById('dashboardToast');
+      const toastBody = toast.querySelector('.toast-body');
+      const messageSpan = document.getElementById('toastMessage');
+  
+      // Set message content
+      messageSpan.textContent = message;
+  
+      // Set toast color based on type
+      toast.classList.remove('bg-success', 'bg-danger', 'bg-warning', 'bg-info');
+  
+      // Add icon based on type
+      let icon = toastBody.querySelector('i');
+      if (!icon) {
+        icon = document.createElement('i');
+        icon.classList.add('bi', 'me-2');
+        toastBody.insertBefore(icon, messageSpan);
+      }
+  
+      // Reset icon classes
+      icon.className = 'bi me-2';
+  
+      switch (type) {
+        case 'success':
+          toast.classList.add('bg-success');
+          icon.classList.add('bi-check-circle-fill');
+          break;
+        case 'danger':
+          toast.classList.add('bg-danger');
+          icon.classList.add('bi-exclamation-triangle-fill');
+          break;
+        case 'warning':
+          toast.classList.add('bg-warning');
+          icon.classList.add('bi-exclamation-circle-fill');
+          break;
+        case 'info':
+          toast.classList.add('bg-info');
+          icon.classList.add('bi-info-circle-fill');
+          break;
+      }
+  
+      // Show the toast
+      const bsToast = new bootstrap.Toast(toast);
+      bsToast.show();
+    }
+
+    // Function to toggle sidebar on mobile
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('show');
+      document.getElementById('sidebarBackdrop').classList.toggle('show');
+    }
+
+    // Function to load dashboard data
+    function loadDashboardData() {
+      // Get orders from localStorage
+      const orders = getStorageData(STORAGE_KEY_ORDERS, []);
+      
+      // Count orders by status
+      const totalOrders = orders.length;
+      const openOrders = orders.filter(o => o.status === ORDER_STATUS.PENDING || o.status === ORDER_STATUS.IN_PROCESS).length;
+      const completedOrders = orders.filter(o => o.status === ORDER_STATUS.COMPLETED).length;
+      
+      // Count memo requests
+      let memoRequests = 0;
+      orders.forEach(order => {
+        if (order.items && order.items.memo) {
+          memoRequests += order.items.memo.length;
+        }
+      });
+      
+      // Update stats values
+      document.getElementById('totalOrdersValue').textContent = totalOrders;
+      document.getElementById('openOrdersValue').textContent = openOrders;
+      document.getElementById('completedOrdersValue').textContent = completedOrders;
+      document.getElementById('memoRequestsValue').textContent = memoRequests;
+      
+      // Update recent activity
+      updateRecentActivity(orders);
+      
+      // Update charts
+      updateOrderTrendsChart(orders);
+      updateOrderTypesChart(orders);
+      updateRecentOrdersTable(orders);
+    }
+
+    // Update recent activity based on order data
+    function updateRecentActivity(orders) {
+      const activityList = document.getElementById('activityList');
+      if (!activityList) return;
+      
+      // Clear existing activities
+      activityList.innerHTML = '';
+      
+      // Sort orders by date (newest first)
+      const sortedOrders = [...orders].sort((a, b) => new Date(b.date) - new Date(a.date));
+      
+      // Get recent orders for activity feed (limit to 5)
+      const recentOrders = sortedOrders.slice(0, 5);
+      
+      if (recentOrders.length === 0) {
+        activityList.innerHTML = '<li class="activity-item p-3"><div class="text-center">No recent activity</div></li>';
+        return;
+      }
+      
+      // Create activity items
+      recentOrders.forEach(order => {
+        // Determine icon and title based on status
+        let iconClass = 'bi-box';
+        let bgClass = 'bg-light-primary';
+        let title = 'New order received';
+        
+        if (order.status === ORDER_STATUS.COMPLETED) {
+          iconClass = 'bi-check-circle';
+          bgClass = 'bg-light-success';
+          title = 'Order completed';
+        } else if (order.status === ORDER_STATUS.IN_PROCESS) {
+          iconClass = 'bi-gear';
+          bgClass = 'bg-light-warning';
+          title = 'Order in process';
+        } else if (order.status === ORDER_STATUS.CANCELLED) {
+          iconClass = 'bi-x-circle';
+          bgClass = 'bg-light-danger';
+          title = 'Order cancelled';
+        }
+        
+        // Calculate time ago
+        const timeAgo = getTimeAgo(new Date(order.date));
+        
+        // Create activity item
+        const activityItem = document.createElement('li');
+        activityItem.className = 'activity-item p-3';
+        activityItem.innerHTML = `
+          <div class="activity-icon ${bgClass}">
+            <i class="bi ${iconClass}"></i>
+          </div>
+          <div class="activity-content">
+            <div class="activity-title">${title}</div>
+            <div class="activity-text">Order #${order.order_id} - ${order.customer?.name || 'Customer'}</div>
+            <div class="activity-time">${timeAgo}</div>
+          </div>
+        `;
+        
+        activityList.appendChild(activityItem);
+      });
+    }
+
+    // Helper function to format time ago
+    function getTimeAgo(date) {
+      const now = new Date();
+      const diffMs = now - date;
+      const diffSec = Math.round(diffMs / 1000);
+      const diffMin = Math.round(diffSec / 60);
+      const diffHour = Math.round(diffMin / 60);
+      const diffDay = Math.round(diffHour / 24);
+      
+      if (diffSec < 60) {
+        return 'just now';
+      } else if (diffMin < 60) {
+        return `${diffMin} minute${diffMin === 1 ? '' : 's'} ago`;
+      } else if (diffHour < 24) {
+        return `${diffHour} hour${diffHour === 1 ? '' : 's'} ago`;
+      } else if (diffDay < 7) {
+        return `${diffDay} day${diffDay === 1 ? '' : 's'} ago`;
+      } else {
+        return formatDate(date, { year: 'numeric', month: 'short', day: 'numeric' });
+      }
+    }
+
+    // Function to show the orders modal with filtered orders
+    function showOrdersModal(filterType) {
+      // Get orders from localStorage
+      const orders = getStorageData(STORAGE_KEY_ORDERS, []);
+      
+      // Filter orders based on the type
+      let filteredOrders = orders;
+      let modalTitle = 'All Orders';
+      
+      if (filterType === 'open') {
+        filteredOrders = orders.filter(o => 
+          o.status === ORDER_STATUS.PENDING || 
+          o.status === ORDER_STATUS.IN_PROCESS
+        );
+        modalTitle = 'Open Orders';
+      } else if (filterType === 'completed') {
+        filteredOrders = orders.filter(o => o.status === ORDER_STATUS.COMPLETED);
+        modalTitle = 'Completed Orders';
+      }
+      
+      // Sort orders by date (newest first)
+      filteredOrders.sort((a, b) => new Date(b.date) - new Date(a.date));
+      
+      // Update modal title
+      document.getElementById('ordersListModalLabel').textContent = modalTitle;
+      
+      // Get modal body
+      const modalTableBody = document.getElementById('ordersModalTableBody');
+      modalTableBody.innerHTML = '';
+      
+      // Check if there are any orders
+      if (filteredOrders.length === 0) {
+        modalTableBody.innerHTML = '<tr><td colspan="7" class="text-center py-4">No orders found</td></tr>';
+      } else {
+        // Populate the table
+        filteredOrders.forEach((order, index) => {
+          // Count items by type
+          const stockCount = order.items?.stock?.length || 0;
+          const memoCount = order.items?.memo?.length || 0;
+          const customCount = order.items?.custom?.length || 0;
+          const totalItems = stockCount + memoCount + customCount;
+          
+          // Create item badges HTML
+          let itemBadgesHtml = '';
+          if (stockCount > 0) {
+            itemBadgesHtml += `<span class="item-type-badge item-stock">${stockCount} Stock</span>`;
+          }
+          if (memoCount > 0) {
+            itemBadgesHtml += `<span class="item-type-badge item-memo">${memoCount} Memo</span>`;
+          }
+          if (customCount > 0) {
+            itemBadgesHtml += `<span class="item-type-badge item-custom">${customCount} Custom</span>`;
+          }
+          
+          // Create status badge based on order status
+          const statusClass = `status-${order.status.replace(/\s+/g, '-')}`;
+          const statusBadge = `<span class="badge status-badge ${statusClass}">${order.status}</span>`;
+          
+          // Create row HTML
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${index + 1}</td>
+            <td><a href="javascript:void(0)" onclick="navigateToOrderDetail('${order.order_id}')" class="text-primary fw-bold">${order.order_id}</a></td>
+            <td>${formatDate(order.date)}</td>
+            <td>${order.customer?.name || 'Customer'}</td>
+            <td>${itemBadgesHtml}</td>
+            <td>${formatCurrency(order.payment?.total || 0)}</td>
+            <td>${statusBadge}</td>
+          `;
+          
+          modalTableBody.appendChild(row);
+        });
+      }
+      
+      // Show the modal
+      const ordersModal = new bootstrap.Modal(document.getElementById('ordersListModal'));
+      ordersModal.show();
+    }
+
+    // Function to navigate to order details page
+    function navigateToOrderDetail(orderId) {
+      window.location.href = `/adminside/orders/${orderId}/`;
+    }
+
+    // Update Order Trends Chart with real data
+    function updateOrderTrendsChart(orders) {
+      // Get the chart
+      const chart = Chart.getChart('orderTrendsChart');
+      if (!chart) return;
+      
+      // Calculate order counts by week
+      // For simplicity, we'll just simulate the data
+      // In a real app, you'd analyze the dates properly
+      
+      chart.data.datasets[0].data = [15, 20, 25, 22, 30, 35]; // Total orders
+      chart.data.datasets[1].data = [2, 4, 5, 7, 10, 12]; // Custom orders
+      chart.data.datasets[2].data = [5, 8, 10, 9, 12, 14]; // Memo requests
+      
+      chart.update();
+    }
+
+    // Update Order Types Pie Chart with real data
+    function updateOrderTypesChart(orders) {
+      // Get the chart
+      const chart = Chart.getChart('orderTypesChart');
+      if (!chart) return;
+      
+      // Count items by type
+      let stockCount = 0;
+      let customCount = 0;
+      let memoCount = 0;
+      
+      orders.forEach(order => {
+        if (order.items) {
+          stockCount += order.items.stock?.length || 0;
+          customCount += order.items.custom?.length || 0;
+          memoCount += order.items.memo?.length || 0;
+        }
+      });
+      
+      const total = stockCount + customCount + memoCount || 1; // Avoid division by zero
+      
+      // Calculate percentages
+      const stockPercent = Math.round((stockCount / total) * 100);
+      const customPercent = Math.round((customCount / total) * 100);
+      const memoPercent = Math.round((memoCount / total) * 100);
+      
+      // Update chart data
+      chart.data.datasets[0].data = [stockPercent, customPercent, memoPercent];
+      
+      chart.update();
+    }
+
+    // Update Recent Orders Table with real data
+    function updateRecentOrdersTable(orders) {
+      const tableBody = document.getElementById('recentOrdersTableBody');
+      if (!tableBody) return;
+      
+      // Clear the table
+      tableBody.innerHTML = '';
+      
+      // Sort orders by date (newest first)
+      const sortedOrders = [...orders].sort((a, b) => new Date(b.date) - new Date(a.date));
+      
+      // Take the 5 most recent orders
+      const recentOrders = sortedOrders.slice(0, 5);
+      
+      // Check if there are any orders
+      if (recentOrders.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="8" class="text-center py-4">No recent orders found</td></tr>';
+        return;
+      }
+      
+      // Populate the table
+      recentOrders.forEach((order, index) => {
+        // Count items by type
+        const stockCount = order.items?.stock?.length || 0;
+        const memoCount = order.items?.memo?.length || 0;
+        const customCount = order.items?.custom?.length || 0;
+        
+        // Create item badges HTML
+        let itemBadgesHtml = '';
+        if (stockCount > 0) {
+          itemBadgesHtml += `<span class="item-type-badge item-stock">${stockCount} Stock</span>`;
+        }
+        if (memoCount > 0) {
+          itemBadgesHtml += `<span class="item-type-badge item-memo">${memoCount} Memo</span>`;
+        }
+        if (customCount > 0) {
+          itemBadgesHtml += `<span class="item-type-badge item-custom">${customCount} Custom</span>`;
+        }
+        
+        // Create status badge based on order status
+        const statusClass = `status-${order.status.replace(/\s+/g, '-')}`;
+        const statusBadge = `<span class="badge status-badge ${statusClass}">${order.status}</span>`;
+        
+        // Create row HTML
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${index + 1}</td>
+          <td>${order.order_id}</td>
+          <td>${formatDate(order.date)}</td>
+          <td>${order.customer?.name || 'Customer'}</td>
+          <td>${itemBadgesHtml}</td>
+          <td>${formatCurrency(order.payment?.total || 0)}</td>
+          <td>${statusBadge}</td>
+          <td>
+            <button class="btn btn-sm btn-outline-primary" onclick="navigateToOrderDetail('${order.order_id}')">
+              <i class="bi bi-eye"></i>
+            </button>
+          </td>
+        `;
+        
+        tableBody.appendChild(row);
+      });
+    }
+
+    // Handle scroll events for the sidebar toggle button
+    function handleScroll() {
+      const toggleBtn = document.getElementById('sidebarToggle');
+      if (window.scrollY > 50) {
+        toggleBtn.classList.add('scrolled');
+      } else {
+        toggleBtn.classList.remove('scrolled');
+      }
+    }
+
+    // Initialize dashboard
+    document.addEventListener('DOMContentLoaded', function () {
+      // Initialize Order Trends Chart
+      const orderTrendsCtx = document.getElementById('orderTrendsChart').getContext('2d');
+      const orderTrendsChart = new Chart(orderTrendsCtx, {
+        type: 'line',
+        data: {
+          labels: ['Apr 1', 'Apr 8', 'Apr 15', 'Apr 22', 'Apr 29', 'May 6'],
+          datasets: [
+            {
+              label: 'Total Orders',
+              data: [0, 0, 0, 0, 0, 0], // Will be populated with real data
+              borderColor: '#0d6efd',
+              backgroundColor: 'rgba(13, 110, 253, 0.1)',
+              tension: 0.4,
+              fill: true
+            },
+            {
+              label: 'Custom Orders',
+              data: [0, 0, 0, 0, 0, 0], // Will be populated with real data
+              borderColor: '#6f42c1',
+              backgroundColor: 'rgba(111, 66, 193, 0.1)',
+              tension: 0.4,
+              fill: true
+            },
+            {
+              label: 'Memo Requests',
+              data: [0, 0, 0, 0, 0, 0], // Will be populated with real data
+              borderColor: '#fd7e14',
+              backgroundColor: 'rgba(253, 126, 20, 0.1)',
+              tension: 0.4,
+              fill: true
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'top',
+            },
+            tooltip: {
+              mode: 'index',
+              intersect: false
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: 'Number of Orders'
+              }
+            },
+            x: {
+              title: {
+                display: true,
+                text: 'Week'
+              }
+            }
+          }
+        }
+      });
+  
+      // Initialize Order Types Pie Chart
+      const orderTypesCtx = document.getElementById('orderTypesChart').getContext('2d');
+      const orderTypesChart = new Chart(orderTypesCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Stock Items', 'Custom Orders', 'Memo Requests'],
+          datasets: [
+            {
+              data: [0, 0, 0], // Will be populated with real data
+              backgroundColor: [
+                '#28a745',
+                '#6f42c1',
+                '#fd7e14'
+              ],
+              borderWidth: 0
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom'
+            },
+            tooltip: {
+              callbacks: {
+                label: function (context) {
+                  const label = context.label || '';
+                  const value = context.formattedValue || '';
+                  return `${label}: ${value}%`;
+                }
+              }
+            }
+          },
+          cutout: '70%'
+        }
+      });
+      
+      // Set up sidebar toggling for mobile
+      document.getElementById('sidebarToggle').addEventListener('click', toggleSidebar);
+      document.getElementById('sidebarBackdrop').addEventListener('click', toggleSidebar);
+      
+      // Load dashboard data
+      loadDashboardData();
+      
+      // Set up refresh button
+      document.getElementById('refreshDashboard').addEventListener('click', function() {
+        loadDashboardData();
+        showToast('Dashboard refreshed successfully');
+      });
+      
+      // Event listener for date range button
+      document.getElementById('dateRangeBtn').addEventListener('click', function () {
+        // In a real app, this would open a date picker
+        // For demo, we'll just toggle the text
+        if (this.textContent.includes('Today')) {
+          this.innerHTML = '<i class="bi bi-calendar3 me-1"></i> This Week';
+        } else if (this.textContent.includes('This Week')) {
+          this.innerHTML = '<i class="bi bi-calendar3 me-1"></i> This Month';
+        } else if (this.textContent.includes('This Month')) {
+          this.innerHTML = '<i class="bi bi-calendar3 me-1"></i> This Year';
+        } else {
+          this.innerHTML = '<i class="bi bi-calendar3 me-1"></i> Today';
+        }
+        
+        // Show toast for feedback
+        showToast('Date range updated', 'info');
+      });
+      
+      // Listen for scroll events
+      window.addEventListener('scroll', handleScroll);
+      
+      // Listen for window resize to adjust UI
+      window.addEventListener('resize', function() {
+        if (window.innerWidth >= 768) {
+          // Hide mobile sidebar if screen becomes larger
+          document.getElementById('sidebar').classList.remove('show');
+          document.getElementById('sidebarBackdrop').classList.remove('show');
+        }
+      });
+    });
+    
+    // Make function available for onclick handlers
+    window.showOrdersModal = showOrdersModal;
+    window.navigateToOrderDetail = navigateToOrderDetail;
+    window.toggleSidebar = toggleSidebar;
+  </script>
+</body>
+
+</html>

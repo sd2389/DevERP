@@ -1,0 +1,217 @@
+/* requests.css - Styles for the requests page in DevERP */
+
+/* Status badges styling */
+.bg-pending-subtle {
+    background-color: #fff4e5;
+}
+.text-pending {
+    color: #f59e0b;
+}
+
+.bg-approved-subtle {
+    background-color: #e6f7ed;
+}
+.text-approved {
+    color: #10b981;
+}
+
+.bg-rejected-subtle {
+    background-color: #fee2e2;
+}
+.text-rejected {
+    color: #ef4444;
+}
+
+.bg-fulfilled-subtle {
+    background-color: #e0e7ff;
+}
+.text-fulfilled {
+    color: #3b82f6;
+}
+
+/* Priority indicators */
+.priority-indicator {
+    display: inline-flex;
+    align-items: center;
+    font-weight: 500;
+    font-size: 0.875rem;
+}
+
+.priority-indicator::before {
+    content: "";
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 6px;
+}
+
+.priority-high::before {
+    background-color: #ef4444;
+}
+
+.priority-medium::before {
+    background-color: #f59e0b;
+}
+
+.priority-low::before {
+    background-color: #10b981;
+}
+
+/* Empty state styling */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem;
+}
+
+/* Avatar placeholder styling */
+.avatar-placeholder {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background-color: #e2e8f0;
+    color: #64748b;
+    font-weight: 600;
+    border-radius: 50%;
+}
+
+/* Request history timeline */
+.timeline {
+    position: relative;
+    padding: 1rem 0;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 15px;
+    width: 2px;
+    background-color: #e2e8f0;
+}
+
+.timeline-item {
+    position: relative;
+    padding-left: 40px;
+    margin-bottom: 1.5rem;
+}
+
+.timeline-item:last-child {
+    margin-bottom: 0;
+}
+
+.timeline-badge {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-color: #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+}
+
+.timeline-badge-created {
+    background-color: #3b82f6;
+    color: white;
+}
+
+.timeline-badge-approved {
+    background-color: #10b981;
+    color: white;
+}
+
+.timeline-badge-rejected {
+    background-color: #ef4444;
+    color: white;
+}
+
+.timeline-badge-fulfilled {
+    background-color: #8b5cf6;
+    color: white;
+}
+
+.timeline-content {
+    padding: 0.75rem 1rem;
+    background-color: #f9fafb;
+    border-radius: 0.375rem;
+    border-left: 3px solid #e2e8f0;
+}
+
+.timeline-content-created {
+    border-left-color: #3b82f6;
+}
+
+.timeline-content-approved {
+    border-left-color: #10b981;
+}
+
+.timeline-content-rejected {
+    border-left-color: #ef4444;
+}
+
+.timeline-content-fulfilled {
+    border-left-color: #8b5cf6;
+}
+
+.timeline-time {
+    font-size: 0.75rem;
+    color: #64748b;
+}
+
+/* Required field label */
+.required::after {
+    content: " *";
+    color: #ef4444;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .table-responsive {
+        border: 0;
+    }
+    
+    #requestsTable thead {
+        display: none;
+    }
+    
+    #requestsTable tbody tr {
+        display: block;
+        margin-bottom: 1rem;
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    
+    #requestsTable tbody td {
+        display: block;
+        text-align: right;
+        padding: 0.75rem;
+        position: relative;
+        border-top: 1px solid #dee2e6;
+    }
+    
+    #requestsTable tbody td:first-child {
+        border-top: none;
+    }
+    
+    #requestsTable tbody td::before {
+        content: attr(data-label);
+        float: left;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+    }
+    
+    .dropdown {
+        display: inline-block;
+    }
+}

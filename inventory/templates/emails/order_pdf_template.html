@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Order Confirmation - {{ order.order_id }}</title>
+    <style type="text/css">
+        @page {
+            size: letter;
+            margin: 1cm;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 10pt;
+            line-height: 1.4;
+            color: #333333;
+        }
+        .header {
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #dddddd;
+        }
+        .logo {
+            max-height: 80px;
+            max-width: 200px;
+        }
+        .order-info {
+            margin-bottom: 20px;
+        }
+        .company-info {
+            text-align: right;
+        }
+        .customer-info {
+            margin-bottom: 20px;
+        }
+        .address-block {
+            margin-bottom: 15px;
+        }
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        .table th {
+            padding: 8px;
+            text-align: left;
+            background-color: #f2f2f2;
+            border-bottom: 1px solid #dddddd;
+        }
+        .table td {
+            padding: 8px;
+            border-bottom: 1px solid #eeeeee;
+        }
+        .table-header {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        .item-type {
+            display: inline-block;
+            padding: 2px 6px;
+            font-size: 8pt;
+            font-weight: bold;
+            border-radius: 3px;
+            color: white;
+        }
+        .stock {
+            background-color: #28a745;
+        }
+        .memo {
+            background-color: #fd7e14;
+        }
+        .custom {
+            background-color: #6f42c1;
+        }
+        .totals-table {
+            width: 40%;
+            float: right;
+            margin-top: 20px;
+        }
+        .totals-table td {
+            padding: 5px;
+        }
+        .total-value {
+            text-align: right;
+            font-weight: bold;
+        }
+        .grand-total {
+            font-weight: bold;
+            font-size: 12pt;
+            border-top: 2px solid #333333;
+        }
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #dddddd;
+            text-align: center;
+            font-size: 9pt;
+            color: #666666;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <table width="100%">
+            <tr>
+                <td>
+                    <img src="{% static 'inventory/logo.png' %}" alt="DevJewels Logo" class="logo">
+                </td>
+                <td class="company-info">
+                    <h2>DevJewels</h2>
+                    <p>123 Jewelry Lane<br>
+                    Diamond District, NY 10001<br>
+                    Tel: (123) 456-7890<br>
+                    Email: orders@devjewels.com</p>
+                </td>
+            </tr>
+        </table>
+    </div>
+    
+    <div class="order-info">
+        <h1>Order Confirmation</h1>
+        <table width="100%">
+            <tr>
+                <td width="50%">
+                    <strong>Order Number:</strong> {{ order.order_id }}<br>
+                    <strong>Order Date:</strong> {{ order.date|date:"F j, Y, g:i a" }}<br>
+                    <strong>Order Status:</strong> {{ order.status }}
+                </td>
+                <td width="50%" style="text-align: right;">
+                    <strong>Payment Method:</strong> {{ order.payment.method|default:"Credit Card" }}
+                </td>
+            </tr>
+        </table>
+    </div>
+    
+    <div class="customer-info">
+        <table width="100%">
+            <tr>
+                <td width="50%" valign="top">
+                    <div class="address-block">
+                        <strong>Shipping Address:</strong><br>
+                        {{ order.customer.name }}<br>
+                        {% with address=order.shipping_address %}
+                            {{ address.line1 }}<br>
+                            {% if address.line2 %}{{ address.line2 }}<br>{% endif %}
+                            {{ address.city }}, {{ address.state }} {{ address.postal_code }}<br>
+                            {{ address.country }}
+                        {% endwith %}
+                    </div>
+                </td>
+                <td width="50%" valign="top">
+                    <div class="address-block">
+                        <strong>Billing Address:</strong><br>
+                        {{ order.customer.name }}<br>
+                        {% with address=order.billing_address|default:order.shipping_address %}
+                            {{ address.line1 }}<br>
+                            {% if address.line2 %}{{ address.line2 }}<br>{% endif %}
+                            {{ address.city }}, {{ address.state }} {{ address.postal_code }}<br>
+                            {{ address.country }}
+                        {% endwith %}
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+    
+    <!-- Stock Items -->
+    {% if order.items.stock %}
+    <h3>In Stock Items</h3>
+    <table class="table">
+        <thead>
+            <tr class="table-header">
+                <th>Design No.</th>
+                <th>Job No.</th>
+                <th>Metal</th>
+                <th>Size</th>
+                <th>Price</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in order.items.stock %}
+            <tr>
+                <td>
+                    <span class="item-type stock">Stock</span>
+                    {{ item.design_no }}
+                </td>
+                <td>{{ item.job_no }}</td>
+                <td>{{ item.metal_type }} {{ item.metal_quality }} {{ item.metal_color }}</td>
+                <td>{{ item.size|default:"N/A" }}</td>
+                <td>${{ item.price|floatformat:2 }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+    
+    <!-- Memo Items -->
+    {% if order.items.memo %}
+    <h3>Memo Request Items</h3>
+    <table class="table">
+        <thead>
+            <tr class="table-header">
+                <th>Design No.</th>
+                <th>Job No.</th>
+                <th>Request Date</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in order.items.memo %}
+            <tr>
+                <td>
+                    <span class="item-type memo">Memo</span>
+                    {{ item.design_no }}
+                </td>
+                <td>{{ item.job_no }}</td>
+                <td>{{ item.requested_at|date:"F j, Y" }}</td>
+                <td>Pending</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+    
+    <!-- Custom Items -->
+    {% if order.items.custom %}
+    <h3>Custom Order Items</h3>
+    <table class="table">
+        <thead>
+            <tr class="table-header">
+                <th>Design No.</th>
+                <th>Specifications</th>
+                <th>Quantity</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in order.items.custom %}
+            <tr>
+                <td>
+                    <span class="item-type custom">Custom</span>
+                    {{ item.design_no }}
+                </td>
+                <td>
+                    <strong>Metal:</strong> {{ item.metal_type }} {{ item.metal_quality }} {{ item.metal_color }}<br>
+                    <strong>Diamond:</strong> {{ item.diamond_quality }}-{{ item.diamond_color }}<br>
+                    <strong>Size:</strong> {{ item.size }}
+                    {% if item.remarks %}<br><strong>Note:</strong> {{ item.remarks }}{% endif %}
+                </td>
+                <td>{{ item.qty|default:"1" }}</td>
+                <td>In Production</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+    
+    <!-- Order Totals -->
+    <table class="totals-table">
+        <tr>
+            <td>Subtotal:</td>
+            <td class="total-value">${{ order.payment.subtotal|floatformat:2 }}</td>
+        </tr>
+        <tr>
+            <td>Shipping:</td>
+            <td class="total-value">${{ order.payment.shipping|floatformat:2 }}</td>
+        </tr>
+        <tr>
+            <td>Tax:</td>
+            <td class="total-value">${{ order.payment.tax|floatformat:2 }}</td>
+        </tr>
+        {% if order.payment.discount > 0 %}
+        <tr>
+            <td>Discount:</td>
+            <td class="total-value">-${{ order.payment.discount|floatformat:2 }}</td>
+        </tr>
+        {% endif %}
+        <tr class="grand-total">
+            <td>Total:</td>
+            <td class="total-value">${{ order.payment.total|floatformat:2 }}</td>
+        </tr>
+    </table>
+    
+    <div style="clear: both;"></div>
+    
+    <div class="footer">
+        <p>Thank you for your order! If you have any questions, please contact customer service at support@devjewels.com or call (123) 456-7890.</p>
+        <p>Order ID: {{ order.order_id }} | Date: {{ order.date|date:"F j, Y" }}</p>
+    </div>
+</body>
+</html>

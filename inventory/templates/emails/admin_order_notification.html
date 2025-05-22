@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>New Order Notification - {{ order.order_id }}</title>
+    <style>
+        /* Base styles */
+        body {
+            background-color: #f6f6f6;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-size: 14px;
+            line-height: 1.5;
+            margin: 0;
+            padding: 0;
+            -ms-text-size-adjust: 100%;
+            -webkit-text-size-adjust: 100%;
+            color: #333333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #ffffff;
+        }
+        .header {
+            background-color: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid #eeeeee;
+        }
+        .footer {
+            margin-top: 20px;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #666666;
+        }
+        .content {
+            padding: 20px;
+        }
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        .alert-primary {
+            background-color: #cfe2ff;
+            border: 1px solid #b6d4fe;
+            color: #084298;
+        }
+        .button {
+            display: inline-block;
+            font-weight: 600;
+            text-decoration: none;
+            background-color: #0d6efd;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .button-primary {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+            color: white;
+        }
+        h1, h2, h3, h4 {
+            color: #333333;
+            margin-top: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        th {
+            text-align: left;
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-bottom: 1px solid #dddddd;
+        }
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #eeeeee;
+        }
+        .item-type {
+            display: inline-block;
+            padding: 2px 6px;
+            font-size: 10px;
+            font-weight: bold;
+            border-radius: 3px;
+            color: white;
+            margin-right: 5px;
+        }
+        .stock {
+            background-color: #28a745;
+        }
+        .memo {
+            background-color: #fd7e14;
+        }
+        .custom {
+            background-color: #6f42c1;
+        }
+        .summary-table {
+            width: 100%;
+            margin-top: 20px;
+        }
+        .summary-table td {
+            padding: 5px;
+        }
+        .text-right {
+            text-align: right;
+        }
+        .total-row {
+            font-weight: 700;
+            font-size: 16px;
+            border-top: 2px solid #dddddd;
+        }
+        .badge {
+            display: inline-block;
+            padding: 3px 7px;
+            font-size: 12px;
+            font-weight: 700;
+            border-radius: 3px;
+            color: white;
+            text-align: center;
+        }
+        .badge-secondary {
+            background-color: #6c757d;
+        }
+        .badge-info {
+            background-color: #0dcaf0;
+        }
+        .stats-container {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .stats-box {
+            flex: 1;
+            margin: 0 5px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .stats-box h2 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .stats-box p {
+            margin: 5px 0 0;
+            font-size: 12px;
+            color: #6c757d;
+        }
+        @media only screen and (max-width: 620px) {
+            .container {
+                width: 100% !important;
+            }
+            .stats-container {
+                flex-direction: column;
+            }
+            .stats-box {
+                margin: 5px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="https://www.devjewels.com/logo.png" alt="DevJewels Admin" style="max-width: 200px;">
+            <h1>New Order Notification</h1>
+        </div>
+        
+        <div class="content">
+            <div class="alert alert-primary">
+                <p><strong>A new order has been placed!</strong></p>
+                <p>Order Number: <strong>{{ order.order_id }}</strong></p>
+                <p>Date: {{ order.date|date:"F j, Y, g:i a" }}</p>
+                <p>Status: <span class="badge badge-secondary">{{ order.status }}</span></p>
+            </div>
+            
+            <!-- Order Stats -->
+            <div class="stats-container">
+                <div class="stats-box">
+                    <h2>{{ order.items.stock|length }}</h2>
+                    <p>Stock Items</p>
+                </div>
+                <div class="stats-box">
+                    <h2>{{ order.items.memo|length }}</h2>
+                    <p>Memo Requests</p>
+                </div>
+                <div class="stats-box">
+                    <h2>{{ order.items.custom|length }}</h2>
+                    <p>Custom Orders</p>
+                </div>
+                <div class="stats-box">
+                    <h2>${{ order.payment.total|floatformat:2 }}</h2>
+                    <p>Total Amount</p>
+                </div>
+            </div>
+            
+            <!-- Customer Information -->
+            <h3>Customer Information</h3>
+            <table>
+                <tr>
+                    <th>Name</th>
+                    <td>{{ order.customer.name }}</td>
+                </tr>
+                <tr>
+                    <th>Email</th>
+                    <td>{{ order.customer.email }}</td>
+                </tr>
+                <tr>
+                    <th>Phone</th>
+                    <td>{{ order.customer.phone }}</td>
+                </tr>
+                <tr>
+                    <th>Customer Since</th>
+                    <td>{{ order.customer.created_at|date:"F j, Y"|default:"New Customer" }}</td>
+                </tr>
+            </table>
+            
+            <!-- Shipping Address -->
+            <h3>Shipping Address</h3>
+            <p>
+                {{ order.customer.name }}<br>
+                {% with address=order.shipping_address %}
+                    {{ address.line1 }}<br>
+                    {% if address.line2 %}{{ address.line2 }}<br>{% endif %}
+                    {{ address.city }}, {{ address.state }} {{ address.postal_code }}<br>
+                    {{ address.country }}
+                {% endwith %}
+            </p>
+            
+            <!-- Stock Items -->
+            {% if order.items.stock %}
+            <h3>In Stock Items</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Details</th>
+                        <th>Price</th>
+                        <th>Action Required</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in order.items.stock %}
+                    <tr>
+                        <td>
+                            <span class="item-type stock">Stock</span>
+                            {{ item.design_no }}
+                        </td>
+                        <td>
+                            Job: {{ item.job_no }}<br>
+                            Metal: {{ item.metal_type }} {{ item.metal_quality }} {{ item.metal_color }}<br>
+                            Size: {{ item.size|default:"N/A" }}
+                        </td>
+                        <td>${{ item.price|floatformat:2 }}</td>
+                        <td><span class="badge badge-info">Prepare for Shipping</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% endif %}
+            
+            <!-- Memo Items -->
+            {% if order.items.memo %}
+            <h3>Memo Request Items</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Details</th>
+                        <th>Action Required</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in order.items.memo %}
+                    <tr>
+                        <td>
+                            <span class="item-type memo">Memo</span>
+                            {{ item.design_no }}
+                        </td>
+                        <td>
+                            Job: {{ item.job_no }}<br>
+                            Requested: {{ item.requested_at|date:"F j, Y" }}
+                        </td>
+                        <td><span class="badge badge-info">Check Availability</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% endif %}
+            
+            <!-- Custom Items -->
+            {% if order.items.custom %}
+            <h3>Custom Order Items</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Specifications</th>
+                        <th>Quantity</th>
+                        <th>Action Required</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in order.items.custom %}
+                    <tr>
+                        <td>
+                            <span class="item-type custom">Custom</span>
+                            {{ item.design_no }}
+                        </td>
+                        <td>
+                            Metal: {{ item.metal_type }} {{ item.metal_quality }} {{ item.metal_color }}<br>
+                            Diamond: {{ item.diamond_quality }}-{{ item.diamond_color }}<br>
+                            Size: {{ item.size }}
+                            {% if item.remarks %}<br>Note: {{ item.remarks }}{% endif %}
+                        </td>
+                        <td>{{ item.qty|default:"1" }}</td>
+                        <td><span class="badge badge-info">Start Production</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% endif %}
+            
+            <!-- Order Totals -->
+            <h3>Payment Summary</h3>
+            <table class="summary-table">
+                <tr>
+                    <td>Subtotal:</td>
+                    <td class="text-right">${{ order.payment.subtotal|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                    <td>Shipping ({{ order.payment.shipping_method|default:"Standard" }}):</td>
+                    <td class="text-right">${{ order.payment.shipping|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                    <td>Tax:</td>
+                    <td class="text-right">${{ order.payment.tax|floatformat:2 }}</td>
+                </tr>
+                {% if order.payment.discount > 0 %}
+                <tr>
+                    <td>Discount:</td>
+                    <td class="text-right">-${{ order.payment.discount|floatformat:2 }}</td>
+                </tr>
+                {% endif %}
+                <tr class="total-row">
+                    <td>Total:</td>
+                    <td class="text-right">${{ order.payment.total|floatformat:2 }}</td>
+                </tr>
+            </table>
+            
+            <div style="text-align: center;">
+                <a href="https://admin.devjewels.com/orders/{{ order.order_id }}" class="button button-primary">Process This Order</a>
+            </div>
+            
+            <p>This is an automated notification. Please do not reply to this email.</p>
+        </div>
+        
+        <div class="footer">
+            <p>&copy; 2025 DevJewels Admin System</p>
+            <p>
+                <a href="https://admin.devjewels.com/orders">View All Orders</a> |
+                <a href="https://admin.devjewels.com/settings/notifications">Notification Settings</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>
