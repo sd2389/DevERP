@@ -1,0 +1,93 @@
+/* Basic styles */
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  color: #333;
+}
+
+/* Cards and containers */
+.card {
+  transition: all 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08) !important;
+}
+
+.unavailable {
+  opacity: 0.7;
+  position: relative;
+}
+
+.unavailable::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.5);
+  pointer-events: none;
+}
+
+/* Buttons and badges */
+.badge {
+  font-weight: 500;
+  padding: 0.5em 0.8em;
+}
+
+.btn-outline-secondary:hover {
+  background-color: #f8f9fa;
+  color: #212529;
+}
+
+.accordion-button:not(.collapsed) {
+  background-color: #f0f7ff;
+  color: #0d6efd;
+  box-shadow: none;
+}
+
+.accordion-button:focus {
+  box-shadow: none;
+  border-color: rgba(13, 110, 253, 0.2);
+}
+
+/* Quantity input */
+.input-group input {
+  border-left: 0;
+  border-right: 0;
+}
+
+/* Animations */
+.highlight-item {
+  animation: pulse 1.5s ease;
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); }
+  70% { box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+}
+
+/* Responsive adjustments */
+@media (max-width: 767.98px) {
+  .card-body .row .col-6 {
+    margin-bottom: 0.5rem;
+  }
+}
+
+/* Empty cart styles */
+#emptyCart i {
+  opacity: 0.3;
+}
+
+/* Order summary card */
+#orderSummaryCard {
+  transition: all 0.3s ease;
+}
+
+/* Custom focus styles */
+button:focus, input:focus {
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+  outline: none;
+}

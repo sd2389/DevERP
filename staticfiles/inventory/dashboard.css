@@ -1,0 +1,64 @@
+/* === Dashboard Layout === */
+
+body {
+    background-color: #f8f9fa;
+  }
+  
+  h2 {
+    font-size: 1.75rem;
+    margin-bottom: 1rem;
+  }
+  
+  /* Tabs Styling */
+  .nav-tabs .nav-link {
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: #333;
+    font-weight: 500;
+    padding: 10px 20px;
+  }
+  
+  .nav-tabs .nav-link.active {
+    color: #000;
+    border-color: #000;
+    background-color: transparent;
+  }
+  
+  /* Tab content spacing */
+  .tab-content {
+    padding: 1rem;
+    background-color: #fff;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  }
+  
+  /* Text alignment for placeholders */
+  .tab-pane .text-muted {
+    font-size: 1rem;
+    padding: 2rem 0;
+  }
+  
+  /* Mobile responsiveness */
+  @media (max-width: 576px) {
+    .nav-tabs .nav-link {
+      font-size: 0.9rem;
+      padding: 8px 12px;
+    }
+  
+    h2 {
+      font-size: 1.5rem;
+    }
+  }
+  
+
+  /* Design Card Styles */
+.card-img-top {
+    height: 220px;
+    object-fit: contain;
+    background-color: #f0f0f0;
+  }
+  
+  .card-title {
+    font-size: 0.95rem;
+  }
+  
