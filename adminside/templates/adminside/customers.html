@@ -1,0 +1,1039 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>DevERP Admin - Customer Management</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    /* Sidebar styling */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 100;
+      padding: 48px 0 0;
+      box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+      background-color: #f8f9fa;
+      width: 240px;
+      transition: all 0.3s;
+    }
+
+    .sidebar-sticky {
+      position: relative;
+      top: 0;
+      height: calc(100vh - 48px);
+      padding-top: 0.5rem;
+      overflow-x: hidden;
+      overflow-y: auto;
+    }
+
+    .sidebar .nav-link {
+      font-weight: 500;
+      color: #333;
+      padding: 0.75rem 1rem;
+    }
+
+    .sidebar .nav-link.active {
+      color: #0d6efd;
+    }
+
+    .sidebar .nav-link:hover {
+      color: #0a58ca;
+      background-color: #e9ecef;
+    }
+
+    .sidebar .nav-link .bi {
+      margin-right: 0.5rem;
+    }
+
+    /* Main content */
+    .main-content {
+      margin-left: 240px;
+      padding: 2rem;
+      transition: all 0.3s;
+    }
+
+    /* Mobile sidebar toggle */
+    .sidebar-toggle {
+      display: none;
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      z-index: 1001;
+      background: #0d6efd;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 0.5rem 0.75rem;
+    }
+
+    @media (max-width: 767.98px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
+
+      .sidebar.show {
+        transform: translateX(0);
+      }
+
+      .main-content {
+        margin-left: 0;
+        padding: 1rem;
+      }
+
+      .sidebar-toggle {
+        display: block;
+      }
+
+      /* Make stats cards stack better on mobile */
+      .stats-card {
+        margin-bottom: 1rem;
+      }
+    }
+
+    /* Status badges */
+    .status-badge {
+      font-size: 0.85rem;
+      padding: 0.35em 0.65em;
+    }
+
+    .status-active {
+      background-color: #198754;
+      color: white;
+    }
+
+    .status-inactive {
+      background-color: #dc3545;
+      color: white;
+    }
+
+    .status-suspended {
+      background-color: #fd7e14;
+      color: white;
+    }
+
+    .status-pending {
+      background-color: #6c757d;
+      color: white;
+    }
+
+    /* Action buttons */
+    .action-buttons .btn {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.85rem;
+    }
+
+    /* Card styles */
+    .customers-card {
+      border-radius: 0.5rem;
+      overflow: hidden;
+      box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+      border: none;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .customers-card:hover {
+      box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+
+    .card-header {
+      background-color: #f8f9fa;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+    }
+
+    /* Table styles */
+    .table-responsive {
+      overflow-x: auto;
+    }
+
+    .table th {
+      background-color: #f8f9fa;
+      font-weight: 600;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .table td {
+      vertical-align: middle;
+    }
+
+    /* Customer stats cards */
+    .stats-card {
+      border-radius: 0.5rem;
+      overflow: hidden;
+      box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+      border: none;
+      padding: 1.5rem;
+      text-align: center;
+      height: 100%;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .stats-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+
+    .stats-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      font-size: 1.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .stats-value {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .stats-label {
+      color: #6c757d;
+    }
+
+    /* Checkbox styling */
+    .form-check-input:checked {
+      background-color: #0d6efd;
+      border-color: #0d6efd;
+    }
+
+    /* Customer avatar */
+    .customer-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background-color: #e9ecef;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #6c757d;
+    }
+
+    /* Bulk action bar */
+    .bulk-action-bar {
+      position: fixed;
+      bottom: 0;
+      left: 240px;
+      right: 0;
+      background-color: #343a40;
+      color: white;
+      padding: 1rem;
+      display: none;
+      z-index: 1000;
+      box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .bulk-action-bar.show {
+      display: block;
+    }
+
+    @media (max-width: 767.98px) {
+      .bulk-action-bar {
+        left: 0;
+      }
+    }
+
+    /* Search input styling */
+    .search-input {
+      max-width: 300px;
+    }
+
+    /* Filter form */
+    .filter-form .form-control,
+    .filter-form .form-select {
+      font-size: 0.9rem;
+    }
+
+    /* Pagination */
+    .pagination {
+      margin-bottom: 0;
+    }
+
+    /* Loading spinner */
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(255, 255, 255, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      display: none;
+    }
+
+    .loading-overlay.show {
+      display: flex;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+  </div>
+
+  <!-- Mobile Sidebar Toggle -->
+  <button class="sidebar-toggle" id="sidebarToggle">
+    <i class="bi bi-list"></i>
+  </button>
+
+  <!-- Sidebar -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-sticky">
+      <div class="px-3 mb-3">
+        <h5 class="text-primary"><i class="bi bi-gem me-2"></i>DevERP Admin</h5>
+      </div>
+      
+      <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+        <span>Management</span>
+      </h6>
+      <ul class="nav flex-column">
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'adminside:dashboard' %}">
+            <i class="bi bi-speedometer2"></i> Dashboard
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'adminside:orders' %}">
+            <i class="bi bi-box"></i> Orders
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'adminside:inventory' %}">
+            <i class="bi bi-grid"></i> Inventory
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link active" href="{% url 'adminside:customers' %}">
+            <i class="bi bi-people"></i> Customers
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'adminside:reports' %}">
+            <i class="bi bi-graph-up"></i> Reports
+          </a>
+        </li>
+      </ul>
+
+      <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+        <span>Settings</span>
+      </h6>
+      <ul class="nav flex-column mb-4">
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'adminside:settings' %}">
+            <i class="bi bi-gear"></i> System Settings
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'adminside:users' %}">
+            <i class="bi bi-person-gear"></i> User Management
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'logout' %}">
+            <i class="bi bi-box-arrow-right"></i> Logout
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+      <h1 class="h2"><i class="bi bi-people me-2"></i>Customer Management</h1>
+      <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+          <a href="{% url 'adminside:customer_export' %}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-download me-1"></i> Export
+          </a>
+          <button type="button" class="btn btn-sm btn-outline-secondary" onclick="window.print()">
+            <i class="bi bi-printer me-1"></i> Print
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Flash Messages -->
+    {% if messages %}
+      <div class="alert-container mb-3">
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <!-- Statistics Cards -->
+    <div class="row g-4 mb-4">
+      <div class="col-xl-3 col-lg-6 col-md-6">
+        <div class="stats-card">
+          <div class="stats-icon bg-primary bg-opacity-10 text-primary mx-auto">
+            <i class="bi bi-people"></i>
+          </div>
+          <div class="stats-value">{{ total_customers|default:"0" }}</div>
+          <div class="stats-label">Total Customers</div>
+        </div>
+      </div>
+      <div class="col-xl-3 col-lg-6 col-md-6">
+        <div class="stats-card">
+          <div class="stats-icon bg-success bg-opacity-10 text-success mx-auto">
+            <i class="bi bi-person-check"></i>
+          </div>
+          <div class="stats-value">{{ active_customers|default:"0" }}</div>
+          <div class="stats-label">Active Customers</div>
+          {% if total_customers > 0 %}
+            <small class="text-muted">{{ active_percentage }}% of total</small>
+          {% endif %}
+        </div>
+      </div>
+      <div class="col-xl-3 col-lg-6 col-md-6">
+        <div class="stats-card">
+          <div class="stats-icon bg-warning bg-opacity-10 text-warning mx-auto">
+            <i class="bi bi-clock-history"></i>
+          </div>
+          <div class="stats-value">{{ pending_customers|default:"0" }}</div>
+          <div class="stats-label">Pending Approval</div>
+        </div>
+      </div>
+      <div class="col-xl-3 col-lg-6 col-md-6">
+        <div class="stats-card">
+          <div class="stats-icon bg-danger bg-opacity-10 text-danger mx-auto">
+            <i class="bi bi-person-x"></i>
+          </div>
+          <div class="stats-value">{{ inactive_customers|default:"0" }}</div>
+          <div class="stats-label">Inactive Customers</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filters and Search -->
+    <div class="card customers-card mb-4">
+      <div class="card-header py-3">
+        <h5 class="mb-0"><i class="bi bi-funnel me-2"></i>Filters & Search</h5>
+      </div>
+      <div class="card-body">
+        <form method="get" class="filter-form">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label for="search" class="form-label">Search</label>
+              <input type="text" class="form-control" id="search" name="search" 
+                     placeholder="Name, email, phone, company..." value="{{ search_query }}">
+            </div>
+            <div class="col-md-3">
+              <label for="status" class="form-label">Status</label>
+              <select class="form-select" id="status" name="status">
+                <option value="">All Statuses</option>
+                <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+                <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactive</option>
+                <option value="suspended" {% if status_filter == 'suspended' %}selected{% endif %}>Suspended</option>
+                <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label for="sort" class="form-label">Sort By</label>
+              <select class="form-select" id="sort" name="sort">
+                <option value="-date_joined" {% if sort_by == '-date_joined' %}selected{% endif %}>Newest First</option>
+                <option value="date_joined" {% if sort_by == 'date_joined' %}selected{% endif %}>Oldest First</option>
+                <option value="name" {% if sort_by == 'name' %}selected{% endif %}>Name A-Z</option>
+                <option value="-name" {% if sort_by == '-name' %}selected{% endif %}>Name Z-A</option>
+                <option value="-total_orders" {% if sort_by == '-total_orders' %}selected{% endif %}>Most Orders</option>
+              </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+              <button type="submit" class="btn btn-primary w-100">
+                <i class="bi bi-search me-1"></i> Search
+              </button>
+            </div>
+          </div>
+          {% if search_query or status_filter %}
+            <div class="mt-3">
+              <a href="{% url 'adminside:customers' %}" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-x-circle me-1"></i> Clear Filters
+              </a>
+            </div>
+          {% endif %}
+        </form>
+      </div>
+    </div>
+
+    <!-- Customers List -->
+    <div class="card customers-card">
+      <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="bi bi-list me-2"></i>Customers List</h5>
+        {% if customers.paginator.count > 0 %}
+          <div class="small text-muted">
+            Showing {{ customers.start_index }}-{{ customers.end_index }} of {{ customers.paginator.count }}
+          </div>
+        {% endif %}
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead>
+              <tr>
+                <th scope="col">
+                  <input type="checkbox" class="form-check-input" id="selectAll">
+                </th>
+                <th scope="col">#</th>
+                <th scope="col">Customer</th>
+                <th scope="col">Contact</th>
+                <th scope="col">Company</th>
+                <th scope="col">Orders</th>
+                <th scope="col">Total Spent</th>
+                <th scope="col">Status</th>
+                <th scope="col">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for customer in customers %}
+              <tr>
+                <td>
+                  <input type="checkbox" class="form-check-input customer-checkbox" 
+                         value="{{ customer.id }}" data-status="{{ customer.customer_profile.account_status }}">
+                </td>
+                <td>{{ forloop.counter|add:customers.start_index|add:-1 }}</td>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <div class="customer-avatar me-2">
+                      {% if customer.first_name %}
+                        {{ customer.first_name|slice:":1"|upper }}{{ customer.last_name|slice:":1"|upper }}
+                      {% else %}
+                        {{ customer.username|slice:":2"|upper }}
+                      {% endif %}
+                    </div>
+                    <div>
+                      <div class="fw-semibold">
+                        {% if customer.get_full_name %}
+                          {{ customer.get_full_name }}
+                        {% else %}
+                          {{ customer.username }}
+                        {% endif %}
+                      </div>
+                      <small class="text-muted">Joined {{ customer.date_joined|date:"M d, Y" }}</small>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div>{{ customer.email }}</div>
+                  {% if customer.customer_profile.phone %}
+                    <small class="text-muted">{{ customer.customer_profile.phone }}</small>
+                  {% endif %}
+                </td>
+                <td>{{ customer.customer_profile.company|default:"-" }}</td>
+                <td>
+                  <span class="badge bg-secondary">{{ customer.customer_profile.total_orders|default:0 }}</span>
+                </td>
+                <td>${{ customer.customer_profile.total_spent|default:"0.00"|floatformat:2 }}</td>
+                <td>
+                  {% if customer.is_active and customer.customer_profile.account_status == 'active' %}
+                    <span class="badge status-badge status-active">Active</span>
+                  {% elif customer.customer_profile.account_status == 'suspended' %}
+                    <span class="badge status-badge status-suspended">Suspended</span>
+                  {% elif customer.customer_profile.account_status == 'pending' %}
+                    <span class="badge status-badge status-pending">Pending</span>
+                  {% else %}
+                    <span class="badge status-badge status-inactive">Inactive</span>
+                  {% endif %}
+                </td>
+                <td class="action-buttons">
+                  <a href="{% url 'adminside:customer_detail' customer.id %}" 
+                     class="btn btn-sm btn-outline-primary" title="View Details" data-bs-toggle="tooltip">
+                    <i class="bi bi-eye"></i>
+                  </a>
+                  <div class="btn-group">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                            type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                      <i class="bi bi-three-dots"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                      <li>
+                        <a class="dropdown-item" href="{% url 'adminside:customer_detail' customer.id %}">
+                          <i class="bi bi-person me-2"></i> View Profile
+                        </a>
+                      </li>
+                      <li>
+                        <a class="dropdown-item" href="/adminside/orders/?customer={{ customer.id }}">
+                          <i class="bi bi-box me-2"></i> View Orders
+                        </a>
+                      </li>
+                      <li>
+                        <a class="dropdown-item" href="mailto:{{ customer.email }}">
+                          <i class="bi bi-envelope me-2"></i> Send Email
+                        </a>
+                      </li>
+                      <li><hr class="dropdown-divider"></li>
+                      {% if customer.is_active and customer.customer_profile.account_status == 'active' %}
+                        <li>
+                          <button class="dropdown-item text-warning" onclick="showDeactivateModal({{ customer.id }}, '{{ customer.email }}')">
+                            <i class="bi bi-pause-circle me-2"></i> Deactivate
+                          </button>
+                        </li>
+                        <li>
+                          <button class="dropdown-item text-danger" onclick="showSuspendModal({{ customer.id }}, '{{ customer.email }}')">
+                            <i class="bi bi-exclamation-triangle me-2"></i> Suspend
+                          </button>
+                        </li>
+                      {% else %}
+                        <li>
+                          <form method="post" action="{% url 'adminside:toggle_customer_status' customer.id %}" class="d-inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="activate">
+                            <button type="submit" class="dropdown-item text-success">
+                              <i class="bi bi-play-circle me-2"></i> Activate
+                            </button>
+                          </form>
+                        </li>
+                      {% endif %}
+                    </ul>
+                  </div>
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="9" class="text-center py-4">
+                  <i class="bi bi-people fs-1 text-muted"></i>
+                  <p class="mt-2 mb-0">No customers found matching your criteria.</p>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if customers.has_other_pages %}
+        <div class="d-flex justify-content-between align-items-center p-3 border-top">
+          <div class="small text-muted">
+            Page {{ customers.number }} of {{ customers.paginator.num_pages }}
+          </div>
+          <nav aria-label="Customers pagination">
+            <ul class="pagination pagination-sm mb-0">
+              {% if customers.has_previous %}
+                <li class="page-item">
+                  <a class="page-link" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}">
+                    <i class="bi bi-chevron-double-left"></i>
+                  </a>
+                </li>
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ customers.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}">
+                    <i class="bi bi-chevron-left"></i>
+                  </a>
+                </li>
+              {% else %}
+                <li class="page-item disabled">
+                  <span class="page-link"><i class="bi bi-chevron-double-left"></i></span>
+                </li>
+                <li class="page-item disabled">
+                  <span class="page-link"><i class="bi bi-chevron-left"></i></span>
+                </li>
+              {% endif %}
+
+              {% for num in customers.paginator.page_range %}
+                {% if customers.number == num %}
+                  <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                {% elif num > customers.number|add:'-3' and num < customers.number|add:'3' %}
+                  <li class="page-item">
+                    <a class="page-link" href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}">{{ num }}</a>
+                  </li>
+                {% endif %}
+              {% endfor %}
+
+              {% if customers.has_next %}
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ customers.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}">
+                    <i class="bi bi-chevron-right"></i>
+                  </a>
+                </li>
+                <li class="page-item">
+                  <a class="page-link" href="?page={{ customers.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}">
+                    <i class="bi bi-chevron-double-right"></i>
+                  </a>
+                </li>
+              {% else %}
+                <li class="page-item disabled">
+                  <span class="page-link"><i class="bi bi-chevron-right"></i></span>
+                </li>
+                <li class="page-item disabled">
+                  <span class="page-link"><i class="bi bi-chevron-double-right"></i></span>
+                </li>
+              {% endif %}
+            </ul>
+          </nav>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Bulk Action Bar -->
+  <div class="bulk-action-bar" id="bulkActionBar">
+    <div class="d-flex justify-content-between align-items-center">
+      <div>
+        <i class="bi bi-check2-square me-2"></i>
+        <span id="selectedCount">0</span> customers selected
+      </div>
+      <div>
+        <button class="btn btn-sm btn-success me-2" onclick="bulkAction('activate')">
+          <i class="bi bi-check-circle me-1"></i> Activate
+        </button>
+        <button class="btn btn-sm btn-warning me-2" onclick="showBulkDeactivateModal()">
+          <i class="bi bi-pause-circle me-1"></i> Deactivate
+        </button>
+        <button class="btn btn-sm btn-outline-light" onclick="clearSelection()">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Deactivate Modal -->
+  <div class="modal fade" id="deactivateModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Deactivate Customer</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <form method="post" id="deactivateForm">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="deactivate">
+          <div class="modal-body">
+            <div class="alert alert-warning d-flex align-items-center">
+              <i class="bi bi-exclamation-triangle-fill flex-shrink-0 me-2"></i>
+              <div>
+                <strong>Warning:</strong> Deactivating this customer will prevent them from logging in and placing new orders.
+              </div>
+            </div>
+            <p>Are you sure you want to deactivate <strong id="deactivateCustomerEmail"></strong>?</p>
+            <div class="mb-3">
+              <label for="reason" class="form-label">Reason for deactivation:</label>
+              <textarea class="form-control" id="reason" name="reason" rows="3" required
+                        placeholder="Please provide a reason for deactivation..."></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-warning">
+              <i class="bi bi-pause-circle me-1"></i> Deactivate Customer
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Suspend Modal -->
+  <div class="modal fade" id="suspendModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Suspend Customer</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <form method="post" id="suspendForm">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="suspend">
+          <div class="modal-body">
+            <div class="alert alert-danger d-flex align-items-center">
+              <i class="bi bi-exclamation-triangle-fill flex-shrink-0 me-2"></i>
+              <div>
+                <strong>Warning:</strong> Suspending a customer is reserved for serious violations of terms of service.
+              </div>
+            </div>
+            <p>Are you sure you want to suspend <strong id="suspendCustomerEmail"></strong>?</p>
+            <div class="mb-3">
+              <label for="suspend_reason" class="form-label">Reason for suspension:</label>
+              <textarea class="form-control" id="suspend_reason" name="reason" rows="3" required
+                        placeholder="Please provide a detailed reason for suspension..."></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-danger">
+              <i class="bi bi-exclamation-triangle me-1"></i> Suspend Customer
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bulk Deactivate Modal -->
+  <div class="modal fade" id="bulkDeactivateModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Bulk Deactivate Customers</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <form method="post" action="{% url 'adminside:bulk_customer_action' %}" id="bulkDeactivateForm">
+          {% csrf_token %}
+          <input type="hidden" name="bulk_action" value="deactivate">
+          <div id="bulkCustomerIds"></div>
+          <div class="modal-body">
+            <div class="alert alert-warning d-flex align-items-center">
+              <i class="bi bi-exclamation-triangle-fill flex-shrink-0 me-2"></i>
+              <div>
+                <strong>Warning:</strong> This will deactivate <span id="bulkCount">0</span> selected customers.
+              </div>
+            </div>
+            <div class="mb-3">
+              <label for="bulk_reason" class="form-label">Reason for bulk deactivation:</label>
+              <textarea class="form-control" id="bulk_reason" name="bulk_reason" rows="3" required
+                        placeholder="Please provide a reason for deactivation..."></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-warning">
+              <i class="bi bi-pause-circle me-1"></i> Deactivate Customers
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1050">
+    <div id="customerToast" class="toast align-items-center text-white bg-success" role="alert" aria-live="assertive"
+      aria-atomic="true">
+      <div class="d-flex">
+        <div class="toast-body">
+          <i class="bi bi-check-circle-fill me-2"></i>
+          <span id="toastMessage">Operation completed successfully.</span>
+        </div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+          aria-label="Close"></button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+
+    // Mobile sidebar toggle
+    document.getElementById('sidebarToggle').addEventListener('click', function() {
+      document.getElementById('sidebar').classList.toggle('show');
+    });
+
+    // Close sidebar when clicking outside on mobile
+    document.addEventListener('click', function(event) {
+      const sidebar = document.getElementById('sidebar');
+      const toggle = document.getElementById('sidebarToggle');
+      
+      if (!sidebar.contains(event.target) && !toggle.contains(event.target)) {
+        sidebar.classList.remove('show');
+      }
+    });
+
+    // Select all checkbox functionality
+    document.getElementById('selectAll').addEventListener('change', function() {
+      const checkboxes = document.querySelectorAll('.customer-checkbox');
+      checkboxes.forEach(checkbox => {
+        checkbox.checked = this.checked;
+      });
+      updateBulkActionBar();
+    });
+
+    // Individual checkbox change
+    document.querySelectorAll('.customer-checkbox').forEach(checkbox => {
+      checkbox.addEventListener('change', updateBulkActionBar);
+    });
+
+    // Update bulk action bar
+    function updateBulkActionBar() {
+      const checkedBoxes = document.querySelectorAll('.customer-checkbox:checked');
+      const bulkActionBar = document.getElementById('bulkActionBar');
+      const selectedCount = document.getElementById('selectedCount');
+      
+      if (checkedBoxes.length > 0) {
+        bulkActionBar.classList.add('show');
+        selectedCount.textContent = checkedBoxes.length;
+        
+        // Update select all checkbox state
+        const totalBoxes = document.querySelectorAll('.customer-checkbox').length;
+        const selectAll = document.getElementById('selectAll');
+        selectAll.checked = checkedBoxes.length === totalBoxes;
+        selectAll.indeterminate = checkedBoxes.length > 0 && checkedBoxes.length < totalBoxes;
+      } else {
+        bulkActionBar.classList.remove('show');
+        document.getElementById('selectAll').checked = false;
+        document.getElementById('selectAll').indeterminate = false;
+      }
+    }
+
+    // Clear selection
+    function clearSelection() {
+      document.getElementById('selectAll').checked = false;
+      document.querySelectorAll('.customer-checkbox').forEach(checkbox => {
+        checkbox.checked = false;
+      });
+      updateBulkActionBar();
+    }
+
+    // Show deactivate modal
+    function showDeactivateModal(customerId, customerEmail) {
+      const form = document.getElementById('deactivateForm');
+      form.action = `/adminside/customers/${customerId}/toggle/`;
+      document.getElementById('deactivateCustomerEmail').textContent = customerEmail;
+      
+      const modal = new bootstrap.Modal(document.getElementById('deactivateModal'));
+      modal.show();
+    }
+
+    // Show suspend modal
+    function showSuspendModal(customerId, customerEmail) {
+      const form = document.getElementById('suspendForm');
+      form.action = `/adminside/customers/${customerId}/toggle/`;
+      document.getElementById('suspendCustomerEmail').textContent = customerEmail;
+      
+      const modal = new bootstrap.Modal(document.getElementById('suspendModal'));
+      modal.show();
+    }
+
+    // Show bulk deactivate modal
+    function showBulkDeactivateModal() {
+      const checkedBoxes = document.querySelectorAll('.customer-checkbox:checked');
+      const bulkCustomerIds = document.getElementById('bulkCustomerIds');
+      const bulkCount = document.getElementById('bulkCount');
+      
+      // Clear previous inputs
+      bulkCustomerIds.innerHTML = '';
+      
+      // Add hidden inputs for each selected customer
+      checkedBoxes.forEach(checkbox => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'customer_ids[]';
+        input.value = checkbox.value;
+        bulkCustomerIds.appendChild(input);
+      });
+      
+      bulkCount.textContent = checkedBoxes.length;
+      
+      const modal = new bootstrap.Modal(document.getElementById('bulkDeactivateModal'));
+      modal.show();
+    }
+
+    // Bulk action
+    function bulkAction(action) {
+      if (action === 'activate') {
+        if (confirm('Are you sure you want to activate the selected customers?')) {
+          const form = document.createElement('form');
+          form.method = 'POST';
+          form.action = '{% url "adminside:bulk_customer_action" %}';
+          
+          // Add CSRF token
+          const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+          const csrfInput = document.createElement('input');
+          csrfInput.type = 'hidden';
+          csrfInput.name = 'csrfmiddlewaretoken';
+          csrfInput.value = csrfToken;
+          form.appendChild(csrfInput);
+          
+          // Add action
+          const actionInput = document.createElement('input');
+          actionInput.type = 'hidden';
+          actionInput.name = 'bulk_action';
+          actionInput.value = action;
+          form.appendChild(actionInput);
+          
+          // Add selected customer IDs
+          const checkedBoxes = document.querySelectorAll('.customer-checkbox:checked');
+          checkedBoxes.forEach(checkbox => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'customer_ids[]';
+            input.value = checkbox.value;
+            form.appendChild(input);
+          });
+          
+          // Show loading overlay
+          document.getElementById('loadingOverlay').classList.add('show');
+          
+          document.body.appendChild(form);
+          form.submit();
+        }
+      }
+    }
+
+    // Show toast notification
+    function showToast(message, type = 'success') {
+      const toast = document.getElementById('customerToast');
+      const toastMessage = document.getElementById('toastMessage');
+      
+      // Set message
+      toastMessage.textContent = message;
+      
+      // Set toast type/color
+      toast.className = 'toast align-items-center text-white';
+      
+      switch(type) {
+        case 'success':
+          toast.classList.add('bg-success');
+          toastMessage.innerHTML = '<i class="bi bi-check-circle-fill me-2"></i>' + message;
+          break;
+        case 'warning':
+          toast.classList.add('bg-warning');
+          toastMessage.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-2"></i>' + message;
+          break;
+        case 'danger':
+          toast.classList.add('bg-danger');
+          toastMessage.innerHTML = '<i class="bi bi-x-circle-fill me-2"></i>' + message;
+          break;
+        default:
+          toast.classList.add('bg-info');
+          toastMessage.innerHTML = '<i class="bi bi-info-circle-fill me-2"></i>' + message;
+      }
+      
+      // Show toast
+      const bsToast = new bootstrap.Toast(toast);
+      bsToast.show();
+    }
+
+    // Handle form submission with loading
+    document.querySelectorAll('form').forEach(form => {
+      form.addEventListener('submit', function() {
+        // Don't show loading for search forms
+        if (!this.classList.contains('filter-form')) {
+          document.getElementById('loadingOverlay').classList.add('show');
+        }
+      });
+    });
+
+    // Auto-dismiss alerts after 5 seconds
+    setTimeout(function() {
+      const alerts = document.querySelectorAll('.alert-dismissible');
+      alerts.forEach(alert => {
+        const bsAlert = new bootstrap.Alert(alert);
+        bsAlert.close();
+      });
+    }, 5000);
+  </script>
+</body>
+</html>

@@ -1,0 +1,1027 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DevERP Admin - Customer Detail</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        /* Sidebar styling */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
+            padding: 48px 0 0;
+            box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+            background-color: #f8f9fa;
+            width: 240px;
+            transition: all 0.3s;
+        }
+
+        .sidebar-sticky {
+            position: relative;
+            top: 0;
+            height: calc(100vh - 48px);
+            padding-top: 0.5rem;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+
+        .sidebar .nav-link {
+            font-weight: 500;
+            color: #333;
+            padding: 0.75rem 1rem;
+        }
+
+        .sidebar .nav-link.active {
+            color: #0d6efd;
+        }
+
+        .sidebar .nav-link:hover {
+            color: #0a58ca;
+            background-color: #e9ecef;
+        }
+
+        .sidebar .nav-link .bi {
+            margin-right: 0.5rem;
+        }
+
+        /* Main content */
+        .main-content {
+            margin-left: 240px;
+            padding: 2rem;
+            transition: all 0.3s;
+        }
+
+        /* Mobile sidebar toggle */
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            z-index: 1001;
+            background: #0d6efd;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 0.5rem 0.75rem;
+        }
+
+        @media (max-width: 767.98px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.show {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 1rem;
+            }
+
+            .sidebar-toggle {
+                display: block;
+            }
+        }
+
+        /* Customer header */
+        .customer-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .customer-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: 600;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+        }
+
+        /* Status badges */
+        .status-badge {
+            font-size: 0.85rem;
+            padding: 0.35em 0.65em;
+            border-radius: 0.25rem;
+            font-weight: 600;
+        }
+
+        .status-active {
+            background-color: #198754;
+            color: white;
+        }
+
+        .status-inactive {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .status-suspended {
+            background-color: #fd7e14;
+            color: white;
+        }
+
+        .status-pending {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        /* Info cards */
+        .info-card {
+            border-radius: 0.5rem;
+            overflow: hidden;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            border: none;
+            height: 100%;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .info-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+
+        .info-card .card-header {
+            background-color: #f8f9fa;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+            font-weight: 600;
+        }
+
+        .info-label {
+            color: #6c757d;
+            font-size: 0.875rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .info-value {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: #212529;
+        }
+
+        /* Activity timeline */
+        .timeline {
+            position: relative;
+            padding: 0;
+            list-style: none;
+        }
+
+        .timeline:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #e9ecef;
+            left: 1.5rem;
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-left: 3.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .timeline-icon {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 3rem;
+            height: 3rem;
+            border-radius: 50%;
+            background: #f8f9fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #fff;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        }
+
+        .timeline-content {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 0.5rem;
+        }
+
+        /* Order table */
+        .order-table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .order-status {
+            font-size: 0.75rem;
+            padding: 0.25em 0.5em;
+            border-radius: 0.25rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .order-status-pending {
+            background-color: #ffc107;
+            color: #000;
+        }
+
+        .order-status-processing {
+            background-color: #17a2b8;
+            color: white;
+        }
+
+        .order-status-completed {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .order-status-cancelled {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        /* Notes section */
+        .note-card {
+            background-color: #f8f9fa;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            border-left: 3px solid #0d6efd;
+        }
+
+        .note-meta {
+            font-size: 0.875rem;
+            color: #6c757d;
+        }
+
+        /* Action buttons */
+        .action-button {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .action-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.15);
+        }
+
+        /* Metric cards */
+        .metric-card {
+            text-align: center;
+            padding: 1.5rem;
+            background-color: #f8f9fa;
+            border-radius: 0.5rem;
+            height: 100%;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #212529;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-label {
+            color: #6c757d;
+            font-size: 0.875rem;
+        }
+
+        /* Tab content */
+        .tab-pane {
+            padding-top: 1.5rem;
+        }
+
+        /* Print styles */
+        @media print {
+            .sidebar,
+            .sidebar-toggle,
+            .btn,
+            .action-buttons {
+                display: none !important;
+            }
+
+            .main-content {
+                margin-left: 0 !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Mobile Sidebar Toggle -->
+    <button class="sidebar-toggle" id="sidebarToggle">
+        <i class="bi bi-list"></i>
+    </button>
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-sticky">
+            <div class="px-3 mb-3">
+                <h5 class="text-primary"><i class="bi bi-gem me-2"></i>DevERP Admin</h5>
+            </div>
+            
+            <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                <span>Management</span>
+            </h6>
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'adminside:dashboard' %}">
+                        <i class="bi bi-speedometer2"></i> Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'adminside:orders' %}">
+                        <i class="bi bi-box"></i> Orders
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'adminside:inventory' %}">
+                        <i class="bi bi-grid"></i> Inventory
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="{% url 'adminside:customers' %}">
+                        <i class="bi bi-people"></i> Customers
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'adminside:reports' %}">
+                        <i class="bi bi-graph-up"></i> Reports
+                    </a>
+                </li>
+            </ul>
+
+            <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                <span>Settings</span>
+            </h6>
+            <ul class="nav flex-column mb-4">
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'adminside:settings' %}">
+                        <i class="bi bi-gear"></i> System Settings
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'adminside:users' %}">
+                        <i class="bi bi-person-gear"></i> User Management
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'logout' %}">
+                        <i class="bi bi-box-arrow-right"></i> Logout
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'adminside:dashboard' %}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'adminside:customers' %}">Customers</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{ customer.get_full_name|default:customer.username }}</li>
+            </ol>
+        </nav>
+
+        <!-- Customer Header -->
+        <div class="customer-header">
+            <div class="row align-items-center">
+                <div class="col-auto">
+                    <div class="customer-avatar">
+                        {% if customer.first_name %}
+                            {{ customer.first_name|slice:":1"|upper }}{{ customer.last_name|slice:":1"|upper }}
+                        {% else %}
+                            {{ customer.username|slice:":2"|upper }}
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col">
+                    <h1 class="h2 mb-1">
+                        {% if customer.get_full_name %}
+                            {{ customer.get_full_name }}
+                        {% else %}
+                            {{ customer.username }}
+                        {% endif %}
+                    </h1>
+                    <div class="d-flex align-items-center gap-3 flex-wrap">
+                        <span><i class="bi bi-envelope me-1"></i> {{ customer.email }}</span>
+                        {% if profile.phone %}
+                            <span><i class="bi bi-telephone me-1"></i> {{ profile.phone }}</span>
+                        {% endif %}
+                        {% if profile.company %}
+                            <span><i class="bi bi-building me-1"></i> {{ profile.company }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-auto">
+                    {% if customer.is_active and profile.account_status == 'active' %}
+                        <span class="badge status-badge status-active">
+                            <i class="bi bi-check-circle me-1"></i> Active
+                        </span>
+                    {% elif profile.account_status == 'suspended' %}
+                        <span class="badge status-badge status-suspended">
+                            <i class="bi bi-exclamation-triangle me-1"></i> Suspended
+                        </span>
+                    {% elif profile.account_status == 'pending' %}
+                        <span class="badge status-badge status-pending">
+                            <i class="bi bi-clock me-1"></i> Pending
+                        </span>
+                    {% else %}
+                        <span class="badge status-badge status-inactive">
+                            <i class="bi bi-x-circle me-1"></i> Inactive
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Flash Messages -->
+        {% if messages %}
+            <div class="alert-container mb-3">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Action Buttons -->
+        <div class="mb-4">
+            <div class="btn-group" role="group">
+                <a href="mailto:{{ customer.email }}" class="btn btn-primary action-button">
+                    <i class="bi bi-envelope me-2"></i> Send Email
+                </a>
+                <a href="/adminside/orders/?customer={{ customer.id }}" class="btn btn-outline-primary action-button">
+                    <i class="bi bi-box me-2"></i> View Orders
+                </a>
+                <button type="button" class="btn btn-outline-primary action-button" data-bs-toggle="modal" data-bs-target="#addNoteModal">
+                    <i class="bi bi-pencil-square me-2"></i> Add Note
+                </button>
+            </div>
+            
+            <div class="btn-group float-end" role="group">
+                {% if customer.is_active and profile.account_status == 'active' %}
+                    <button type="button" class="btn btn-warning action-button" data-bs-toggle="modal" data-bs-target="#deactivateModal">
+                        <i class="bi bi-pause-circle me-2"></i> Deactivate
+                    </button>
+                    <button type="button" class="btn btn-danger action-button" data-bs-toggle="modal" data-bs-target="#suspendModal">
+                        <i class="bi bi-exclamation-triangle me-2"></i> Suspend
+                    </button>
+                {% else %}
+                    <form method="post" action="{% url 'adminside:toggle_customer_status' customer.id %}" class="d-inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="activate">
+                        <button type="submit" class="btn btn-success action-button">
+                            <i class="bi bi-play-circle me-2"></i> Activate
+                        </button>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Metrics Row -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-3">
+                <div class="metric-card">
+                    <div class="metric-value">{{ profile.total_orders|default:0 }}</div>
+                    <div class="metric-label">Total Orders</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-card">
+                    <div class="metric-value">${{ profile.total_spent|default:"0.00"|floatformat:2 }}</div>
+                    <div class="metric-label">Total Spent</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-card">
+                    <div class="metric-value">
+                        {% if profile.total_orders > 0 %}
+                            ${{ profile.total_spent|default:0|floatformat:2|div:profile.total_orders|floatformat:2 }}
+                        {% else %}
+                            $0.00
+                        {% endif %}
+                    </div>
+                    <div class="metric-label">Average Order Value</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-card">
+                    <div class="metric-value">
+                        {% if profile.last_order_date %}
+                            {{ profile.last_order_date|timesince }} ago
+                        {% else %}
+                            Never
+                        {% endif %}
+                    </div>
+                    <div class="metric-label">Last Order</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <ul class="nav nav-tabs mb-4" id="customerTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="details-tab" data-bs-toggle="tab" data-bs-target="#details" type="button" role="tab">
+                    <i class="bi bi-person-lines-fill me-2"></i> Details
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="orders-tab" data-bs-toggle="tab" data-bs-target="#orders" type="button" role="tab">
+                    <i class="bi bi-box me-2"></i> Orders ({{ orders.count }})
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="activity-tab" data-bs-toggle="tab" data-bs-target="#activity" type="button" role="tab">
+                    <i class="bi bi-clock-history me-2"></i> Activity
+                </button>
+            </li>
+        </ul>
+
+        <!-- Tab Content -->
+        <div class="tab-content" id="customerTabsContent">
+            <!-- Details Tab -->
+            <div class="tab-pane fade show active" id="details" role="tabpanel">
+                <div class="row g-4">
+                    <!-- Account Information -->
+                    <div class="col-md-6">
+                        <div class="card info-card">
+                            <div class="card-header">
+                                <i class="bi bi-person-badge me-2"></i> Account Information
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-6">
+                                        <div class="info-label">Username</div>
+                                        <div class="info-value">{{ customer.username }}</div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="info-label">Email</div>
+                                        <div class="info-value">{{ customer.email }}</div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="info-label">Date Joined</div>
+                                        <div class="info-value">{{ customer.date_joined|date:"M d, Y" }}</div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="info-label">Last Login</div>
+                                        <div class="info-value">
+                                            {% if customer.last_login %}
+                                                {{ customer.last_login|date:"M d, Y H:i" }}
+                                            {% else %}
+                                                Never
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="info-label">Account Type</div>
+                                        <div class="info-value">{{ profile.get_business_type_display|default:"Retail" }}</div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="info-label">Customer ID</div>
+                                        <div class="info-value">#{{ customer.id }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contact Information -->
+                    <div class="col-md-6">
+                        <div class="card info-card">
+                            <div class="card-header">
+                                <i class="bi bi-telephone me-2"></i> Contact Information
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <div class="info-label">Full Name</div>
+                                        <div class="info-value">
+                                            {% if customer.get_full_name %}
+                                                {{ customer.get_full_name }}
+                                            {% else %}
+                                                <span class="text-muted">Not provided</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="info-label">Phone</div>
+                                        <div class="info-value">
+                                            {% if profile.phone %}
+                                                {{ profile.phone }}
+                                            {% else %}
+                                                <span class="text-muted">Not provided</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="info-label">Company</div>
+                                        <div class="info-value">
+                                            {% if profile.company %}
+                                                {{ profile.company }}
+                                            {% else %}
+                                                <span class="text-muted">Not provided</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="info-label">Tax ID</div>
+                                        <div class="info-value">
+                                            {% if profile.tax_id %}
+                                                {{ profile.tax_id }}
+                                            {% else %}
+                                                <span class="text-muted">Not provided</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Shipping Address -->
+                    <div class="col-12">
+                        <div class="card info-card">
+                            <div class="card-header">
+                                <i class="bi bi-geo-alt me-2"></i> Shipping Address
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <div class="info-label">Address Line 1</div>
+                                        <div class="info-value">
+                                            {% if profile.address_line1 %}
+                                                {{ profile.address_line1 }}
+                                            {% else %}
+                                                <span class="text-muted">Not provided</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="info-label">Address Line 2</div>
+                                        <div class="info-value">
+                                            {% if profile.address_line2 %}
+                                                {{ profile.address_line2 }}
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="info-label">City</div>
+                                        <div class="info-value">
+                                            {% if profile.city %}
+                                                {{ profile.city }}
+                                            {% else %}
+                                                <span class="text-muted">Not provided</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="info-label">State/Province</div>
+                                        <div class="info-value">
+                                            {% if profile.state %}
+                                                {{ profile.state }}
+                                            {% else %}
+                                                <span class="text-muted">Not provided</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="info-label">Postal Code</div>
+                                        <div class="info-value">
+                                            {% if profile.postal_code %}
+                                                {{ profile.postal_code }}
+                                            {% else %}
+                                                <span class="text-muted">Not provided</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="info-label">Country</div>
+                                        <div class="info-value">
+                                            {% if profile.country %}
+                                                {{ profile.country }}
+                                            {% else %}
+                                                <span class="text-muted">Not provided</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Account Status Details (if deactivated) -->
+                    {% if profile.deactivated_at %}
+                    <div class="col-12">
+                        <div class="card info-card border-warning">
+                            <div class="card-header bg-warning bg-opacity-10">
+                                <i class="bi bi-info-circle me-2"></i> Deactivation Details
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <div class="info-label">Deactivated At</div>
+                                        <div class="info-value">{{ profile.deactivated_at|date:"M d, Y H:i" }}</div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="info-label">Deactivated By</div>
+                                        <div class="info-value">{{ profile.deactivated_by.get_full_name|default:profile.deactivated_by.username }}</div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="info-label">Reason</div>
+                                        <div class="info-value">{{ profile.deactivation_reason|default:"No reason provided" }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Orders Tab -->
+            <div class="tab-pane fade" id="orders" role="tabpanel">
+                <div class="card">
+                    <div class="card-body">
+                        {% if orders %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Order ID</th>
+                                        <th>Date</th>
+                                        <th>Items</th>
+                                        <th>Total</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for order in orders %}
+                                    <tr>
+                                        <td>
+                                            <a href="{% url 'adminside:order_detail' order.id %}" class="text-decoration-none">
+                                                #{{ order.id }}
+                                            </a>
+                                        </td>
+                                        <td>{{ order.created_at|date:"M d, Y" }}</td>
+                                        <td>{{ order.items.count }} items</td>
+                                        <td>${{ order.total|floatformat:2 }}</td>
+                                        <td>
+                                            <span class="badge order-status order-status-{{ order.status|lower }}">
+                                                {{ order.get_status_display }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'adminside:order_detail' order.id %}" class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="text-center mt-3">
+                            <a href="/adminside/orders/?customer={{ customer.id }}" class="btn btn-primary">
+                                View All Orders <i class="bi bi-arrow-right ms-2"></i>
+                            </a>
+                        </div>
+                        {% else %}
+                        <div class="text-center py-5">
+                            <i class="bi bi-box fs-1 text-muted"></i>
+                            <p class="mt-3 text-muted">No orders found for this customer.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Activity Tab -->
+            <div class="tab-pane fade" id="activity" role="tabpanel">
+                <div class="card">
+                    <div class="card-body">
+                        {% if activities %}
+                        <ul class="timeline">
+                            {% for activity in activities %}
+                            <li class="timeline-item">
+                                <div class="timeline-icon">
+                                    {% if activity.action == 'CREATE' %}
+                                        <i class="bi bi-plus-circle text-success"></i>
+                                    {% elif activity.action == 'UPDATE' %}
+                                        <i class="bi bi-pencil text-primary"></i>
+                                    {% elif activity.action == 'DELETE' %}
+                                        <i class="bi bi-trash text-danger"></i>
+                                    {% elif activity.action == 'ACTIVATE' %}
+                                        <i class="bi bi-check-circle text-success"></i>
+                                    {% elif activity.action == 'DEACTIVATE' %}
+                                        <i class="bi bi-x-circle text-warning"></i>
+                                    {% else %}
+                                        <i class="bi bi-info-circle text-info"></i>
+                                    {% endif %}
+                                </div>
+                                <div class="timeline-content">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <strong>{{ activity.get_action_display }}</strong> by {{ activity.user.get_full_name|default:activity.user.username }}
+                                            <div class="text-muted small">{{ activity.details }}</div>
+                                        </div>
+                                        <div class="text-muted small">
+                                            {{ activity.timestamp|date:"M d, Y H:i" }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        {% else %}
+                        <div class="text-center py-5">
+                            <i class="bi bi-clock-history fs-1 text-muted"></i>
+                            <p class="mt-3 text-muted">No activity recorded for this customer.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Deactivate Modal -->
+    <div class="modal fade" id="deactivateModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Deactivate Customer</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="post" action="{% url 'adminside:toggle_customer_status' customer.id %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="deactivate">
+                    <div class="modal-body">
+                        <div class="alert alert-warning d-flex align-items-center">
+                            <i class="bi bi-exclamation-triangle-fill flex-shrink-0 me-2"></i>
+                            <div>
+                                <strong>Warning:</strong> Deactivating this customer will prevent them from logging in and placing new orders.
+                            </div>
+                        </div>
+                        <p>Are you sure you want to deactivate <strong>{{ customer.email }}</strong>?</p>
+                        <div class="mb-3">
+                            <label for="reason" class="form-label">Reason for deactivation:</label>
+                            <textarea class="form-control" id="reason" name="reason" rows="3" required
+                                      placeholder="Please provide a reason for deactivation..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-warning">
+                            <i class="bi bi-pause-circle me-1"></i> Deactivate Customer
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Suspend Modal -->
+    <div class="modal fade" id="suspendModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Suspend Customer</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="post" action="{% url 'adminside:toggle_customer_status' customer.id %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="suspend">
+                    <div class="modal-body">
+                        <div class="alert alert-danger d-flex align-items-center">
+                            <i class="bi bi-exclamation-triangle-fill flex-shrink-0 me-2"></i>
+                            <div>
+                                <strong>Warning:</strong> Suspending a customer is reserved for serious violations of terms of service.
+                            </div>
+                        </div>
+                        <p>Are you sure you want to suspend <strong>{{ customer.email }}</strong>?</p>
+                        <div class="mb-3">
+                            <label for="suspend_reason" class="form-label">Reason for suspension:</label>
+                            <textarea class="form-control" id="suspend_reason" name="reason" rows="3" required
+                                      placeholder="Please provide a detailed reason for suspension..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-exclamation-triangle me-1"></i> Suspend Customer
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Note Modal -->
+    <div class="modal fade" id="addNoteModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Customer Note</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="post" action="{% url 'adminside:customer_notes' customer.id %}">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="note" class="form-label">Note:</label>
+                            <textarea class="form-control" id="note" name="note" rows="4" required
+                                      placeholder="Enter your note about this customer..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-plus-circle me-1"></i> Add Note
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Mobile sidebar toggle
+        document.getElementById('sidebarToggle').addEventListener('click', function() {
+            document.getElementById('sidebar').classList.toggle('show');
+        });
+
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', function(event) {
+            const sidebar = document.getElementById('sidebar');
+            const toggle = document.getElementById('sidebarToggle');
+            
+            if (!sidebar.contains(event.target) && !toggle.contains(event.target)) {
+                sidebar.classList.remove('show');
+            }
+        });
+
+        // Auto-dismiss alerts after 5 seconds
+        setTimeout(function() {
+            const alerts = document.querySelectorAll('.alert-dismissible');
+            alerts.forEach(alert => {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            });
+        }, 5000);
+
+        // Print functionality
+        function printCustomerDetails() {
+            window.print();
+        }
+
+        // Initialize tooltips if any
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        });
+
+        // Save active tab to localStorage
+        document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(button => {
+            button.addEventListener('shown.bs.tab', function (e) {
+                localStorage.setItem('activeCustomerTab', e.target.id);
+            });
+        });
+
+        // Restore active tab from localStorage
+        const activeTab = localStorage.getItem('activeCustomerTab');
+        if (activeTab) {
+            const tabTrigger = document.getElementById(activeTab);
+            if (tabTrigger) {
+                const tab = new bootstrap.Tab(tabTrigger);
+                tab.show();
+            }
+        }
+    </script>
+</body>
+</html>

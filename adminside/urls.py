@@ -1,19 +1,25 @@
+# adminside/urls.py
 from django.urls import path
 from . import views
 
 app_name = 'adminside'
 
 urlpatterns = [
-    # Login URL (add this first, before other patterns)
+    # Login URL
     path('login/', views.admin_login, name='admin_login'),
-    
     
     # Dashboard
     path('', views.dashboard, name='dashboard'),
     path('designs/', views.design_list, name='design_list'),
     path('designs/<int:pk>/toggle/', views.toggle_design, name='toggle_design'),
     
-    
+    # Customer management - Complete URLs
+    path('customers/', views.customer_list, name='customers'),
+    path('customers/<int:customer_id>/', views.customer_detail, name='customer_detail'),
+    path('customers/<int:customer_id>/toggle/', views.toggle_customer_status, name='toggle_customer_status'),
+    path('customers/bulk-action/', views.bulk_customer_action, name='bulk_customer_action'),
+    path('customers/export/', views.customer_export, name='customer_export'),
+    path('customers/<int:customer_id>/notes/', views.customer_notes, name='customer_notes'),
     
     # Orders management
     path('orders/', views.orders_list, name='orders'),
@@ -27,10 +33,6 @@ urlpatterns = [
     path('inventory/add/', views.add_inventory_item, name='add_inventory'),
     path('inventory/<str:item_id>/edit/', views.edit_inventory_item, name='edit_inventory'),
     path('inventory/<str:item_id>/delete/', views.delete_inventory_item, name='delete_inventory'),
-    
-    # Customer management
-    path('customers/', views.customers_list, name='customers'),
-    path('customers/<int:customer_id>/', views.customer_detail, name='customer_detail'),
     
     # Reports
     path('reports/', views.reports, name='reports'),

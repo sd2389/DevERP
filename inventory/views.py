@@ -168,11 +168,108 @@ def inventory_dashboard(request):
         return render(request, 'inventory/error.html', {
             'error': str(e)
         })
+        
+        
+@require_GET
+def inventory_list_ajax(request):
+    """
+    AJAX endpoint for loading products in batches with search support
+    """
+    try:
+        page = int(request.GET.get('page', 1))
+        limit = int(request.GET.get('limit', 20))
+        search_query = request.GET.get('search', '').strip()
+        category_filter = request.GET.get('category', 'all')
+        status_filter = request.GET.get('status', 'instock')
+        
+        # Get all products
+        all_products = fetch_products()
+        
+        # Filter by active designs
+        active_nos = set(
+            Design.objects.filter(is_active=True).values_list('design_no', flat=True)
+        )
+        products = [
+            prod for prod in all_products
+            if prod.get('design_no') in active_nos and prod.get('design_no')
+        ]
+        
+        # Apply search filter first (if search exists, return all matching results immediately)
+        if search_query:
+            filtered_products = []
+            search_lower = search_query.lower()
+            
+            for product in products:
+                # Search in design number
+                if search_lower in product.get('design_no', '').lower():
+                    filtered_products.append(product)
+                    continue
+                    
+                # Search in category
+                if search_lower in product.get('category', '').lower():
+                    filtered_products.append(product)
+                    continue
+                    
+                # Search in job numbers
+                found_in_jobs = False
+                for job in product.get('in_stock_jobs', []) + product.get('memo_jobs', []):
+                    if search_lower in job.get('job_no', '').lower():
+                        filtered_products.append(product)
+                        found_in_jobs = True
+                        break
+                
+                if found_in_jobs:
+                    continue
+            
+            # For search, return all results immediately (no pagination)
+            return JsonResponse({
+                'success': True,
+                'products': filtered_products,
+                'has_more': False,
+                'total_count': len(filtered_products),
+                'is_search': True
+            })
+        
+        # Apply category filter
+        if category_filter != 'all':
+            products = [p for p in products if p.get('category', '').lower() == category_filter.lower()]
+        
+        # Apply status filter
+        if status_filter == 'instock':
+            products = [p for p in products if p.get('in_stock_jobs')]
+        elif status_filter == 'notinstock':
+            products = [p for p in products if not p.get('in_stock_jobs')]
+        # 'all' doesn't need filtering
+        
+        # Calculate pagination
+        total_count = len(products)
+        start_idx = (page - 1) * limit
+        end_idx = start_idx + limit
+        
+        paginated_products = products[start_idx:end_idx]
+        has_more = end_idx < total_count
+        
+        return JsonResponse({
+            'success': True,
+            'products': paginated_products,
+            'has_more': has_more,
+            'total_count': total_count,
+            'current_page': page,
+            'is_search': False
+        })
+        
+    except Exception as e:
+        logger.error(f"Error in inventory_list_ajax: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)        
+
 
 def inventory_list(request):
     try:
         all_products = fetch_products()
-        print("Total fetched:", len(all_products))
+        # print("Total fetched:", len(all_products))
 
         # Only active design_nos
         active_nos = set(
@@ -180,17 +277,17 @@ def inventory_list(request):
         )
 
         # Filter products
-        products = [
+        filtered_products = [
             prod for prod in all_products
             if prod.get('design_no') in active_nos and prod.get('design_no')
         ]
 
-        # Diagnostic print for in-stock pieces
-        for p in products[:10]:  # Print top 10
-            print(f"{p['design_no']} - in_stock: {len(p['in_stock_jobs'])}, memo: {len(p['memo_jobs'])}")
-
+        initial_products = filtered_products[:20]
+        
         return render(request, 'inventory/inventory.html', {
-            'products': products
+            'products': initial_products,
+            'has_more': len(filtered_products) > 20,
+            'total_count': len(filtered_products)
         })
     except Exception as e:
         logger.error(f"Error rendering inventory: {str(e)}")

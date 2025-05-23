@@ -63,8 +63,9 @@ CONTENT_SECURITY_POLICY = {
 }
 
 # Login URLs
-LOGIN_URL = 'login'  # Default login URL
-ADMINSIDE_LOGIN_URL = 'admin_login'  # Custom admin login URL
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'inventory:inventory'  # For regular users
+LOGOUT_REDIRECT_URL = 'login'
 
 # Redirect settings
 LOGIN_REDIRECT_URL = 'dashboard'
@@ -87,6 +88,13 @@ INSTALLED_APPS = [
     "inventory",
     "orders",
     "adminside",
+]
+
+PASSWORD_HASHERS = [
+    'django.contrib.auth.hashers.BCryptSHA256PasswordHasher',
+    'django.contrib.auth.hashers.BCryptPasswordHasher',
+    'django.contrib.auth.hashers.PBKDF2PasswordHasher',
+    'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
 ]
 
 STATIC_URL = '/static/'
@@ -156,7 +164,21 @@ DATABASES = {
     }
 }
 
+# Authentication backends
+AUTHENTICATION_BACKENDS = [
+    'adminside.backend.CustomerAuthenticationBackend',  # Your custom backend
+    'django.contrib.auth.backends.ModelBackend',  # Keep the default as fallback
+]
 
+# Login URLs
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'inventory:inventory'  # Default redirect after login
+LOGOUT_REDIRECT_URL = 'login'
+
+# Session settings
+SESSION_COOKIE_AGE = 1209600  # 2 weeks
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+SESSION_SAVE_EVERY_REQUEST = True
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
 
