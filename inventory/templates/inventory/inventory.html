@@ -730,28 +730,684 @@
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-  <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      const scrollButton = document.getElementById('scrollToTopBtn');
-
-      // Show button when user scrolls down 100px
-      window.addEventListener('scroll', function () {
-        if (window.pageYOffset > 100) {
-          scrollButton.classList.add('show');
-        } else {
-          scrollButton.classList.remove('show');
+<!-- Replace the duplicate Product Loading and Pagination script in your inventory.html with this fixed version -->
+<script>
+// Product Loading and Pagination - FIXED VERSION
+document.addEventListener('DOMContentLoaded', function() {
+    // Configuration
+    const PRODUCTS_PER_PAGE = 20;
+    let currentPage = 1;
+    let isLoading = false;
+    let allProductsLoaded = false;
+    
+    // DOM Elements
+    const cardView = document.getElementById('card-view');
+    const loadingOverlay = document.getElementById('loading-overlay');
+    
+    // Create Load More container
+    const loadMoreContainer = document.createElement('div');
+    loadMoreContainer.className = 'col-12 text-center my-4';
+    loadMoreContainer.innerHTML = `
+        <button id="loadMoreBtn" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-down-circle me-2"></i>Load More Products
+        </button>
+    `;
+    
+    // Add Load More button to the end of the card view
+    if (cardView && cardView.parentNode) {
+        cardView.parentNode.insertBefore(loadMoreContainer, cardView.nextSibling);
+        const loadMoreBtn = document.getElementById('loadMoreBtn');
+        
+        // Hide button initially if no more products
+        const hasMore = {% if has_more %}true{% else %}false{% endif %};
+        if (!hasMore) {
+            loadMoreContainer.style.display = 'none';
+            allProductsLoaded = true;
         }
-      });
-
-      // Scroll to top when button is clicked
-      scrollButton.addEventListener('click', function () {
-        window.scrollTo({
-          top: 0,
-          behavior: 'smooth'
+        
+        // Function to load more products
+        function loadMoreProducts() {
+            if (isLoading || allProductsLoaded) return;
+            
+            isLoading = true;
+            currentPage++;
+            showLoading(true);
+            
+            // Get current filter values
+            const searchInput = document.getElementById('searchInput');
+            const typeFilter = document.getElementById('typeFilter');
+            const currentFilter = getActiveStatusFilter();
+            
+            // Build URL with query parameters
+            const params = new URLSearchParams({
+                page: currentPage,
+                limit: PRODUCTS_PER_PAGE,
+                search: searchInput ? searchInput.value : '',
+                category: typeFilter ? typeFilter.value : 'all',
+                status: currentFilter
+            });
+            
+            // Fetch more products from the server - FIXED URL
+            fetch(`{% url 'inventory:inventory_ajax' %}?${params.toString()}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('AJAX Response:', data); // Debug log
+                    
+                    if (data.success) {
+                        if (data.products && data.products.length > 0) {
+                            // Append new products to the DOM
+                            appendProductsToDOM(data.products);
+                            
+                            // Check if we've loaded all products
+                            if (!data.has_more) {
+                                allProductsLoaded = true;
+                                updateLoadMoreButton(false);
+                            }
+                        } else {
+                            allProductsLoaded = true;
+                            updateLoadMoreButton(false);
+                        }
+                    } else {
+                        console.error('Error loading products:', data.error);
+                        showErrorMessage('Failed to load more products. Please try again.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching products:', error);
+                    showErrorMessage('Failed to load more products. Please try again.');
+                })
+                .finally(() => {
+                    isLoading = false;
+                    showLoading(false);
+                });
+        }
+        
+        // Get the current active status filter
+        function getActiveStatusFilter() {
+            const activeBtn = document.querySelector('.filter-btn.active');
+            if (!activeBtn) return 'all';
+            
+            const btnId = activeBtn.id;
+            if (btnId === 'btn-instock') return 'instock';
+            if (btnId === 'btn-notinstock') return 'notinstock';
+            return 'all';
+        }
+        
+        // Function to append products to the DOM
+        function appendProductsToDOM(products) {
+            products.forEach((product, index) => {
+                if (!product.design_no) return;
+                
+                // Create unique forloop counter for new products
+                const modalIndex = document.querySelectorAll('#card-view .col-6').length + index;
+                
+                // Create a card for each product
+                const card = document.createElement('div');
+                card.className = 'col-6 col-md-4 col-lg-3';
+                card.dataset.type = (product.category || '').toLowerCase();
+                card.dataset.status = (product.status || '').toLowerCase();
+                
+                // Set job data attributes
+                let inStockJobs = '';
+                let memoJobs = '';
+                
+                if (product.in_stock_jobs && product.in_stock_jobs.length > 0) {
+                    inStockJobs = product.in_stock_jobs.map(job => job.job_no).join(' ');
+                }
+                
+                if (product.memo_jobs && product.memo_jobs.length > 0) {
+                    memoJobs = product.memo_jobs.map(job => job.job_no).join(' ');
+                }
+                
+                card.dataset.jobs = inStockJobs;
+                card.dataset.memojobs = memoJobs;
+                
+                // Generate status circles
+                let statusCircles = '';
+                let statusBadge = '';
+                
+                if (product.in_stock_jobs && product.in_stock_jobs.length > 0) {
+                    statusCircles += `<div class="status-circle in-stock" title="In Stock">${product.in_stock_jobs.length}</div>`;
+                }
+                
+                if (product.memo_jobs && product.memo_jobs.length > 0) {
+                    statusCircles += `<div class="status-circle on-memo" title="On Memo">${product.memo_jobs.length}</div>`;
+                }
+                
+                if ((!product.in_stock_jobs || product.in_stock_jobs.length === 0) && 
+                    (!product.memo_jobs || product.memo_jobs.length === 0)) {
+                    statusCircles += `<div class="status-circle out-of-stock" title="Not In Stock">0</div>`;
+                }
+                
+                // Set status badge
+                if (product.in_stock_jobs && product.in_stock_jobs.length > 0) {
+                    if (product.memo_jobs && product.memo_jobs.length > 0) {
+                        statusBadge = `
+                            <div class="status-icon in-stock me-2"><i class="bi bi-check-circle-fill"></i> In Stock</div>
+                            <div class="status-icon on-memo"><i class="bi bi-bookmark-fill"></i> On Memo</div>
+                        `;
+                    } else {
+                        statusBadge = `<div class="status-icon in-stock"><i class="bi bi-check-circle-fill"></i> In Stock</div>`;
+                    }
+                } else if (product.memo_jobs && product.memo_jobs.length > 0) {
+                    statusBadge = `<div class="status-icon on-memo"><i class="bi bi-bookmark-fill"></i> On Memo</div>`;
+                } else {
+                    statusBadge = `<div class="status-icon out-of-stock"><i class="bi bi-x-circle-fill"></i> Not In Stock</div>`;
+                }
+                
+                // Generate button based on availability
+                let actionButton = '';
+                const hasStock = product.in_stock_jobs && product.in_stock_jobs.length > 0;
+                const hasMemo = product.memo_jobs && product.memo_jobs.length > 0;
+                
+                if (!hasStock && !hasMemo) {
+                    actionButton = `
+                        <button class="btn btn-sm btn-outline-secondary w-100" data-bs-toggle="modal" data-bs-target="#modal-${modalIndex}">
+                            <i class="bi bi-tools"></i> Request Custom Order
+                        </button>
+                    `;
+                } else {
+                    actionButton = `
+                        <button class="btn btn-sm btn-primary w-100 order-btn" data-bs-toggle="modal" data-bs-target="#modal-${modalIndex}">
+                            <i class="bi bi-cart-plus"></i> Order Now
+                        </button>
+                    `;
+                }
+                
+                // Get the first available job_no for wishlist
+                let firstJobNo = '';
+                if (product.in_stock_jobs && product.in_stock_jobs.length > 0) {
+                    firstJobNo = product.in_stock_jobs[0].job_no || '';
+                }
+                
+                // Complete card HTML
+                card.innerHTML = `
+                    <div class="card h-100">
+                        <div class="card-img-container">
+                            <img class="lazy" src="{% static 'inventory/placeholder.jpg' %}" 
+                                 data-src="${product.image_base_path || 'https://dev-jewels.s3.us-east-2.amazonaws.com/products/' + product.design_no}/White/D_${product.design_no}-1.jpg"
+                                 alt="${product.design_no}" data-bs-toggle="modal" data-bs-target="#imageModal-${modalIndex}">
+                            <button class="wishlist-btn position-absolute top-0 end-0 m-2"
+                                    onclick="toggleWishlist('${product.design_no}', '${firstJobNo}')">
+                                <i class="bi bi-heart fs-5"></i>
+                            </button>
+                        </div>
+                        <div class="card-body text-center p-3">
+                            <h5 class="card-title mb-1">${product.design_no}</h5>
+                            <p class="text-muted small mb-2">${product.category || ''}</p>
+                            <div class="status-circles-container">
+                                ${statusCircles}
+                            </div>
+                            <div class="d-flex justify-content-center mb-3">
+                                ${statusBadge}
+                            </div>
+                            ${actionButton}
+                        </div>
+                    </div>
+                `;
+                
+                // Add the card to the view
+                cardView.appendChild(card);
+                
+                // Also need to add the corresponding modals
+                addProductModals(product, modalIndex);
+            });
+            
+            // Initialize lazy loading for new images
+            initLazyLoading();
+            
+            // Update filters to include new products
+            updateFilterItems();
+            
+            // Re-apply current filters
+            if (typeof applyFilters === 'function') {
+                applyFilters();
+            }
+            
+            // Update wishlist buttons for new items
+            if (typeof updateWishlistButtons === 'function') {
+                updateWishlistButtons();
+            }
+        }
+        
+        // Function to add product modals
+        function addProductModals(product, modalIndex) {
+            // Create order modal
+            const orderModal = createOrderModal(product, modalIndex);
+            document.body.appendChild(orderModal);
+            
+            // Create image modal
+            const imageModal = createImageModal(product, modalIndex);
+            document.body.appendChild(imageModal);
+        }
+        
+        // Create order modal
+        function createOrderModal(product, modalIndex) {
+            const modalDiv = document.createElement('div');
+            modalDiv.innerHTML = `
+                <div class="modal fade" id="modal-${modalIndex}" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Order: ${product.design_no}</h5>
+                                <div class="ms-auto">
+                                    <button class="btn btn-outline-danger me-2"
+                                        onclick="toggleWishlist('${product.design_no}', '${product.in_stock_jobs && product.in_stock_jobs[0] ? product.in_stock_jobs[0].job_no : ''}')">
+                                        <i class="bi bi-heart"></i> Wishlist
+                                    </button>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                            </div>
+                            <div class="modal-body">
+                                ${generateModalContent(product, modalIndex)}
+                            </div>
+                            <div class="modal-footer justify-content-between">
+                                <button class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                                    <i class="bi bi-x-lg"></i> Cancel
+                                </button>
+                                <button class="btn btn-dark" onclick="addToCart('${product.design_no}', '${modalIndex}')">
+                                    <i class="bi bi-cart-plus"></i> Add to Cart
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            return modalDiv.firstElementChild;
+        }
+        
+        // Generate modal content
+        function generateModalContent(product, modalIndex) {
+            let content = '';
+            
+            // In Stock Section
+            if (product.in_stock_jobs && product.in_stock_jobs.length > 0) {
+                content += `
+                    <h6 class="text-center mb-4">
+                        <i class="bi bi-check-circle-fill text-success me-2"></i>In Stock
+                    </h6>
+                    <div class="table-responsive mb-5">
+                        <table class="table table-bordered">
+                            <thead class="table-light">
+                                <tr class="text-center">
+                                    <th class="text-center">SELECT</th>
+                                    <th>JOB NO</th>
+                                    <th>METAL</th>
+                                    <th>QUALITY</th>
+                                    <th>COLOR</th>
+                                    <th>DIAMOND QUALITY</th>
+                                    <th>DIAMOND COLOR</th>
+                                    <th>GWT</th>
+                                    <th>DWT</th>
+                                    <th>SIZE</th>
+                                    <th>PRICE</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+                
+                product.in_stock_jobs.forEach(job => {
+                    content += `
+                        <tr class="text-center">
+                            <td class="text-center">
+                                <input type="checkbox" class="form-check-input job-checkbox" 
+                                    data-design="${product.design_no}"
+                                    data-job_no="${job.job_no}" 
+                                    data-price="${job.discounted_price}">
+                            </td>
+                            <td>${job.job_no}</td>
+                            <td>${job.metal_type || ''}</td>
+                            <td>${job.metal_quality || ''}</td>
+                            <td>${job.metal_color || ''}</td>
+                            <td>${job.diamond_quality || 'VVS-VS'}</td>
+                            <td>${job.diamond_color || 'D-E-F'}</td>
+                            <td>${job.gwt || ''}</td>
+                            <td>${job.dwt || ''}</td>
+                            <td>${job.size || ''}</td>
+                            <td>$${job.discounted_price}</td>
+                        </tr>`;
+                });
+                
+                content += `
+                            </tbody>
+                        </table>
+                    </div>`;
+            }
+            
+            // Memo Section
+            if (product.memo_jobs && product.memo_jobs.length > 0) {
+                content += `
+                    <h6 class="text-center mb-4">
+                        <i class="bi bi-bookmark-fill text-warning me-2"></i>On Memo with Others
+                    </h6>
+                    <div class="table-responsive mb-5">
+                        <table class="table table-bordered">
+                            <thead class="table-light">
+                                <tr class="text-center">
+                                    <th class="text-center">REQUEST</th>
+                                    <th>JOB NO</th>
+                                    <th>METAL</th>
+                                    <th>QUALITY</th>
+                                    <th>COLOR</th>
+                                    <th>DIAMOND QUALITY</th>
+                                    <th>DIAMOND COLOR</th>
+                                    <th>GWT</th>
+                                    <th>DWT</th>
+                                    <th>SIZE</th>
+                                    <th>PRICE</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+                
+                product.memo_jobs.forEach(job => {
+                    content += `
+                        <tr class="text-center">
+                            <td class="text-center">
+                                <input type="checkbox" class="form-check-input memo-checkbox" 
+                                    data-design="${product.design_no}"
+                                    data-job_no="${job.job_no}">
+                            </td>
+                            <td>${job.job_no}</td>
+                            <td>${job.metal_type || ''}</td>
+                            <td>${job.metal_quality || ''}</td>
+                            <td>${job.metal_color || ''}</td>
+                            <td>${job.diamond_quality || 'VVS-VS'}</td>
+                            <td>${job.diamond_color || 'D-E-F'}</td>
+                            <td>${job.gwt || ''}</td>
+                            <td>${job.dwt || ''}</td>
+                            <td>${job.size || ''}</td>
+                            <td>$${job.discounted_price}</td>
+                        </tr>`;
+                });
+                
+                content += `
+                            </tbody>
+                        </table>
+                        <div class="text-end mt-3">
+                            <button class="btn btn-warning request-selected-memo-btn">
+                                <i class="bi bi-bookmark-plus me-1"></i> Request Selected Items
+                            </button>
+                        </div>
+                    </div>`;
+            }
+            
+            // Out of stock message
+            if ((!product.in_stock_jobs || product.in_stock_jobs.length === 0) && 
+                (!product.memo_jobs || product.memo_jobs.length === 0)) {
+                content += `
+                    <div class="alert alert-secondary mb-4 d-flex">
+                        <i class="bi bi-exclamation-circle-fill me-2 fs-4"></i>
+                        <div>
+                            <p class="mb-2 fw-bold">Sorry, we are out of stock.</p>
+                            <p class="mb-0">
+                                Contact us at <a href="mailto:abc@gmail.com">abc@gmail.com</a> or
+                                <a href="tel:+12011234567">+1 (201) 123 4567</a>
+                            </p>
+                        </div>
+                    </div>`;
+            }
+            
+            // Custom Order Section
+            content += `
+                <h6 class="text-center mb-4">
+                    <i class="bi bi-tools me-2"></i>Custom Order
+                </h6>
+                <div class="table-responsive mb-3">
+                    <table class="table table-bordered" id="customOrderTable-${modalIndex}">
+                        <thead class="table-light">
+                            <tr class="text-center">
+                                <th>SERIAL NO.</th>
+                                <th>METAL TYPE</th>
+                                <th>QUALITY</th>
+                                <th>COLOR</th>
+                                <th>DIAMOND QUALITY</th>
+                                <th>DIAMOND COLOR</th>
+                                <th>SIZE (IN)</th>
+                                <th>NUMBER OF PCS</th>
+                                <th>REMARKS</th>
+                                <th>REMOVE</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <button class="btn btn-outline-primary btn-sm"
+                    onclick="addCustomRow('${modalIndex}', '${product.design_no}')">
+                    <i class="bi bi-plus-lg"></i> Add Row
+                </button>`;
+            
+            return content;
+        }
+        
+        // Create image modal
+        function createImageModal(product, modalIndex) {
+            const modalDiv = document.createElement('div');
+            modalDiv.innerHTML = `
+                <div class="modal fade" id="imageModal-${modalIndex}" tabindex="-1">
+                    <div class="modal-dialog modal-dialog-centered modal-xl">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Images - ${product.design_no}</h5>
+                                <div class="ms-auto">
+                                    <button class="btn btn-outline-danger me-2"
+                                        onclick="toggleWishlist('${product.design_no}', '${product.in_stock_jobs && product.in_stock_jobs[0] ? product.in_stock_jobs[0].job_no : ''}')">
+                                        <i class="bi bi-heart"></i> Add to Wishlist
+                                    </button>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                            </div>
+                            <div class="modal-body">
+                                <div class="mb-3 text-center">
+                                    <button class="btn btn-outline-secondary mx-1 color-btn" data-color="White"
+                                        data-design="${product.design_no}" data-modal="${modalIndex}">W</button>
+                                    <button class="btn btn-outline-secondary mx-1 color-btn" data-color="Yellow"
+                                        data-design="${product.design_no}" data-modal="${modalIndex}">Y</button>
+                                    <button class="btn btn-outline-secondary mx-1 color-btn" data-color="Rose"
+                                        data-design="${product.design_no}" data-modal="${modalIndex}">R</button>
+                                </div>
+                                <div id="carousel-${modalIndex}" class="carousel slide" data-bs-ride="false">
+                                    <div class="carousel-inner text-center" id="carousel-inner-${modalIndex}">
+                                        <div class="carousel-item active">
+                                            <img src="${product.image_base_path || 'https://dev-jewels.s3.us-east-2.amazonaws.com/products/' + product.design_no}/White/D_${product.design_no}-1.jpg"
+                                                class="modal-carousel-img d-inline-block" alt="${product.design_no}">
+                                        </div>
+                                    </div>
+                                    <button class="carousel-control-prev" type="button" data-bs-target="#carousel-${modalIndex}"
+                                        data-bs-slide="prev">
+                                        <span class="carousel-control-prev-icon"></span>
+                                    </button>
+                                    <button class="carousel-control-next" type="button" data-bs-target="#carousel-${modalIndex}"
+                                        data-bs-slide="next">
+                                        <span class="carousel-control-next-icon"></span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            return modalDiv.firstElementChild;
+        }
+        
+        // Update the "Load More" button visibility
+        function updateLoadMoreButton(visible) {
+            if (visible) {
+                loadMoreContainer.style.display = 'block';
+                loadMoreBtn.innerHTML = '<i class="bi bi-arrow-down-circle me-2"></i>Load More Products';
+                loadMoreBtn.disabled = false;
+            } else {
+                loadMoreBtn.innerHTML = 'All Products Loaded';
+                loadMoreBtn.disabled = true;
+                // Hide button after delay
+                setTimeout(() => {
+                    loadMoreContainer.style.display = 'none';
+                }, 3000);
+            }
+        }
+        
+        // Show/hide loading indicator
+        function showLoading(isVisible) {
+            if (isVisible) {
+                loadingOverlay.classList.remove('d-none');
+                loadingOverlay.classList.add('d-flex');
+            } else {
+                loadingOverlay.classList.add('d-none');
+                loadingOverlay.classList.remove('d-flex');
+            }
+        }
+        
+        // Show error message
+        function showErrorMessage(message) {
+            if (typeof showToast === 'function') {
+                showToast(`<i class="bi bi-exclamation-triangle-fill me-2"></i>${message}`, "danger");
+            } else {
+                alert(message);
+            }
+        }
+        
+        // Initialize lazy loading for images
+        function initLazyLoading() {
+            const lazyImages = document.querySelectorAll("img.lazy:not([data-loaded='true'])");
+            
+            if ('IntersectionObserver' in window) {
+                const observer = new IntersectionObserver((entries, obs) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            const img = entry.target;
+                            
+                            if (img.dataset.src && !img.dataset.loaded) {
+                                img.src = img.dataset.src;
+                                img.dataset.loaded = "true";
+                                img.classList.remove("lazy");
+                                obs.unobserve(img);
+                            }
+                        }
+                    });
+                });
+                
+                lazyImages.forEach(img => observer.observe(img));
+            } else {
+                lazyImages.forEach(img => {
+                    if (img.dataset.src) {
+                        img.src = img.dataset.src;
+                        img.dataset.loaded = "true";
+                    }
+                });
+            }
+        }
+        
+        // Update filter items when new products are added
+        function updateFilterItems() {
+            // Update the global cards array if it exists
+            if (typeof window.cards !== 'undefined') {
+                window.cards = Array.from(document.querySelectorAll('#card-view .col-6')).map(card => {
+                    const jobNos = ((card.dataset.jobs || "") + " " + (card.dataset.memojobs || "")).toLowerCase();
+                    return {
+                        el: card,
+                        type: card.dataset.type,
+                        status: card.dataset.status,
+                        jobs: jobNos.split(/\s+/).filter(Boolean),
+                    };
+                });
+            }
+        }
+        
+        // Debounce function
+        function debounce(func, wait) {
+            let timeout;
+            return function(...args) {
+                const context = this;
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(context, args), wait);
+            };
+        }
+        
+        // Handle infinite scroll
+        function handleInfiniteScroll() {
+            if (isLoading || allProductsLoaded) return;
+            
+            const scrollTop = (document.documentElement && document.documentElement.scrollTop) || document.body.scrollTop;
+            const scrollHeight = (document.documentElement && document.documentElement.scrollHeight) || document.body.scrollHeight;
+            const clientHeight = document.documentElement.clientHeight || window.innerHeight;
+            
+            // If user has scrolled to within 200px of the bottom, load more products
+            if (scrollHeight - scrollTop - clientHeight < 200) {
+                loadMoreProducts();
+            }
+        }
+        
+        // Event listeners
+        if (loadMoreBtn) {
+            loadMoreBtn.addEventListener('click', loadMoreProducts);
+        }
+        
+        // Add scroll event listener for infinite scrolling
+        window.addEventListener('scroll', debounce(handleInfiniteScroll, 100));
+        
+        // Re-attach event listeners for dynamically added elements
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.color-btn')) {
+                const button = e.target.closest('.color-btn');
+                const designNo = button.getAttribute('data-design');
+                const color = button.getAttribute('data-color');
+                const modalId = button.getAttribute('data-modal');
+                const container = document.getElementById(`carousel-inner-${modalId}`);
+                
+                if (container) {
+                    const baseUrl = `https://dev-jewels.s3.us-east-2.amazonaws.com/products/${designNo}/${color}/`;
+                    const imagePaths = [
+                        `D_${designNo}-1.jpg`,
+                        `H_${designNo}-2.jpg`,
+                        `${designNo}-3.jpg`,
+                        `${designNo}-4.jpg`
+                    ];
+                    
+                    let content = '';
+                    imagePaths.forEach((name, idx) => {
+                        content += `
+                            <div class="carousel-item ${idx === 0 ? 'active' : ''}">
+                                <img src="${baseUrl}${name}" class="modal-carousel-img d-inline-block" alt="${color} image ${idx + 1}">
+                            </div>`;
+                    });
+                    container.innerHTML = content;
+                }
+            }
         });
-      });
-    });
-  </script>
+        
+        // Reset page counter when filters change
+        const searchInput = document.getElementById('searchInput');
+        const typeFilter = document.getElementById('typeFilter');
+        const filterBtns = document.querySelectorAll('.filter-btn');
+        
+        function resetPagination() {
+            currentPage = 1;
+            allProductsLoaded = false;
+            
+            // Show load more button again
+            if (loadMoreContainer) {
+                loadMoreContainer.style.display = 'block';
+                updateLoadMoreButton(true);
+            }
+        }
+        
+        if (searchInput) {
+            searchInput.addEventListener('input', debounce(resetPagination, 300));
+        }
+        
+        if (typeFilter) {
+            typeFilter.addEventListener('change', resetPagination);
+        }
+        
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', resetPagination);
+        });
+    }
+});
+</script>
 
   <!-- Filter functions -->
   <script>
@@ -1589,6 +2245,8 @@
       updateCartCounter();
     });
   </script>
+
+  
 
 </body>
 

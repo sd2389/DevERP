@@ -170,6 +170,7 @@ def inventory_dashboard(request):
         })
         
         
+# application/vnd.ant.code language="python"
 @require_GET
 def inventory_list_ajax(request):
     """
@@ -182,19 +183,26 @@ def inventory_list_ajax(request):
         category_filter = request.GET.get('category', 'all')
         status_filter = request.GET.get('status', 'instock')
         
+        # Log request parameters for debugging
+        logger.info(f"AJAX request - page: {page}, limit: {limit}, search: '{search_query}', category: {category_filter}, status: {status_filter}")
+        
         # Get all products
         all_products = fetch_products()
+        logger.info(f"Total products fetched from API: {len(all_products)}")
         
         # Filter by active designs
         active_nos = set(
             Design.objects.filter(is_active=True).values_list('design_no', flat=True)
         )
+        logger.info(f"Total active designs: {len(active_nos)}")
+        
         products = [
             prod for prod in all_products
             if prod.get('design_no') in active_nos and prod.get('design_no')
         ]
+        logger.info(f"Products after active design filter: {len(products)}")
         
-        # Apply search filter first (if search exists, return all matching results immediately)
+        # Apply search filter
         if search_query:
             filtered_products = []
             search_lower = search_query.lower()
@@ -221,81 +229,95 @@ def inventory_list_ajax(request):
                 if found_in_jobs:
                     continue
             
-            # For search, return all results immediately (no pagination)
-            return JsonResponse({
-                'success': True,
-                'products': filtered_products,
-                'has_more': False,
-                'total_count': len(filtered_products),
-                'is_search': True
-            })
+            products = filtered_products
+            logger.info(f"Products after search filter: {len(products)}")
         
         # Apply category filter
         if category_filter != 'all':
             products = [p for p in products if p.get('category', '').lower() == category_filter.lower()]
+            logger.info(f"Products after category filter: {len(products)}")
         
         # Apply status filter
         if status_filter == 'instock':
             products = [p for p in products if p.get('in_stock_jobs')]
+            logger.info(f"Products after instock filter: {len(products)}")
         elif status_filter == 'notinstock':
             products = [p for p in products if not p.get('in_stock_jobs')]
+            logger.info(f"Products after notinstock filter: {len(products)}")
         # 'all' doesn't need filtering
         
         # Calculate pagination
         total_count = len(products)
         start_idx = (page - 1) * limit
-        end_idx = start_idx + limit
+        end_idx = min(start_idx + limit, total_count)
         
+        # Check for out-of-bounds page
+        if start_idx >= total_count:
+            logger.warning(f"Requested page {page} is out of bounds (total: {total_count})")
+            return JsonResponse({
+                'success': True,
+                'products': [],  # Empty array
+                'has_more': False,
+                'total_count': total_count,
+                'current_page': page
+            })
+        
+        # Get products for current page
         paginated_products = products[start_idx:end_idx]
         has_more = end_idx < total_count
+        
+        logger.info(f"Returning {len(paginated_products)} products for page {page} (has_more: {has_more})")
         
         return JsonResponse({
             'success': True,
             'products': paginated_products,
             'has_more': has_more,
             'total_count': total_count,
-            'current_page': page,
-            'is_search': False
+            'current_page': page
         })
         
     except Exception as e:
-        logger.error(f"Error in inventory_list_ajax: {str(e)}")
+        logger.error(f"Error in inventory_list_ajax: {str(e)}", exc_info=True)
         return JsonResponse({
             'success': False,
             'error': str(e)
-        }, status=500)        
+        }, status=500)
 
-
+# application/vnd.ant.code language="python"
 def inventory_list(request):
     try:
         all_products = fetch_products()
-        # print("Total fetched:", len(all_products))
+        logger.info(f"Total products fetched from API: {len(all_products)}")
 
         # Only active design_nos
         active_nos = set(
             Design.objects.filter(is_active=True).values_list('design_no', flat=True)
         )
+        logger.info(f"Total active designs: {len(active_nos)}")
 
         # Filter products
         filtered_products = [
             prod for prod in all_products
             if prod.get('design_no') in active_nos and prod.get('design_no')
         ]
+        logger.info(f"Filtered products count: {len(filtered_products)}")
 
+        # Initial products for first page (limit to 20)
         initial_products = filtered_products[:20]
+        has_more = len(filtered_products) > 20
+        
+        logger.info(f"Initial products: {len(initial_products)}, has_more: {has_more}")
         
         return render(request, 'inventory/inventory.html', {
             'products': initial_products,
-            'has_more': len(filtered_products) > 20,
+            'has_more': has_more,
             'total_count': len(filtered_products)
         })
     except Exception as e:
-        logger.error(f"Error rendering inventory: {str(e)}")
+        logger.error(f"Error rendering inventory: {str(e)}", exc_info=True)
         return render(request, 'inventory/error.html', {
             'error': str(e)
         })
-
-
 
 def cart_view(request):
     """

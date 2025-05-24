@@ -10,8 +10,8 @@ urlpatterns = [
     path('wishlist/', views.wishlist_view, name='wishlist'),
     path('dashboard/', views.inventory_dashboard, name='dashboard'),
     path('orders/', views.order_view, name='orders'),
-    path('ajax/products/', views.inventory_list_ajax, name='inventory_ajax'),
-
+    path('ajax/', views.inventory_list_ajax, name='inventory_ajax'),
+    
     # API endpoint for stock data
     path('api/get-stock-by-job/<str:job_no>/', views.get_stock_by_job, name='api_stock_by_job'),
     path('api/get-stock-by-design/<str:design_no>/', views.get_stock_by_design, name='api_stock_by_design'),

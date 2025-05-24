@@ -29,13 +29,14 @@ SECRET_KEY = "django-insecure-1*3e)0d((tb0mtv4fjh+$uav)#lee3njli$e_vrr3=n-4v4r#%
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True  
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost','192.168.12.121']
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost','192.168.12.121','192.168.1.188']
 
 # CSRF protection for trusted domains
 CSRF_TRUSTED_ORIGINS = [
     'http://127.0.0.1:8000',
     'http://localhost:8000',
     "http://192.168.12.121:8000",
+    "http://192.168.1.188:8000",
     'https://deverp.com',           # production frontend
     'https://admin.deverp.com',     # optional admin domain
 ]
@@ -44,6 +45,7 @@ CSRF_TRUSTED_ORIGINS = [
 CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:8000",
     "http://192.168.12.121:8000",
+    "http://192.168.1.188:8000",
     "http://localhost:8000",
     "https://deverp.com",
 ]

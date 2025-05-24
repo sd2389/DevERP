@@ -795,3 +795,38 @@ img.lazy.loaded {
 .status-icon.out-of-stock {
   color: #F44336;
 }
+
+/* Scroll to Top Button */
+.scroll-to-top-button {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background-color: #0d6efd;
+  color: #fff;
+  border: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  z-index: 1000;
+}
+
+.scroll-to-top-button.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.scroll-to-top-button:hover {
+  background-color: #0b5ed7;
+}
+
+.scroll-to-top-button i {
+  font-size: 1.5rem;
+}
