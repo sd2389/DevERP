@@ -1,0 +1,298 @@
+/* Enhanced Responsive Styles for DevERP Inventory */
+
+/* === Global Responsive Improvements === */
+html {
+  scroll-behavior: smooth; /* Enable smooth scrolling for better UX */
+}
+
+body {
+  overflow-x: hidden; /* Prevent horizontal overflow on mobile */
+}
+
+/* === Better Container Scaling === */
+.container {
+  width: 100%;
+  padding-right: var(--bs-gutter-x, 0.75rem);
+  padding-left: var(--bs-gutter-x, 0.75rem);
+  margin-right: auto;
+  margin-left: auto;
+}
+
+/* === Enhanced Card View Responsiveness === */
+.card-view .col-6 {
+  transition: width 0.3s ease;
+}
+
+/* === Improved Image Containers === */
+.card-img-container {
+  height: auto !important; /* Override fixed height */
+  aspect-ratio: 1/1; /* Maintain square aspect ratio */
+  padding: 0 !important; /* Remove padding that affects layout */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-img-container img {
+  max-height: 100%;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+/* === Better Card Padding for Small Screens === */
+@media (max-width: 576px) {
+  .card-body {
+    padding: 0.75rem !important;
+  }
+  
+  .card-title {
+    font-size: 0.9rem !important;
+    margin-bottom: 0.25rem !important;
+  }
+  
+  .text-muted.small {
+    font-size: 0.7rem !important;
+  }
+  
+  .status-circles-container {
+    margin: 0.25rem 0 !important;
+  }
+  
+  .status-circle {
+    width: 25px !important;
+    height: 25px !important;
+    font-size: 10px !important;
+  }
+  
+  .status-icon {
+    font-size: 0.7rem !important;
+    padding: 0.2em 0.4em !important;
+  }
+}
+
+/* === Improved Filter Container Responsiveness === */
+@media (max-width: 767.98px) {
+  .filter-container {
+    padding: 0.75rem !important;
+  }
+  
+  .search-wrapper input {
+    font-size: 0.875rem !important;
+  }
+  
+  .filter-btn {
+    padding: 0.25rem 0.5rem !important;
+    font-size: 0.75rem !important;
+  }
+  
+  .advanced-filters-panel .form-label {
+    font-size: 0.75rem !important;
+  }
+  
+  .advanced-filters-panel .form-select {
+    font-size: 0.75rem !important;
+    padding: 0.25rem 0.5rem !important;
+  }
+  
+  /* Stack filter buttons in small screens */
+  #advancedFiltersBtn, #toggleViewBtn {
+    margin-top: 0.5rem !important;
+    width: 100% !important;
+  }
+  
+  .col-md-3 .d-flex, .col-md-5 .d-flex {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+}
+
+/* === Better Handling of Landscape Mode === */
+@media (max-height: 500px) and (orientation: landscape) {
+  /* Optimize for landscape phones */
+  .card-view .col-6 {
+    width: 25% !important; /* 4 cards per row in landscape */
+  }
+  
+  .modal-dialog-scrollable {
+    max-height: 85vh;
+  }
+  
+  .card-img-container {
+    aspect-ratio: 4/3; /* Wider aspect ratio for landscape */
+  }
+  
+  /* More compact navbar for landscape */
+  .navbar {
+    padding: 0.25rem 0.5rem !important;
+  }
+}
+
+/* === Extra Large Screens Support === */
+@media (min-width: 1600px) {
+  .card-view .col-lg-3 {
+    width: 16.666667% !important; /* 6 cards per row on very large screens */
+  }
+  
+  .container {
+    max-width: 1540px;
+  }
+}
+
+/* === iPad and Tablets Optimization === */
+@media (min-width: 768px) and (max-width: 991.98px) {
+  .card-view .col-md-4 {
+    width: 33.333333% !important; /* Force 3 cards per row */
+  }
+}
+
+/* === Better Modal Responsiveness === */
+@media (max-width: 767.98px) {
+  .modal-dialog {
+    margin: 0.5rem !important;
+  }
+  
+  .modal-header {
+    padding: 0.75rem !important;
+  }
+  
+  .modal-body {
+    padding: 0.75rem !important;
+  }
+  
+  .modal-footer {
+    padding: 0.75rem !important;
+  }
+  
+  /* Prevent modal title overflow */
+  .modal-title {
+    font-size: 1rem !important;
+    width: 70%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  /* Improve table scrolling in modals */
+  .modal .table-responsive {
+    margin: 0 -0.75rem !important;
+    width: calc(100% + 1.5rem) !important;
+    padding: 0 0.75rem !important;
+  }
+  
+  .modal th, .modal td {
+    white-space: nowrap;
+    padding: 0.4rem !important;
+    font-size: 0.75rem !important;
+  }
+  
+  /* Make form elements more touch-friendly */
+  .modal input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+/* === Improved Table View Responsiveness === */
+#table-view .table th {
+  white-space: nowrap;
+}
+
+/* Make headings responsive */
+@media (max-width: 767.98px) {
+  h1 {
+    font-size: 1.5rem !important;
+  }
+  
+  h5 {
+    font-size: 1rem !important;
+  }
+  
+  h6 {
+    font-size: 0.9rem !important;
+  }
+}
+
+/* === Improve Scroll to Top Button === */
+@media (max-width: 576px) {
+  .scroll-to-top-button {
+    width: 40px !important;
+    height: 40px !important;
+    bottom: 20px !important;
+    right: 20px !important;
+  }
+  
+  .scroll-to-top-button i {
+    font-size: 1rem !important;
+  }
+}
+
+/* === Responsive Image Modal === */
+@media (max-width: 767.98px) {
+  .modal-carousel-img {
+    max-height: 50vh !important;
+  }
+  
+  .color-btn {
+    padding: 0.25rem 0.5rem !important;
+    font-size: 0.75rem !important;
+    margin: 0 0.25rem !important;
+  }
+}
+
+/* === Fix for iOS Safari 100vh Issue === */
+.modal-dialog-scrollable .modal-content {
+  max-height: calc(100vh - 3.5rem);
+}
+
+@supports (-webkit-touch-callout: none) {
+  /* iOS specific fix */
+  .modal-dialog-scrollable .modal-content {
+    max-height: -webkit-fill-available;
+  }
+}
+
+/* === Better Touch Support === */
+@media (pointer: coarse) {
+  /* Larger touch targets for touch devices */
+  .btn, .form-select, .form-control, .wishlist-btn, 
+  .filter-btn, .nav-link, .status-circle {
+    min-height: 38px;
+  }
+  
+  .wishlist-btn {
+    width: 40px !important;
+    height: 40px !important;
+  }
+  
+  /* More spacing between interactive elements */
+  .btn {
+    margin-bottom: 0.25rem;
+  }
+}
+
+/* === Improved Filter Tag Responsiveness === */
+@media (max-width: 767.98px) {
+  .filter-tag {
+    margin-bottom: 0.25rem !important;
+    font-size: 0.75rem !important;
+    padding: 0.2em 0.5em !important;
+  }
+}
+
+/* === Print Styles === */
+@media print {
+  .navbar, .filter-container, .scroll-to-top-button, 
+  .btn, .wishlist-btn, .modal-footer {
+    display: none !important;
+  }
+  
+  .card {
+    break-inside: avoid;
+    box-shadow: none !important;
+    border: 1px solid #ddd !important;
+  }
+  
+  body {
+    background-color: white !important;
+  }
+}

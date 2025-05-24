@@ -5,195 +5,13 @@
 <head>
   <meta charset="UTF-8">
   <title>DevERP Inventory</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
   <link href="{% static 'inventory/index.css' %}" rel="stylesheet">
-  <style>
-    /* Enhanced card and layout styling */
-    .card-view .card {
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-      border: none;
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
 
-    .card-view .card:hover {
-      transform: translateY(-8px);
-      box-shadow: 0 12px 20px rgba(0, 0, 0, 0.12);
-    }
-
-    .card-img-container {
-      height: 180px;
-      padding: 1rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background-color: #f8f9fa;
-      overflow: hidden;
-    }
-
-    .card-img-container img {
-      max-height: 100%;
-      max-width: 100%;
-      object-fit: contain;
-      transition: transform 0.4s ease;
-    }
-
-    .card-view .card:hover .card-img-container img {
-      transform: scale(1.08);
-    }
-
-    .status-icon {
-      padding: 0.35em 0.65em;
-      font-size: 0.8em;
-      border-radius: 50rem;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .status-circles-container {
-      display: flex;
-      justify-content: center;
-      gap: 8px;
-      margin: 0.5rem 0;
-    }
-
-    .status-badge {
-      border-radius: 50rem;
-      font-weight: 500;
-    }
-
-    /* Improved filter buttons */
-    .filter-container {
-      background-color: #fff;
-      padding: 1rem;
-      border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-      margin-bottom: 1.5rem;
-    }
-
-    .filter-btn {
-      border-radius: 50rem;
-      font-weight: 500;
-      padding: 0.5rem 1rem;
-      transition: all 0.3s ease;
-    }
-
-    #toggleViewBtn {
-      border-radius: 50rem;
-    }
-
-    /* Animation for status badges */
-    @keyframes pulse {
-      0% {
-        transform: scale(1);
-      }
-
-      50% {
-        transform: scale(1.05);
-      }
-
-      100% {
-        transform: scale(1);
-      }
-    }
-
-    .status-circle {
-      animation: pulse 2s infinite ease-in-out;
-    }
-
-    /* Better modal styling */
-    .modal-content {
-      border-radius: 15px;
-      border: none;
-      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
-    }
-
-    .modal-header {
-      background-color: #f8f9fa;
-      border-bottom: 1px solid #eee;
-      border-top-left-radius: 15px;
-      border-top-right-radius: 15px;
-    }
-
-    .modal-footer {
-      background-color: #f8f9fa;
-      border-top: 1px solid #eee;
-      border-bottom-left-radius: 15px;
-      border-bottom-right-radius: 15px;
-    }
-
-    /* Enhanced status indicators for cards */
-    .status-circle.out-of-stock {
-      background-color: #F44336;
-      color: white;
-    }
-
-    .status-icon.out-of-stock {
-      color: #F44336;
-      background-color: rgba(244, 67, 54, 0.1);
-      padding: 0.35em 0.65em;
-      border-radius: 50rem;
-    }
-
-    .status-icon.in-stock {
-      color: #4CAF50;
-      background-color: rgba(76, 175, 80, 0.1);
-      padding: 0.35em 0.65em;
-      border-radius: 50rem;
-    }
-
-    .status-icon.on-memo {
-      color: #FFC107;
-      background-color: rgba(255, 193, 7, 0.1);
-      padding: 0.35em 0.65em;
-      border-radius: 50rem;
-    }
-
-    /* Improved empty state for no results */
-    .no-results {
-      text-align: center;
-      padding: 3rem 0;
-      background-color: #fff;
-      border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    }
-
-    .no-results i {
-      font-size: 3rem;
-      color: #ccc;
-      margin-bottom: 1rem;
-    }
-
-    /* Better responsive grid for card view */
-    @media (min-width: 1400px) {
-      .card-view .col-lg-3 {
-        flex: 0 0 auto;
-        width: 20%;
-      }
-    }
-
-    @media (max-width: 767.98px) {
-      .card-img-container {
-        height: 150px;
-      }
-
-      .card-title {
-        font-size: 0.9rem;
-      }
-
-      .status-circles-container {
-        gap: 4px;
-      }
-
-      .status-circle {
-        width: 30px;
-        height: 30px;
-        font-size: 12px;
-      }
-    }
-  </style>
+  <!-- <link href="{% static 'inventory/responsive.css' %}" rel="stylesheet"> -->
+  
 </head>
 
 <body>
@@ -236,39 +54,105 @@
     </nav>
 
     <div id="loading-overlay"
-      class="position-fixed top-0 start-0 w-100 h-100 d-none align-items-center justify-content-center bg-white bg-opacity-75"
-      style="z-index: 1050;">
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">Loading...</span>
+      class="position-fixed top-0 start-0 w-100 h-100 d-none align-items-center justify-content-center">
+      <div class="loading-container">
+        <div class="spinner-border text-primary mb-2" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <div class="text-primary">Loading products...</div>
       </div>
     </div>
 
     <h1 class="text-center mb-4">Inventory</h1>
 
-    <!-- Filters in a container -->
+    <!-- Enhanced Filters Container -->
     <div class="filter-container">
       <div class="row align-items-center g-3">
+        <!-- Search Bar -->
         <div class="col-md-4">
-          <input type="text" id="searchInput" class="form-control" placeholder="Search by design or job no.">
+          <div class="search-wrapper position-relative">
+            <input type="text" id="searchInput" class="form-control ps-4"
+              placeholder="Search by design, job no, category...">
+            <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-2 text-muted"></i>
+          </div>
         </div>
+
+        <!-- Quick Status Filters -->
         <div class="col-md-3">
-          <select id="typeFilter" class="form-select">
-            <option value="all">All Categories</option>
-            <option value="earring">Earring</option>
-            <option value="ring">Ring</option>
-            <option value="necklace">Necklace</option>
-            <option value="bracelet">Bracelet</option>
-          </select>
-        </div>
-        <div class="col-md-5">
-          <div class="d-flex justify-content-md-end justify-content-center gap-2">
+          <div class="d-flex gap-2">
             <button class="filter-btn" id="btn-all">All</button>
             <button class="filter-btn active" id="btn-instock">In Stock</button>
             <button class="filter-btn" id="btn-notinstock">Not In Stock</button>
+          </div>
+        </div>
+
+        <!-- Advanced Filters Toggle & View Toggle -->
+        <div class="col-md-5">
+          <div class="d-flex justify-content-md-end justify-content-center gap-2">
+            <button class="btn btn-outline-secondary" id="advancedFiltersBtn">
+              <i class="bi bi-filter"></i> Advanced Filters
+              <span class="badge bg-primary ms-1" id="activeFiltersCount" style="display: none;">0</span>
+            </button>
             <button class="btn btn-outline-primary" id="toggleViewBtn">
-              <i class="bi bi-table"></i> <span id="toggleBtnText">Table View</span>
+              <i class="bi bi-table"></i> <span id="toggleBtnText"></span>
             </button>
           </div>
+        </div>
+      </div>
+
+      <!-- Advanced Filters Panel (Hidden by default) -->
+      <div id="advancedFiltersPanel" class="advanced-filters-panel mt-3" style="display: none;">
+        <div class="row g-3">
+          <div class="col-6 col-md-2">
+            <label class="form-label small">Category</label>
+            <select id="categoryFilter" class="form-select form-select-sm">
+              <option value="all">All Categories</option>
+              <!-- Options populated by JavaScript -->
+            </select>
+          </div>
+          <div class="col-6 col-md-2">
+            <label class="form-label small">Gender</label>
+            <select id="genderFilter" class="form-select form-select-sm">
+              <option value="all">All Genders</option>
+              <!-- Options populated by JavaScript -->
+            </select>
+          </div>
+          <div class="col-6 col-md-2">
+            <label class="form-label small">Collection</label>
+            <select id="collectionFilter" class="form-select form-select-sm">
+              <option value="all">All Collections</option>
+              <!-- Options populated by JavaScript -->
+            </select>
+          </div>
+          <div class="col-6 col-md-2">
+            <label class="form-label small">Subcategory</label>
+            <select id="subcategoryFilter" class="form-select form-select-sm">
+              <option value="all">All Subcategories</option>
+              <!-- Options populated by JavaScript -->
+            </select>
+          </div>
+          <div class="col-6 col-md-2">
+            <label class="form-label small">Product Type</label>
+            <select id="productTypeFilter" class="form-select form-select-sm">
+              <option value="all">All Types</option>
+              <!-- Options populated by JavaScript -->
+            </select>
+          </div>
+          <div class="col-6 col-md-2">
+            <button class="btn btn-sm btn-link text-danger mt-4" id="clearFiltersBtn">
+              <i class="bi bi-x-circle"></i> Clear All
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Filters Display -->
+    <div id="activeFiltersDisplay" class="active-filters-display mt-2 mb-3" style="display: none;">
+      <div class="d-flex flex-wrap gap-2 align-items-center">
+        <span class="text-muted small">Active filters:</span>
+        <div id="activeFilterTags" class="d-flex flex-wrap gap-2">
+          <!-- Filter tags will be inserted here -->
         </div>
       </div>
     </div>
@@ -283,8 +167,8 @@
         <div class="card h-100">
           <div class="card-img-container">
             <img class="lazy" src="{% static 'inventory/placeholder.jpg' %}"
-              data-src="https://dev-jewels.s3.us-east-2.amazonaws.com/products/{{ prod.design_no }}/White/D_{{ prod.design_no }}-1.jpg"
-              alt="{{ prod.design_no }}" data-bs-toggle="modal" data-bs-target="#imageModal-{{ forloop.counter0 }}">
+              data-src="{{ prod.image_base_path }}/White/D_{{ prod.design_no }}-1.jpg" alt="{{ prod.design_no }}"
+              data-bs-toggle="modal" data-bs-target="#imageModal-{{ forloop.counter0 }}">
 
             <!-- Wishlist Button overlay on image -->
             <button class="wishlist-btn position-absolute top-0 end-0 m-2"
@@ -345,7 +229,17 @@
       {% endfor %}
     </div>
 
-    <!-- Inventory Table (now hidden by default) -->
+    <!-- No Results Message -->
+    <div id="noResultsMessage" class="no-results py-5 text-center mt-4" style="display: none;">
+      <i class="bi bi-search fs-1 text-muted mb-3"></i>
+      <h4>No products found</h4>
+      <p class="text-muted">Try adjusting your search or filter criteria</p>
+      <button class="btn btn-outline-primary mt-2" id="clearAllFiltersBtn" style="height: 20%;">
+        <i class="bi bi-arrow-repeat"> Clear All Filters</i> 
+      </button>
+    </div>
+
+    <!-- Inventory Table (hidden by default) -->
     <div id="table-view" class="d-none">
       <div class="table-responsive">
         <table class="table table-hover text-center align-middle" id="inventory-table">
@@ -370,9 +264,9 @@
               <td>{{ forloop.counter }}</td>
               <td>
                 <img src="{% static 'inventory/placeholder.jpg' %}"
-                  data-src="https://dev-jewels.s3.us-east-2.amazonaws.com/products/{{ prod.design_no }}/White/D_{{ prod.design_no }}-1.jpg"
-                  class="img-thumbnail lazy" style="height:60px; width:auto; cursor:pointer;" alt="Loading"
-                  data-bs-toggle="modal" data-bs-target="#imageModal-{{ forloop.counter0 }}">
+                  data-src="{{ prod.image_base_path }}/White/D_{{ prod.design_no }}-1.jpg" class="img-thumbnail lazy"
+                  style="height:60px; width:auto; cursor:pointer;" alt="Loading" data-bs-toggle="modal"
+                  data-bs-target="#imageModal-{{ forloop.counter0 }}">
               </td>
               <td>{{ prod.design_no }}</td>
               <td>{{ prod.category }}</td>
@@ -423,7 +317,7 @@
               <td>
                 <div class="d-flex justify-content-center gap-2">
                   <button class="wishlist-btn"
-                    onclick="toggleWishlist('{{ prod.design_no }}', '{{ prod.in_stock_jobs.0.job_no|default:"" }}')">
+                    onclick="toggleWishlist('{{ prod.design_no }}', '{{ prod.in_stock_jobs.0.job_no|default:'' }}')">
                     <i class="bi bi-heart"></i>
                   </button>
                   <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
@@ -444,7 +338,7 @@
       </div>
     </div>
 
-    <!-- 📌 Number of pcs Modal -->
+    <!-- Product Details & Order Modals -->
     {% for prod in products %}
     {% if prod.design_no %}
     <div class="modal fade" id="modal-{{ forloop.counter0 }}" tabindex="-1" aria-hidden="true">
@@ -481,7 +375,6 @@
                     <th>DIAMOND QUALITY</th>
                     <th>DIAMOND COLOR</th>
                     <th>GWT</th>
-                    <th>DWT</th>
                     <th>SIZE</th>
                     <th>PRICE</th>
                   </tr>
@@ -496,11 +389,10 @@
                     <td>{{ job.job_no }}</td>
                     <td>{{ job.metal_type }}</td>
                     <td>{{ job.metal_quality }}</td>
-                    <td>{{ job.metal_color }}</td>
+                    <td>{{ job.metal_color|default:"-" }}</td>
                     <td>{{ job.diamond_quality|default:"VVS-VS" }}</td>
                     <td>{{ job.diamond_color|default:"D-E-F" }}</td>
                     <td>{{ job.gwt }}</td>
-                    <td>{{ job.dwt }}</td>
                     <td>{{ job.size }}</td>
                     <td>${{ job.discounted_price }}</td>
                   </tr>
@@ -531,7 +423,6 @@
                     <th>DIAMOND QUALITY</th>
                     <th>DIAMOND COLOR</th>
                     <th>GWT</th>
-                    <th>DWT</th>
                     <th>SIZE</th>
                     <th>PRICE</th>
                   </tr>
@@ -546,22 +437,21 @@
                     <td>{{ job.job_no }}</td>
                     <td>{{ job.metal_type }}</td>
                     <td>{{ job.metal_quality }}</td>
-                    <td>{{ job.metal_color }}</td>
+                    <td>{{ job.metal_color|default:"-" }}</td>
                     <td>{{ job.diamond_quality|default:"VVS-VS" }}</td>
                     <td>{{ job.diamond_color|default:"D-E-F" }}</td>
                     <td>{{ job.gwt }}</td>
-                    <td>{{ job.dwt }}</td>
                     <td>{{ job.size }}</td>
                     <td>${{ job.discounted_price }}</td>
                   </tr>
                   {% endfor %}
                 </tbody>
               </table>
-              <div class="text-end mt-3">
+              <!-- <div class="text-end mt-3">
                 <button class="btn btn-warning request-selected-memo-btn">
                   <i class="bi bi-bookmark-plus me-1"></i> Request Selected Items
                 </button>
-              </div>
+              </div> -->
             </div>
             {% endif %}
 
@@ -643,7 +533,7 @@
           </div>
           <div class="modal-body">
             <div class="mb-3 text-center">
-              <button class="btn btn-outline-secondary mx-1 color-btn" data-color="White"
+              <button class="btn btn-outline-secondary mx-1 color-btn active" data-color="White"
                 data-design="{{ prod.design_no }}" data-modal="{{ forloop.counter0 }}">W</button>
               <button class="btn btn-outline-secondary mx-1 color-btn" data-color="Yellow"
                 data-design="{{ prod.design_no }}" data-modal="{{ forloop.counter0 }}">Y</button>
@@ -653,8 +543,7 @@
             <div id="carousel-{{ forloop.counter0 }}" class="carousel slide" data-bs-ride="false">
               <div class="carousel-inner text-center" id="carousel-inner-{{ forloop.counter0 }}">
                 <div class="carousel-item active">
-                  <img
-                    src="https://dev-jewels.s3.us-east-2.amazonaws.com/products/{{ prod.design_no }}/White/D_{{ prod.design_no }}-1.jpg"
+                  <img src="{{ prod.image_base_path }}/White/D_{{ prod.design_no }}-1.jpg"
                     class="modal-carousel-img d-inline-block" alt="{{ prod.design_no }}">
                 </div>
               </div>
@@ -721,923 +610,1545 @@
         </div>
       </div>
     </div>
+
+    <!-- "Load More" button -->
+    <div class="text-center my-4">
+      <button id="loadMoreBtn" class="btn btn-outline-primary {% if not has_more %}d-none{% endif %}">
+        <i class="bi bi-arrow-down-circle me-2"></i>Load More Products
+      </button>
+      <div id="allLoadedMsg" class="text-muted small {% if has_more %}d-none{% endif %}">
+        All products loaded
+      </div>
+    </div>
   </div>
 
   <button id="scrollToTopBtn" class="scroll-to-top-button" title="Back to top">
     <i class="bi bi-arrow-up"></i>
   </button>
 
+  <script src="{% static 'inventory/responsive.js' %}"></script>
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-<!-- Replace the duplicate Product Loading and Pagination script in your inventory.html with this fixed version -->
-<script>
-// Product Loading and Pagination - FIXED VERSION
-document.addEventListener('DOMContentLoaded', function() {
-    // Configuration
-    const PRODUCTS_PER_PAGE = 20;
-    let currentPage = 1;
-    let isLoading = false;
-    let allProductsLoaded = false;
-    
-    // DOM Elements
-    const cardView = document.getElementById('card-view');
-    const loadingOverlay = document.getElementById('loading-overlay');
-    
-    // Create Load More container
-    const loadMoreContainer = document.createElement('div');
-    loadMoreContainer.className = 'col-12 text-center my-4';
-    loadMoreContainer.innerHTML = `
-        <button id="loadMoreBtn" class="btn btn-outline-primary">
-            <i class="bi bi-arrow-down-circle me-2"></i>Load More Products
-        </button>
-    `;
-    
-    // Add Load More button to the end of the card view
-    if (cardView && cardView.parentNode) {
-        cardView.parentNode.insertBefore(loadMoreContainer, cardView.nextSibling);
-        const loadMoreBtn = document.getElementById('loadMoreBtn');
-        
-        // Hide button initially if no more products
-        const hasMore = {% if has_more %}true{% else %}false{% endif %};
-        if (!hasMore) {
-            loadMoreContainer.style.display = 'none';
-            allProductsLoaded = true;
-        }
-        
-        // Function to load more products
-        function loadMoreProducts() {
-            if (isLoading || allProductsLoaded) return;
-            
-            isLoading = true;
-            currentPage++;
-            showLoading(true);
-            
-            // Get current filter values
-            const searchInput = document.getElementById('searchInput');
-            const typeFilter = document.getElementById('typeFilter');
-            const currentFilter = getActiveStatusFilter();
-            
-            // Build URL with query parameters
-            const params = new URLSearchParams({
-                page: currentPage,
-                limit: PRODUCTS_PER_PAGE,
-                search: searchInput ? searchInput.value : '',
-                category: typeFilter ? typeFilter.value : 'all',
-                status: currentFilter
-            });
-            
-            // Fetch more products from the server - FIXED URL
-            fetch(`{% url 'inventory:inventory_ajax' %}?${params.toString()}`)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    console.log('AJAX Response:', data); // Debug log
-                    
-                    if (data.success) {
-                        if (data.products && data.products.length > 0) {
-                            // Append new products to the DOM
-                            appendProductsToDOM(data.products);
-                            
-                            // Check if we've loaded all products
-                            if (!data.has_more) {
-                                allProductsLoaded = true;
-                                updateLoadMoreButton(false);
-                            }
-                        } else {
-                            allProductsLoaded = true;
-                            updateLoadMoreButton(false);
-                        }
-                    } else {
-                        console.error('Error loading products:', data.error);
-                        showErrorMessage('Failed to load more products. Please try again.');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error fetching products:', error);
-                    showErrorMessage('Failed to load more products. Please try again.');
-                })
-                .finally(() => {
-                    isLoading = false;
-                    showLoading(false);
-                });
-        }
-        
-        // Get the current active status filter
-        function getActiveStatusFilter() {
-            const activeBtn = document.querySelector('.filter-btn.active');
-            if (!activeBtn) return 'all';
-            
-            const btnId = activeBtn.id;
-            if (btnId === 'btn-instock') return 'instock';
-            if (btnId === 'btn-notinstock') return 'notinstock';
-            return 'all';
-        }
-        
-        // Function to append products to the DOM
-        function appendProductsToDOM(products) {
-            products.forEach((product, index) => {
-                if (!product.design_no) return;
-                
-                // Create unique forloop counter for new products
-                const modalIndex = document.querySelectorAll('#card-view .col-6').length + index;
-                
-                // Create a card for each product
-                const card = document.createElement('div');
-                card.className = 'col-6 col-md-4 col-lg-3';
-                card.dataset.type = (product.category || '').toLowerCase();
-                card.dataset.status = (product.status || '').toLowerCase();
-                
-                // Set job data attributes
-                let inStockJobs = '';
-                let memoJobs = '';
-                
-                if (product.in_stock_jobs && product.in_stock_jobs.length > 0) {
-                    inStockJobs = product.in_stock_jobs.map(job => job.job_no).join(' ');
-                }
-                
-                if (product.memo_jobs && product.memo_jobs.length > 0) {
-                    memoJobs = product.memo_jobs.map(job => job.job_no).join(' ');
-                }
-                
-                card.dataset.jobs = inStockJobs;
-                card.dataset.memojobs = memoJobs;
-                
-                // Generate status circles
-                let statusCircles = '';
-                let statusBadge = '';
-                
-                if (product.in_stock_jobs && product.in_stock_jobs.length > 0) {
-                    statusCircles += `<div class="status-circle in-stock" title="In Stock">${product.in_stock_jobs.length}</div>`;
-                }
-                
-                if (product.memo_jobs && product.memo_jobs.length > 0) {
-                    statusCircles += `<div class="status-circle on-memo" title="On Memo">${product.memo_jobs.length}</div>`;
-                }
-                
-                if ((!product.in_stock_jobs || product.in_stock_jobs.length === 0) && 
-                    (!product.memo_jobs || product.memo_jobs.length === 0)) {
-                    statusCircles += `<div class="status-circle out-of-stock" title="Not In Stock">0</div>`;
-                }
-                
-                // Set status badge
-                if (product.in_stock_jobs && product.in_stock_jobs.length > 0) {
-                    if (product.memo_jobs && product.memo_jobs.length > 0) {
-                        statusBadge = `
-                            <div class="status-icon in-stock me-2"><i class="bi bi-check-circle-fill"></i> In Stock</div>
-                            <div class="status-icon on-memo"><i class="bi bi-bookmark-fill"></i> On Memo</div>
-                        `;
-                    } else {
-                        statusBadge = `<div class="status-icon in-stock"><i class="bi bi-check-circle-fill"></i> In Stock</div>`;
-                    }
-                } else if (product.memo_jobs && product.memo_jobs.length > 0) {
-                    statusBadge = `<div class="status-icon on-memo"><i class="bi bi-bookmark-fill"></i> On Memo</div>`;
-                } else {
-                    statusBadge = `<div class="status-icon out-of-stock"><i class="bi bi-x-circle-fill"></i> Not In Stock</div>`;
-                }
-                
-                // Generate button based on availability
-                let actionButton = '';
-                const hasStock = product.in_stock_jobs && product.in_stock_jobs.length > 0;
-                const hasMemo = product.memo_jobs && product.memo_jobs.length > 0;
-                
-                if (!hasStock && !hasMemo) {
-                    actionButton = `
-                        <button class="btn btn-sm btn-outline-secondary w-100" data-bs-toggle="modal" data-bs-target="#modal-${modalIndex}">
-                            <i class="bi bi-tools"></i> Request Custom Order
-                        </button>
-                    `;
-                } else {
-                    actionButton = `
-                        <button class="btn btn-sm btn-primary w-100 order-btn" data-bs-toggle="modal" data-bs-target="#modal-${modalIndex}">
-                            <i class="bi bi-cart-plus"></i> Order Now
-                        </button>
-                    `;
-                }
-                
-                // Get the first available job_no for wishlist
-                let firstJobNo = '';
-                if (product.in_stock_jobs && product.in_stock_jobs.length > 0) {
-                    firstJobNo = product.in_stock_jobs[0].job_no || '';
-                }
-                
-                // Complete card HTML
-                card.innerHTML = `
-                    <div class="card h-100">
-                        <div class="card-img-container">
-                            <img class="lazy" src="{% static 'inventory/placeholder.jpg' %}" 
-                                 data-src="${product.image_base_path || 'https://dev-jewels.s3.us-east-2.amazonaws.com/products/' + product.design_no}/White/D_${product.design_no}-1.jpg"
-                                 alt="${product.design_no}" data-bs-toggle="modal" data-bs-target="#imageModal-${modalIndex}">
-                            <button class="wishlist-btn position-absolute top-0 end-0 m-2"
-                                    onclick="toggleWishlist('${product.design_no}', '${firstJobNo}')">
-                                <i class="bi bi-heart fs-5"></i>
-                            </button>
-                        </div>
-                        <div class="card-body text-center p-3">
-                            <h5 class="card-title mb-1">${product.design_no}</h5>
-                            <p class="text-muted small mb-2">${product.category || ''}</p>
-                            <div class="status-circles-container">
-                                ${statusCircles}
-                            </div>
-                            <div class="d-flex justify-content-center mb-3">
-                                ${statusBadge}
-                            </div>
-                            ${actionButton}
-                        </div>
-                    </div>
-                `;
-                
-                // Add the card to the view
-                cardView.appendChild(card);
-                
-                // Also need to add the corresponding modals
-                addProductModals(product, modalIndex);
-            });
-            
-            // Initialize lazy loading for new images
-            initLazyLoading();
-            
-            // Update filters to include new products
-            updateFilterItems();
-            
-            // Re-apply current filters
-            if (typeof applyFilters === 'function') {
-                applyFilters();
-            }
-            
-            // Update wishlist buttons for new items
-            if (typeof updateWishlistButtons === 'function') {
-                updateWishlistButtons();
-            }
-        }
-        
-        // Function to add product modals
-        function addProductModals(product, modalIndex) {
-            // Create order modal
-            const orderModal = createOrderModal(product, modalIndex);
-            document.body.appendChild(orderModal);
-            
-            // Create image modal
-            const imageModal = createImageModal(product, modalIndex);
-            document.body.appendChild(imageModal);
-        }
-        
-        // Create order modal
-        function createOrderModal(product, modalIndex) {
-            const modalDiv = document.createElement('div');
-            modalDiv.innerHTML = `
-                <div class="modal fade" id="modal-${modalIndex}" tabindex="-1" aria-hidden="true">
-                    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title">Order: ${product.design_no}</h5>
-                                <div class="ms-auto">
-                                    <button class="btn btn-outline-danger me-2"
-                                        onclick="toggleWishlist('${product.design_no}', '${product.in_stock_jobs && product.in_stock_jobs[0] ? product.in_stock_jobs[0].job_no : ''}')">
-                                        <i class="bi bi-heart"></i> Wishlist
-                                    </button>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                </div>
-                            </div>
-                            <div class="modal-body">
-                                ${generateModalContent(product, modalIndex)}
-                            </div>
-                            <div class="modal-footer justify-content-between">
-                                <button class="btn btn-outline-secondary" data-bs-dismiss="modal">
-                                    <i class="bi bi-x-lg"></i> Cancel
-                                </button>
-                                <button class="btn btn-dark" onclick="addToCart('${product.design_no}', '${modalIndex}')">
-                                    <i class="bi bi-cart-plus"></i> Add to Cart
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            return modalDiv.firstElementChild;
-        }
-        
-        // Generate modal content
-        function generateModalContent(product, modalIndex) {
-            let content = '';
-            
-            // In Stock Section
-            if (product.in_stock_jobs && product.in_stock_jobs.length > 0) {
-                content += `
-                    <h6 class="text-center mb-4">
-                        <i class="bi bi-check-circle-fill text-success me-2"></i>In Stock
-                    </h6>
-                    <div class="table-responsive mb-5">
-                        <table class="table table-bordered">
-                            <thead class="table-light">
-                                <tr class="text-center">
-                                    <th class="text-center">SELECT</th>
-                                    <th>JOB NO</th>
-                                    <th>METAL</th>
-                                    <th>QUALITY</th>
-                                    <th>COLOR</th>
-                                    <th>DIAMOND QUALITY</th>
-                                    <th>DIAMOND COLOR</th>
-                                    <th>GWT</th>
-                                    <th>DWT</th>
-                                    <th>SIZE</th>
-                                    <th>PRICE</th>
-                                </tr>
-                            </thead>
-                            <tbody>`;
-                
-                product.in_stock_jobs.forEach(job => {
-                    content += `
-                        <tr class="text-center">
-                            <td class="text-center">
-                                <input type="checkbox" class="form-check-input job-checkbox" 
-                                    data-design="${product.design_no}"
-                                    data-job_no="${job.job_no}" 
-                                    data-price="${job.discounted_price}">
-                            </td>
-                            <td>${job.job_no}</td>
-                            <td>${job.metal_type || ''}</td>
-                            <td>${job.metal_quality || ''}</td>
-                            <td>${job.metal_color || ''}</td>
-                            <td>${job.diamond_quality || 'VVS-VS'}</td>
-                            <td>${job.diamond_color || 'D-E-F'}</td>
-                            <td>${job.gwt || ''}</td>
-                            <td>${job.dwt || ''}</td>
-                            <td>${job.size || ''}</td>
-                            <td>$${job.discounted_price}</td>
-                        </tr>`;
-                });
-                
-                content += `
-                            </tbody>
-                        </table>
-                    </div>`;
-            }
-            
-            // Memo Section
-            if (product.memo_jobs && product.memo_jobs.length > 0) {
-                content += `
-                    <h6 class="text-center mb-4">
-                        <i class="bi bi-bookmark-fill text-warning me-2"></i>On Memo with Others
-                    </h6>
-                    <div class="table-responsive mb-5">
-                        <table class="table table-bordered">
-                            <thead class="table-light">
-                                <tr class="text-center">
-                                    <th class="text-center">REQUEST</th>
-                                    <th>JOB NO</th>
-                                    <th>METAL</th>
-                                    <th>QUALITY</th>
-                                    <th>COLOR</th>
-                                    <th>DIAMOND QUALITY</th>
-                                    <th>DIAMOND COLOR</th>
-                                    <th>GWT</th>
-                                    <th>DWT</th>
-                                    <th>SIZE</th>
-                                    <th>PRICE</th>
-                                </tr>
-                            </thead>
-                            <tbody>`;
-                
-                product.memo_jobs.forEach(job => {
-                    content += `
-                        <tr class="text-center">
-                            <td class="text-center">
-                                <input type="checkbox" class="form-check-input memo-checkbox" 
-                                    data-design="${product.design_no}"
-                                    data-job_no="${job.job_no}">
-                            </td>
-                            <td>${job.job_no}</td>
-                            <td>${job.metal_type || ''}</td>
-                            <td>${job.metal_quality || ''}</td>
-                            <td>${job.metal_color || ''}</td>
-                            <td>${job.diamond_quality || 'VVS-VS'}</td>
-                            <td>${job.diamond_color || 'D-E-F'}</td>
-                            <td>${job.gwt || ''}</td>
-                            <td>${job.dwt || ''}</td>
-                            <td>${job.size || ''}</td>
-                            <td>$${job.discounted_price}</td>
-                        </tr>`;
-                });
-                
-                content += `
-                            </tbody>
-                        </table>
-                        <div class="text-end mt-3">
-                            <button class="btn btn-warning request-selected-memo-btn">
-                                <i class="bi bi-bookmark-plus me-1"></i> Request Selected Items
-                            </button>
-                        </div>
-                    </div>`;
-            }
-            
-            // Out of stock message
-            if ((!product.in_stock_jobs || product.in_stock_jobs.length === 0) && 
-                (!product.memo_jobs || product.memo_jobs.length === 0)) {
-                content += `
-                    <div class="alert alert-secondary mb-4 d-flex">
-                        <i class="bi bi-exclamation-circle-fill me-2 fs-4"></i>
-                        <div>
-                            <p class="mb-2 fw-bold">Sorry, we are out of stock.</p>
-                            <p class="mb-0">
-                                Contact us at <a href="mailto:abc@gmail.com">abc@gmail.com</a> or
-                                <a href="tel:+12011234567">+1 (201) 123 4567</a>
-                            </p>
-                        </div>
-                    </div>`;
-            }
-            
-            // Custom Order Section
-            content += `
-                <h6 class="text-center mb-4">
-                    <i class="bi bi-tools me-2"></i>Custom Order
-                </h6>
-                <div class="table-responsive mb-3">
-                    <table class="table table-bordered" id="customOrderTable-${modalIndex}">
-                        <thead class="table-light">
-                            <tr class="text-center">
-                                <th>SERIAL NO.</th>
-                                <th>METAL TYPE</th>
-                                <th>QUALITY</th>
-                                <th>COLOR</th>
-                                <th>DIAMOND QUALITY</th>
-                                <th>DIAMOND COLOR</th>
-                                <th>SIZE (IN)</th>
-                                <th>NUMBER OF PCS</th>
-                                <th>REMARKS</th>
-                                <th>REMOVE</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-                <button class="btn btn-outline-primary btn-sm"
-                    onclick="addCustomRow('${modalIndex}', '${product.design_no}')">
-                    <i class="bi bi-plus-lg"></i> Add Row
-                </button>`;
-            
-            return content;
-        }
-        
-        // Create image modal
-        function createImageModal(product, modalIndex) {
-            const modalDiv = document.createElement('div');
-            modalDiv.innerHTML = `
-                <div class="modal fade" id="imageModal-${modalIndex}" tabindex="-1">
-                    <div class="modal-dialog modal-dialog-centered modal-xl">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title">Images - ${product.design_no}</h5>
-                                <div class="ms-auto">
-                                    <button class="btn btn-outline-danger me-2"
-                                        onclick="toggleWishlist('${product.design_no}', '${product.in_stock_jobs && product.in_stock_jobs[0] ? product.in_stock_jobs[0].job_no : ''}')">
-                                        <i class="bi bi-heart"></i> Add to Wishlist
-                                    </button>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                </div>
-                            </div>
-                            <div class="modal-body">
-                                <div class="mb-3 text-center">
-                                    <button class="btn btn-outline-secondary mx-1 color-btn" data-color="White"
-                                        data-design="${product.design_no}" data-modal="${modalIndex}">W</button>
-                                    <button class="btn btn-outline-secondary mx-1 color-btn" data-color="Yellow"
-                                        data-design="${product.design_no}" data-modal="${modalIndex}">Y</button>
-                                    <button class="btn btn-outline-secondary mx-1 color-btn" data-color="Rose"
-                                        data-design="${product.design_no}" data-modal="${modalIndex}">R</button>
-                                </div>
-                                <div id="carousel-${modalIndex}" class="carousel slide" data-bs-ride="false">
-                                    <div class="carousel-inner text-center" id="carousel-inner-${modalIndex}">
-                                        <div class="carousel-item active">
-                                            <img src="${product.image_base_path || 'https://dev-jewels.s3.us-east-2.amazonaws.com/products/' + product.design_no}/White/D_${product.design_no}-1.jpg"
-                                                class="modal-carousel-img d-inline-block" alt="${product.design_no}">
-                                        </div>
-                                    </div>
-                                    <button class="carousel-control-prev" type="button" data-bs-target="#carousel-${modalIndex}"
-                                        data-bs-slide="prev">
-                                        <span class="carousel-control-prev-icon"></span>
-                                    </button>
-                                    <button class="carousel-control-next" type="button" data-bs-target="#carousel-${modalIndex}"
-                                        data-bs-slide="next">
-                                        <span class="carousel-control-next-icon"></span>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            return modalDiv.firstElementChild;
-        }
-        
-        // Update the "Load More" button visibility
-        function updateLoadMoreButton(visible) {
-            if (visible) {
-                loadMoreContainer.style.display = 'block';
-                loadMoreBtn.innerHTML = '<i class="bi bi-arrow-down-circle me-2"></i>Load More Products';
-                loadMoreBtn.disabled = false;
-            } else {
-                loadMoreBtn.innerHTML = 'All Products Loaded';
-                loadMoreBtn.disabled = true;
-                // Hide button after delay
-                setTimeout(() => {
-                    loadMoreContainer.style.display = 'none';
-                }, 3000);
-            }
-        }
-        
-        // Show/hide loading indicator
-        function showLoading(isVisible) {
-            if (isVisible) {
-                loadingOverlay.classList.remove('d-none');
-                loadingOverlay.classList.add('d-flex');
-            } else {
-                loadingOverlay.classList.add('d-none');
-                loadingOverlay.classList.remove('d-flex');
-            }
-        }
-        
-        // Show error message
-        function showErrorMessage(message) {
-            if (typeof showToast === 'function') {
-                showToast(`<i class="bi bi-exclamation-triangle-fill me-2"></i>${message}`, "danger");
-            } else {
-                alert(message);
-            }
-        }
-        
-        // Initialize lazy loading for images
-        function initLazyLoading() {
-            const lazyImages = document.querySelectorAll("img.lazy:not([data-loaded='true'])");
-            
-            if ('IntersectionObserver' in window) {
-                const observer = new IntersectionObserver((entries, obs) => {
-                    entries.forEach(entry => {
-                        if (entry.isIntersecting) {
-                            const img = entry.target;
-                            
-                            if (img.dataset.src && !img.dataset.loaded) {
-                                img.src = img.dataset.src;
-                                img.dataset.loaded = "true";
-                                img.classList.remove("lazy");
-                                obs.unobserve(img);
-                            }
-                        }
-                    });
-                });
-                
-                lazyImages.forEach(img => observer.observe(img));
-            } else {
-                lazyImages.forEach(img => {
-                    if (img.dataset.src) {
-                        img.src = img.dataset.src;
-                        img.dataset.loaded = "true";
-                    }
-                });
-            }
-        }
-        
-        // Update filter items when new products are added
-        function updateFilterItems() {
-            // Update the global cards array if it exists
-            if (typeof window.cards !== 'undefined') {
-                window.cards = Array.from(document.querySelectorAll('#card-view .col-6')).map(card => {
-                    const jobNos = ((card.dataset.jobs || "") + " " + (card.dataset.memojobs || "")).toLowerCase();
-                    return {
-                        el: card,
-                        type: card.dataset.type,
-                        status: card.dataset.status,
-                        jobs: jobNos.split(/\s+/).filter(Boolean),
-                    };
-                });
-            }
-        }
-        
-        // Debounce function
-        function debounce(func, wait) {
-            let timeout;
-            return function(...args) {
-                const context = this;
-                clearTimeout(timeout);
-                timeout = setTimeout(() => func.apply(context, args), wait);
-            };
-        }
-        
-        // Handle infinite scroll
-        function handleInfiniteScroll() {
-            if (isLoading || allProductsLoaded) return;
-            
-            const scrollTop = (document.documentElement && document.documentElement.scrollTop) || document.body.scrollTop;
-            const scrollHeight = (document.documentElement && document.documentElement.scrollHeight) || document.body.scrollHeight;
-            const clientHeight = document.documentElement.clientHeight || window.innerHeight;
-            
-            // If user has scrolled to within 200px of the bottom, load more products
-            if (scrollHeight - scrollTop - clientHeight < 200) {
-                loadMoreProducts();
-            }
-        }
-        
-        // Event listeners
-        if (loadMoreBtn) {
-            loadMoreBtn.addEventListener('click', loadMoreProducts);
-        }
-        
-        // Add scroll event listener for infinite scrolling
-        window.addEventListener('scroll', debounce(handleInfiniteScroll, 100));
-        
-        // Re-attach event listeners for dynamically added elements
-        document.addEventListener('click', function(e) {
-            if (e.target.closest('.color-btn')) {
-                const button = e.target.closest('.color-btn');
-                const designNo = button.getAttribute('data-design');
-                const color = button.getAttribute('data-color');
-                const modalId = button.getAttribute('data-modal');
-                const container = document.getElementById(`carousel-inner-${modalId}`);
-                
-                if (container) {
-                    const baseUrl = `https://dev-jewels.s3.us-east-2.amazonaws.com/products/${designNo}/${color}/`;
-                    const imagePaths = [
-                        `D_${designNo}-1.jpg`,
-                        `H_${designNo}-2.jpg`,
-                        `${designNo}-3.jpg`,
-                        `${designNo}-4.jpg`
-                    ];
-                    
-                    let content = '';
-                    imagePaths.forEach((name, idx) => {
-                        content += `
-                            <div class="carousel-item ${idx === 0 ? 'active' : ''}">
-                                <img src="${baseUrl}${name}" class="modal-carousel-img d-inline-block" alt="${color} image ${idx + 1}">
-                            </div>`;
-                    });
-                    container.innerHTML = content;
-                }
-            }
-        });
-        
-        // Reset page counter when filters change
-        const searchInput = document.getElementById('searchInput');
-        const typeFilter = document.getElementById('typeFilter');
-        const filterBtns = document.querySelectorAll('.filter-btn');
-        
-        function resetPagination() {
-            currentPage = 1;
-            allProductsLoaded = false;
-            
-            // Show load more button again
-            if (loadMoreContainer) {
-                loadMoreContainer.style.display = 'block';
-                updateLoadMoreButton(true);
-            }
-        }
-        
-        if (searchInput) {
-            searchInput.addEventListener('input', debounce(resetPagination, 300));
-        }
-        
-        if (typeFilter) {
-            typeFilter.addEventListener('change', resetPagination);
-        }
-        
-        filterBtns.forEach(btn => {
-            btn.addEventListener('click', resetPagination);
-        });
-    }
-});
-</script>
-
-  <!-- Filter functions -->
+  <!-- Main JavaScript for Inventory Functionality -->
   <script>
     document.addEventListener('DOMContentLoaded', function () {
-      const btnAll = document.getElementById('btn-all');
-      const btnInStock = document.getElementById('btn-instock');
-      const btnNotStock = document.getElementById('btn-notinstock');
-      const searchInput = document.getElementById('searchInput');
-      const typeFilter = document.getElementById('typeFilter');
-      const overlay = document.getElementById('loading-overlay');
-      const toggleBtnText = document.getElementById('toggleBtnText');
-      const tableView = document.getElementById('table-view');
-      const cardView = document.getElementById('card-view');
-      const toggleBtn = document.getElementById('toggleViewBtn');
+      // Global variables
+      let activeStatusFilter = 'instock'; // default filter
+      const PRODUCTS_PER_PAGE = 20;
+      let currentPage = 1;
+      let isLoading = false;
+      let allProductsLoaded = {% if not has_more %}true{% else %}false{% endif %};
+    let productsCache = {};
 
-      // Get all rows/cards to be filtered
-      const rows = Array.from(document.querySelectorAll('#inventory-table tbody tr')).map(tr => {
-        const jobNos = ((tr.dataset.jobs || "") + " " + (tr.dataset.memojobs || "")).toLowerCase();
-        return {
-          el: tr,
-          type: tr.dataset.type,
-          status: tr.dataset.status,
-          jobs: jobNos.split(/\s+/).filter(Boolean),
-        };
-      });
+    // DOM Elements
+    const cardView = document.getElementById('card-view');
+    const tableView = document.getElementById('table-view');
+    const loadingOverlay = document.getElementById('loading-overlay');
+    const loadMoreBtn = document.getElementById('loadMoreBtn');
+    const allLoadedMsg = document.getElementById('allLoadedMsg');
+    const noResultsMessage = document.getElementById('noResultsMessage');
 
-      // Get all card items
-      const cards = Array.from(document.querySelectorAll('#card-view .col-6')).map(card => {
-        const jobNos = ((card.dataset.jobs || "") + " " + (card.dataset.memojobs || "")).toLowerCase();
-        return {
-          el: card,
-          type: card.dataset.type,
-          status: card.dataset.status,
-          jobs: jobNos.split(/\s+/).filter(Boolean),
-        };
-      });
+    // Filter Elements
+    const searchInput = document.getElementById('searchInput');
+    const categoryFilter = document.getElementById('categoryFilter');
+    const genderFilter = document.getElementById('genderFilter');
+    const collectionFilter = document.getElementById('collectionFilter');
+    const subcategoryFilter = document.getElementById('subcategoryFilter');
+    const productTypeFilter = document.getElementById('productTypeFilter');
 
-      // Initialize with instock filter and card view active
-      let currentFilter = 'instock';
-      btnInStock.classList.add('active');
+    const btnAll = document.getElementById('btn-all');
+    const btnInStock = document.getElementById('btn-instock');
+    const btnNotInStock = document.getElementById('btn-notinstock');
 
-      // Set the toggle button text based on the current view
-      const icon = toggleBtn.querySelector('i');
-      toggleBtnText.textContent = "Table View";
-      icon.classList.remove('bi-grid');
-      icon.classList.add('bi-table');
+    const advancedFiltersBtn = document.getElementById('advancedFiltersBtn');
+    const advancedFiltersPanel = document.getElementById('advancedFiltersPanel');
+    const toggleViewBtn = document.getElementById('toggleViewBtn');
+    const toggleBtnText = document.getElementById('toggleBtnText');
+    const clearFiltersBtn = document.getElementById('clearFiltersBtn');
+    const activeFiltersDisplay = document.getElementById('activeFiltersDisplay');
+    const activeFilterTags = document.getElementById('activeFilterTags');
+    const activeFiltersCount = document.getElementById('activeFiltersCount');
 
-      // Apply initial filters
-      applyFilters();
+    // API Endpoints
+    const FILTER_OPTIONS_API = '{% url "inventory:api_filter_options" %}';
+    const INVENTORY_AJAX_API = '{% url "inventory:inventory_ajax" %}';
 
-      function debounce(fn, delay = 150) {
-        let timer;
-        return (...args) => {
-          clearTimeout(timer);
-          timer = setTimeout(() => fn.apply(this, args), delay);
-        };
+    // Load filter options when page loads
+    loadFilterOptions();
+
+    // Initialize
+    updateWishlistButtons();
+    updateWishlistCount();
+    updateCartCounter();
+
+    // Toggle view between cards and table
+    toggleViewBtn.addEventListener('click', function () {
+      const isTableView = cardView.classList.contains('d-none');
+
+      if (isTableView) {
+        // Switch to card view
+        cardView.classList.remove('d-none');
+        tableView.classList.add('d-none');
+        toggleBtnText.textContent = '';
+        toggleViewBtn.querySelector('i').classList.remove('bi-grid');
+        toggleViewBtn.querySelector('i').classList.add('bi-table');
+      } else {
+        // Switch to table view
+        cardView.classList.add('d-none');
+        tableView.classList.remove('d-none');
+        toggleBtnText.textContent = '';
+        toggleViewBtn.querySelector('i').classList.remove('bi-table');
+        toggleViewBtn.querySelector('i').classList.add('bi-grid');
       }
+    });
 
-      // Filter Logic for Both Table and Card View with debug logging
-      function applyFilters() {
-        const query = searchInput.value.trim().toLowerCase();
-        const cat = typeFilter.value.toLowerCase();
+    // Toggle advanced filters panel
+    advancedFiltersBtn.addEventListener('click', function () {
+      advancedFiltersPanel.style.display = advancedFiltersPanel.style.display === 'none' ? 'block' : 'none';
+    });
 
-        console.log("Applying filters:");
-        console.log("- Current filter:", currentFilter);
-        console.log("- Category filter:", cat);
-        console.log("- Search query:", query);
+    // Event listeners for filter controls
+    if (searchInput) {
+      searchInput.addEventListener('input', debounce(function () {
+        const searchTerm = this.value.trim();
+        console.log("Search term:", searchTerm);
 
-        // Filtering cards first
-        cards.forEach(card => {
-          const { el, type, status, jobs } = card;
+        // Clear any previous search message
+        const existingMsg = document.getElementById('search-status-message');
+        if (existingMsg) existingMsg.remove();
 
-          console.log("Card: type = " + type + ", status = " + status);
+        
 
-          // Get text content for searching
-          const text = el.innerText.toLowerCase();
-
-          const matchesSearch = query === '' ||
-            text.includes(query) ||
-            jobs.some(j => j.includes(query));
-
-          const matchesCat = cat === "all" || type === cat;
-
-          const matchesStat =
-            currentFilter === "all" ||
-            (currentFilter === "instock" && status === "in stock") ||
-            (currentFilter === "notinstock" && status === "not in stock");
-
-          console.log("- Matches: search = " + matchesSearch + ", cat = " + matchesCat + ", stat = " + matchesStat);
-
-          el.style.display = matchesSearch && matchesCat && matchesStat ? "" : "none";
-        });
-
-        // Then filter table rows
-        rows.forEach(row => {
-          const { el, type, status, jobs } = row;
-
-          console.log("Row: type = " + type + ", status = " + status);
-
-          const designNo = el.querySelector("td:nth-child(3)")?.textContent.toLowerCase() || "";
-          const category = el.querySelector("td:nth-child(4)")?.textContent.toLowerCase() || "";
-
-          const matchesSearch = query === '' ||
-            designNo.includes(query) ||
-            category.includes(query) ||
-            jobs.some(j => j.includes(query));
-
-          const matchesCat = cat === "all" || type === cat;
-
-          const matchesStat =
-            currentFilter === "all" ||
-            (currentFilter === "instock" && status === "in stock") ||
-            (currentFilter === "notinstock" && status === "not in stock");
-
-          console.log("- Matches: search = " + matchesSearch + ", cat = " + matchesCat + ", stat = " + matchesStat);
-
-          el.style.display = matchesSearch && matchesCat && matchesStat ? "" : "none";
-        });
-
-        // Check if we need to show "No results" message
-        const visibleCards = Array.from(document.querySelectorAll('#card-view .col-6')).filter(
-          card => card.style.display !== 'none'
-        );
-
-        const noResultsEl = document.querySelector('.no-results');
-
-        // If there's no visible cards and no "No results" message, add one
-        if (visibleCards.length === 0) {
-          if (!noResultsEl) {
-            const noResults = document.createElement('div');
-            noResults.className = 'col-12 no-results';
-            noResults.innerHTML = `
-            <i class="bi bi-search"></i>
-            <h4>No items found</h4>
-            <p class="text-muted">Try changing your search or filter criteria</p>
-          `;
-            document.getElementById('card-view').appendChild(noResults);
-          }
-        } else {
-          // If there are visible cards but a "No results" message exists, remove it
-          if (noResultsEl) {
-            noResultsEl.remove();
-          }
-        }
-      }
-
-      // Show/hide loading spinner during filtering
-      function applyFiltersWithLoading() {
-        overlay.classList.remove('d-none');
-        overlay.classList.add('d-flex');
+        // Delay a bit more for job number searches
         setTimeout(() => {
-          applyFilters();
-          overlay.classList.add('d-none');
-          overlay.classList.remove('d-flex');
-        }, 400);
+          resetPagination();
+          handleFilterChange();
+        }, 300);
+      }, 500));
+    }
+
+
+    // Add event listeners to filter dropdowns
+    [categoryFilter, genderFilter, collectionFilter, subcategoryFilter, productTypeFilter].forEach(filter => {
+      if (filter) {
+        filter.addEventListener('change', function () {
+          resetPagination();
+          handleFilterChange();
+        });
+      }
+    });
+
+    // Status filter buttons
+    if (btnAll) {
+      btnAll.addEventListener('click', function () {
+        setStatusFilter('all');
+      });
+    }
+
+    if (btnInStock) {
+      btnInStock.addEventListener('click', function () {
+        setStatusFilter('instock');
+      });
+    }
+
+    if (btnNotInStock) {
+      btnNotInStock.addEventListener('click', function () {
+        setStatusFilter('notinstock');
+      });
+    }
+
+    // Clear all filters button
+    if (clearFiltersBtn) {
+      clearFiltersBtn.addEventListener('click', clearAllFilters);
+    }
+
+    // Clear all filters button in no results message
+    document.addEventListener('click', function (e) {
+      if (e.target.closest('#clearAllFiltersBtn')) {
+        clearAllFilters();
+      }
+    });
+
+    // Load more button
+    if (loadMoreBtn) {
+      loadMoreBtn.addEventListener('click', function () {
+        loadMoreProducts();
+      });
+    }
+
+    // Infinite scroll
+    window.addEventListener('scroll', debounce(handleInfiniteScroll, 100));
+
+    /**
+     * Load filter options from server
+     */
+    function loadFilterOptions() {
+      showLoading(true);
+
+      fetch(FILTER_OPTIONS_API)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then(data => {
+          if (data.success) {
+            populateFilterDropdowns(data.filters);
+          } else {
+            console.error('Error in filter options response:', data.error || 'Unknown error');
+          }
+        })
+        .catch(error => {
+          console.error('Error loading filter options:', error);
+        })
+        .finally(() => {
+          showLoading(false);
+        });
+    }
+
+    /**
+     * Populate filter dropdowns with options from server
+     */
+    function populateFilterDropdowns(filters) {
+      // Categories
+      if (filters.categories && categoryFilter) {
+        filters.categories.forEach(cat => {
+          const option = document.createElement('option');
+          option.value = cat.toLowerCase();
+          option.textContent = cat;
+          categoryFilter.appendChild(option);
+        });
       }
 
-      // Filter button click handlers
-      [btnAll, btnInStock, btnNotStock].forEach(btn => {
-        btn.addEventListener('click', () => {
-          btnAll.classList.remove('active');
-          btnInStock.classList.remove('active');
-          btnNotStock.classList.remove('active');
-          btn.classList.add('active');
-          currentFilter = btn.id.replace('btn-', '');
-          console.log("Filter button clicked:", currentFilter);
-          applyFiltersWithLoading();
+      // Genders
+      if (filters.genders && genderFilter) {
+        filters.genders.forEach(gender => {
+          const option = document.createElement('option');
+          option.value = gender.toLowerCase();
+          option.textContent = gender;
+          genderFilter.appendChild(option);
         });
-      });
+      }
 
-      // Input and dropdown event handlers
-      searchInput.addEventListener('input', debounce(applyFiltersWithLoading, 100));
-      typeFilter.addEventListener('change', applyFiltersWithLoading);
-
-      // Dynamic Carousel Image Loader
-      document.querySelectorAll('.color-btn').forEach(button => {
-        button.addEventListener('click', () => {
-          const designNo = button.getAttribute('data-design');
-          const color = button.getAttribute('data-color');
-          const modalId = button.getAttribute('data-modal');
-          const container = document.getElementById(`carousel-inner-${modalId}`);
-          const baseUrl = `https://dev-jewels.s3.us-east-2.amazonaws.com/products/${designNo}/${color}/`;
-
-          const imagePaths = [
-            `D_${designNo}-1.jpg`,
-            `H_${designNo}-2.jpg`,
-            `${designNo}-3.jpg`,
-            `${designNo}-4.jpg`
-          ];
-
-          let content = '';
-          imagePaths.forEach((name, idx) => {
-            content += `
-            <div class="carousel-item ${idx === 0 ? 'active' : ''}">
-              <img src="${baseUrl}${name}" class="modal-carousel-img d-inline-block" alt="${color} image ${idx + 1}">
-            </div>`;
-          });
-          container.innerHTML = content;
+      // Collections
+      if (filters.collections && collectionFilter) {
+        filters.collections.forEach(collection => {
+          const option = document.createElement('option');
+          option.value = collection.toLowerCase();
+          option.textContent = collection;
+          collectionFilter.appendChild(option);
         });
-      });
+      }
 
-      // View toggle handler
-      toggleBtn.addEventListener("click", () => {
-        tableView.classList.toggle("d-none");
-        cardView.classList.toggle("d-none");
+      // Subcategories
+      if (filters.subcategories && subcategoryFilter) {
+        filters.subcategories.forEach(subcat => {
+          const option = document.createElement('option');
+          option.value = subcat.toLowerCase();
+          option.textContent = subcat;
+          subcategoryFilter.appendChild(option);
+        });
+      }
 
-        const icon = toggleBtn.querySelector('i');
+      // Product Types
+      if (filters.product_types && productTypeFilter) {
+        filters.product_types.forEach(type => {
+          const option = document.createElement('option');
+          option.value = type.toLowerCase();
+          option.textContent = type;
+          productTypeFilter.appendChild(option);
+        });
+      }
+    }
 
-        if (tableView.classList.contains("d-none")) {
-          toggleBtnText.textContent = "Table View";
-          icon.classList.remove('bi-grid');
-          icon.classList.add('bi-table');
-        } else {
-          toggleBtnText.textContent = "Card View";
-          icon.classList.remove('bi-table');
-          icon.classList.add('bi-grid');
+    /**
+     * Set the active status filter
+     */
+    function setStatusFilter(filter) {
+      // Don't do anything if already active
+      if (filter === activeStatusFilter) return;
+
+      // Update active status
+      activeStatusFilter = filter;
+
+      // Update active button styling
+      const buttons = [btnAll, btnInStock, btnNotInStock];
+      buttons.forEach(btn => {
+        if (btn) {
+          btn.classList.remove('active');
         }
       });
 
-      // Update wishlist/cart counters
-      updateWishlistCount();
-      updateCartCounter();
-      updateCustomOrdersCount();
-    }); // Ensure there is no stray comma or incomplete statement above this line
-  </script>
+      if (filter === 'all' && btnAll) {
+        btnAll.classList.add('active');
+      } else if (filter === 'instock' && btnInStock) {
+        btnInStock.classList.add('active');
+      } else if (filter === 'notinstock' && btnNotInStock) {
+        btnNotInStock.classList.add('active');
+      }
 
-  <!-- Lazy Loading -->
-  <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      const lazyImages = document.querySelectorAll("img.lazy");
+      // Reset pagination and reload products
+      resetPagination();
+
+      // Clear card view
+      if (cardView) {
+        cardView.innerHTML = '';
+      }
+
+      // Load products with the new filter
+      loadMoreProducts(true);
+    }
+
+    /**
+     * Reset pagination when filters change
+     */
+    function resetPagination() {
+      currentPage = 1;
+      allProductsLoaded = false;
+
+      // Show load more button
+      if (loadMoreBtn) {
+        loadMoreBtn.classList.remove('d-none');
+      }
+
+      // Hide "all loaded" message
+      if (allLoadedMsg) {
+        allLoadedMsg.classList.add('d-none');
+      }
+
+      // Hide "no results" message
+      if (noResultsMessage) {
+        noResultsMessage.style.display = 'none';
+      }
+    }
+
+    /**
+     * Handle filter changes
+     */
+    function handleFilterChange() {
+      // Hide any previous "no results" message
+      if (noResultsMessage) {
+        noResultsMessage.style.display = 'none';
+      }
+
+      // Update the active filters display
+      updateActiveFiltersDisplay();
+
+      // Debug - log search term
+      if (searchInput && searchInput.value.trim()) {
+        console.log("Searching for:", searchInput.value.trim());
+      }
+
+      // Load products with the current filters
+      loadMoreProducts(true);
+    }
+
+    /**
+     * Clear all filters and reset to defaults
+     */
+    function clearAllFilters() {
+      // Reset search field
+      if (searchInput) {
+        searchInput.value = '';
+      }
+
+      // Reset all filter dropdowns
+      [categoryFilter, genderFilter, collectionFilter, subcategoryFilter, productTypeFilter].forEach(filter => {
+        if (filter) {
+          filter.value = 'all';
+        }
+      });
+
+      // Reset status to default (instock)
+      setStatusFilter('instock');
+
+      // Update active filters display
+      updateActiveFiltersDisplay();
+
+      // Reset and reload products
+      resetPagination();
+      loadMoreProducts(true);
+    }
+
+    /**
+     * Update the active filters display
+     */
+    function updateActiveFiltersDisplay() {
+      // Get active filters
+      const filters = [];
+
+      // Check search input
+      if (searchInput && searchInput.value.trim()) {
+        filters.push({
+          name: 'search',
+          value: searchInput.value.trim(),
+          label: `Search: ${searchInput.value.trim()}`
+        });
+      }
+
+      // Check filter dropdowns
+      const dropdowns = [
+        { el: categoryFilter, name: 'category' },
+        { el: genderFilter, name: 'gender' },
+        { el: collectionFilter, name: 'collection' },
+        { el: subcategoryFilter, name: 'subcategory' },
+        { el: productTypeFilter, name: 'producttype' }
+      ];
+
+      dropdowns.forEach(dropdown => {
+        if (dropdown.el && dropdown.el.value !== 'all') {
+          filters.push({
+            name: dropdown.name,
+            value: dropdown.el.value,
+            label: `${dropdown.name.charAt(0).toUpperCase() + dropdown.name.slice(1)}: ${dropdown.el.options[dropdown.el.selectedIndex].text}`
+          });
+        }
+      });
+
+      // Update the UI
+      if (filters.length > 0) {
+        if (activeFiltersCount) {
+          activeFiltersCount.textContent = filters.length;
+          activeFiltersCount.style.display = 'inline-block';
+        }
+
+        if (activeFiltersDisplay) {
+          activeFiltersDisplay.style.display = 'block';
+        }
+
+        if (activeFilterTags) {
+          // Clear existing tags
+          activeFilterTags.innerHTML = '';
+
+          // Add new tags
+          filters.forEach(filter => {
+            const tag = document.createElement('span');
+            tag.className = 'filter-tag';
+            tag.innerHTML = `
+                ${filter.label} 
+                <i class="bi bi-x remove-filter" data-filter="${filter.name}" data-value="${filter.value}"></i>
+              `;
+            activeFilterTags.appendChild(tag);
+          });
+
+          // Add event listeners to remove buttons
+          const removeBtns = activeFilterTags.querySelectorAll('.remove-filter');
+          removeBtns.forEach(btn => {
+            btn.addEventListener('click', function () {
+              const filterName = this.getAttribute('data-filter');
+
+              if (filterName === 'search' && searchInput) {
+                searchInput.value = '';
+              } else {
+                // Find the corresponding dropdown
+                const dropdown = dropdowns.find(d => d.name === filterName)?.el;
+                if (dropdown) dropdown.value = 'all';
+              }
+
+              // Reset and reload
+              handleFilterChange();
+            });
+          });
+        }
+      } else {
+        // No active filters
+        if (activeFiltersCount) {
+          activeFiltersCount.style.display = 'none';
+        }
+
+        if (activeFiltersDisplay) {
+          activeFiltersDisplay.style.display = 'none';
+        }
+      }
+    }
+
+    /**
+     * Load more products with the current filters
+     */
+    function loadMoreProducts(resetPage = false) {
+      if (isLoading || (allProductsLoaded && !resetPage)) return;
+
+      isLoading = true;
+
+      if (resetPage) {
+        currentPage = 1;
+        allProductsLoaded = false;
+
+        // Clear existing products
+        if (cardView) {
+          cardView.innerHTML = '';
+        }
+
+        // Hide any previous "no results" message
+        if (noResultsMessage) {
+          noResultsMessage.style.display = 'none';
+        }
+      } else {
+        currentPage++;
+      }
+
+      showLoading(true);
+
+      // Build query parameters
+      const params = new URLSearchParams({
+        page: currentPage,
+        limit: PRODUCTS_PER_PAGE,
+        status: activeStatusFilter
+      });
+
+      // Add search term if present
+      if (searchInput && searchInput.value.trim()) {
+        params.append('search', searchInput.value.trim());
+      }
+
+      // Add other filters
+      if (categoryFilter && categoryFilter.value !== 'all') {
+        params.append('category', categoryFilter.value);
+      }
+
+      if (genderFilter && genderFilter.value !== 'all') {
+        params.append('gender', genderFilter.value);
+      }
+
+      if (collectionFilter && collectionFilter.value !== 'all') {
+        params.append('collection', collectionFilter.value);
+      }
+
+      if (subcategoryFilter && subcategoryFilter.value !== 'all') {
+        params.append('subcategory', subcategoryFilter.value);
+      }
+
+      if (productTypeFilter && productTypeFilter.value !== 'all') {
+        params.append('producttype', productTypeFilter.value);
+      }
+
+      // Debug - log the query we're making
+      console.log("Loading products with params:", params.toString());
+
+      // Fetch products from server
+      fetch(`${INVENTORY_AJAX_API}?${params.toString()}`)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`Network error: ${response.status} ${response.statusText}`);
+          }
+          return response.json();
+        })
+        .then(data => {
+          console.log('AJAX Response:', data); // Debug log
+
+          if (data.success) {
+            if (data.products && data.products.length > 0) {
+              // Clean the design numbers to ensure consistency
+              const cleanedProducts = data.products.map(product => {
+                // Ensure design_no is a clean string without any transformations
+                const cleanProduct = { ...product };
+
+                // Log the original design_no for debugging
+                console.log("Original design_no:", product.design_no);
+
+                // Ensure it's treated as a string
+                cleanProduct.design_no = String(product.design_no).trim();
+
+                // Log the cleaned design_no
+                console.log("Cleaned design_no:", cleanProduct.design_no);
+
+                return cleanProduct;
+              });
+
+              // Append products to DOM
+              appendProductsToDOM(cleanedProducts, resetPage);
+
+              // Update pagination state
+              allProductsLoaded = !data.has_more;
+
+              // Update load more button
+              updateLoadMoreButton();
+            } else {
+              allProductsLoaded = true;
+              updateLoadMoreButton();
+
+              // Show no results message if it's the first page
+              if (resetPage) {
+                showNoResultsMessage();
+              }
+            }
+          } else {
+            console.error('Error loading products:', data.error);
+            showErrorMessage('Failed to load products: ' + (data.error || 'Unknown error'));
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching products:', error);
+          showErrorMessage('Network error: ' + error.message);
+        })
+        .finally(() => {
+          isLoading = false;
+          showLoading(false);
+        });
+    }
+
+    /**
+     * Append products to the DOM
+     */
+    /**
+* Append products to the DOM with strict consistency for design numbers
+*/
+    function appendProductsToDOM(products, resetExisting = false) {
+      if (!cardView) return;
+
+      // If resetting, clear the container first
+      if (resetExisting) {
+        cardView.innerHTML = '';
+
+        // Also remove any existing modals for these products
+        // This ensures we don't have duplicate modals with different design numbers
+        const existingModals = document.querySelectorAll('[id^="modal-"], [id^="imageModal-"]');
+        existingModals.forEach(modal => {
+          if (modal.parentNode) {
+            modal.parentNode.removeChild(modal);
+          }
+        });
+      }
+
+      // Get the current count for indexing
+      const startIndex = resetExisting ? 0 : document.querySelectorAll('#card-view .col-6').length;
+
+      // Create a document fragment to improve performance
+      const fragment = document.createDocumentFragment();
+
+      // Keep track of processed design numbers to avoid duplicates
+      const processedDesigns = {};
+
+      products.forEach((product, index) => {
+        if (!product.design_no) return;
+
+        // Ensure consistent design number
+        const designNo = String(product.design_no).trim();
+
+        // Skip if we've already processed this design number
+        if (processedDesigns[designNo]) return;
+        processedDesigns[designNo] = true;
+
+        // Create unique ID for modals
+        const modalIndex = startIndex + index;
+
+        // Create the product card
+        const card = createProductCard(product, modalIndex);
+        fragment.appendChild(card);
+
+        // Create modals (only if they don't already exist)
+        if (!document.getElementById(`modal-${modalIndex}`)) {
+          const orderModal = createOrderModal(product, modalIndex);
+          document.body.appendChild(orderModal);
+
+          const imageModal = createImageModal(product, modalIndex);
+          document.body.appendChild(imageModal);
+        }
+      });
+
+      // Add all products at once
+      cardView.appendChild(fragment);
+
+      // Initialize lazy loading for new images
+      initLazyLoading();
+
+      // Update wishlist buttons for new products
+      updateWishlistButtons();
+    }
+
+    /**
+     * Create a product card element
+     */
+    // application/vnd.ant.code language="javascript"
+    /**
+     * Create a product card element - with fixed design number handling
+     */
+    function createProductCard(product, index) {
+      const card = document.createElement('div');
+      card.className = 'col-6 col-md-4 col-lg-3';
+      card.dataset.type = (product.category || '').toLowerCase();
+      card.dataset.status = (product.status || '').toLowerCase();
+
+      // Store exact design_no for consistency
+      const designNo = product.design_no;
+
+      // Set jobs data attributes
+      card.dataset.jobs = (product.in_stock_jobs || []).map(job => job.job_no).join(' ');
+      card.dataset.memojobs = (product.memo_jobs || []).map(job => job.job_no).join(' ');
+
+      // Collect all job numbers for data attributes and debugging
+      const inStockJobs = (product.in_stock_jobs || []).map(job => job.job_no);
+      const memoJobs = (product.memo_jobs || []).map(job => job.job_no);
+
+      // Set jobs data attributes
+      card.dataset.jobs = inStockJobs.join(' ');
+      card.dataset.memojobs = memoJobs.join(' ');
+
+
+      // Create status indicators
+      let statusCircles = '';
+      let statusBadges = '';
+      let actionButton = '';
+
+      const hasInStock = product.in_stock_jobs && product.in_stock_jobs.length > 0;
+      const hasMemo = product.memo_jobs && product.memo_jobs.length > 0;
+
+      // Status circles
+      if (hasInStock) {
+        statusCircles += `
+        <div class="status-circle in-stock" title="In Stock">
+            ${product.in_stock_jobs.length}
+        </div>
+        `;
+      }
+
+      if (hasMemo) {
+        statusCircles += `
+        <div class="status-circle on-memo" title="On Memo">
+            ${product.memo_jobs.length}
+        </div>
+        `;
+      }
+
+      if (!hasInStock && !hasMemo) {
+        statusCircles += `
+        <div class="status-circle out-of-stock" title="Not In Stock">0</div>
+        `;
+      }
+
+      // Status badges
+      if (hasInStock && hasMemo) {
+        statusBadges = `
+        <div class="status-icon in-stock me-2"><i class="bi bi-check-circle-fill"></i> In Stock</div>
+        <div class="status-icon on-memo"><i class="bi bi-bookmark-fill"></i> On Memo</div>
+        `;
+      } else if (hasInStock) {
+        statusBadges = `
+        <div class="status-icon in-stock"><i class="bi bi-check-circle-fill"></i> In Stock</div>
+        `;
+      } else if (hasMemo) {
+        statusBadges = `
+        <div class="status-icon on-memo"><i class="bi bi-bookmark-fill"></i> On Memo</div>
+        `;
+      } else {
+        statusBadges = `
+        <div class="status-icon out-of-stock"><i class="bi bi-x-circle-fill"></i> Not In Stock</div>
+        `;
+      }
+
+      // Action button
+      if (!hasInStock && !hasMemo) {
+        actionButton = `
+        <button class="btn btn-sm btn-outline-secondary w-100" data-bs-toggle="modal" data-bs-target="#modal-${index}">
+            <i class="bi bi-tools"></i> Request Custom Order
+        </button>
+        `;
+      } else {
+        actionButton = `
+        <button class="btn btn-sm btn-primary w-100 order-btn" data-bs-toggle="modal" data-bs-target="#modal-${index}">
+            <i class="bi bi-cart-plus"></i> Order Now
+        </button>
+        `;
+      }
+
+      // First job number for wishlist
+      const firstJobNo = hasInStock ? product.in_stock_jobs[0].job_no || '' : '';
+
+      // Build the card HTML - using exact design_no everywhere
+      card.innerHTML = `
+    <div class="card h-100">
+        <div class="card-img-container">
+        <img class="lazy" 
+            src="{% static 'inventory/placeholder.jpg' %}"
+            data-src="${product.image_base_path || 'https://dev-jewels.s3.us-east-2.amazonaws.com/products/' + designNo}/White/D_${designNo}-1.jpg"
+            alt="${designNo}" 
+            data-bs-toggle="modal" 
+            data-bs-target="#imageModal-${index}">
+        <button class="wishlist-btn position-absolute top-0 end-0 m-2"
+            onclick="toggleWishlist('${designNo}', '${firstJobNo}')">
+            <i class="bi bi-heart fs-5"></i>
+        </button>
+        </div>
+        <div class="card-body text-center p-3">
+        <h5 class="card-title mb-1">${designNo}</h5>
+        <p class="text-muted small mb-2">${product.category || ''}</p>
+        <div class="status-circles-container">
+            ${statusCircles}
+        </div>
+        <div class="d-flex justify-content-center mb-3">
+            ${statusBadges}
+        </div>
+        ${actionButton}
+        </div>
+    </div>
+    `;
+
+      return card;
+    }
+
+    /**
+     * Create order modal for a product - with fixed design number handling
+     */
+    function createOrderModal(product, index) {
+      const modalDiv = document.createElement('div');
+      modalDiv.className = 'modal fade';
+      modalDiv.id = `modal-${index}`;
+      modalDiv.setAttribute('tabindex', '-1');
+      modalDiv.setAttribute('aria-hidden', 'true');
+
+      // Store exact design_no for consistency
+      const designNo = product.design_no;
+
+      // First job number for wishlist button
+      const firstJobNo = product.in_stock_jobs && product.in_stock_jobs.length > 0
+        ? product.in_stock_jobs[0].job_no || ''
+        : '';
+
+      // Prepare in-stock table rows
+      let inStockRows = '';
+      if (product.in_stock_jobs && product.in_stock_jobs.length > 0) {
+        product.in_stock_jobs.forEach(job => {
+          inStockRows += `
+            <tr class="text-center">
+            <td class="text-center">
+                <input type="checkbox" class="form-check-input job-checkbox" 
+                data-design="${designNo}"
+                data-job_no="${job.job_no}" 
+                data-price="${job.discounted_price}">
+            </td>
+            <td>${job.job_no}</td>
+            <td>${job.metal_type || ''}</td>
+            <td>${job.metal_quality || ''}</td>
+            <td>${job.metal_color || '-'}</td>
+            <td>${job.diamond_quality || 'VVS-VS'}</td>
+            <td>${job.diamond_color || 'D-E-F'}</td>
+            <td>${job.gwt || ''}</td>
+            <td>${job.size || ''}</td>
+            <td>$${job.discounted_price}</td>
+            </tr>
+        `;
+        });
+      } else {
+        inStockRows = `
+        <tr>
+            <td colspan="10" class="text-center py-3">No items in stock</td>
+        </tr>
+        `;
+      }
+
+      // Prepare memo table rows
+      let memoRows = '';
+      if (product.memo_jobs && product.memo_jobs.length > 0) {
+        product.memo_jobs.forEach(job => {
+          memoRows += `
+            <tr class="text-center">
+            <td class="text-center">
+                <input type="checkbox" class="form-check-input memo-checkbox" 
+                data-design="${designNo}"
+                data-job_no="${job.job_no}">
+            </td>
+            <td>${job.job_no}</td>
+            <td>${job.metal_type || ''}</td>
+            <td>${job.metal_quality || ''}</td>
+            <td>${job.metal_color || '-'}</td>
+            <td>${job.diamond_quality || 'VVS-VS'}</td>
+            <td>${job.diamond_color || 'D-E-F'}</td>
+            <td>${job.gwt || ''}</td>
+            <td>${job.size || ''}</td>
+            <td>$${job.discounted_price}</td>
+            </tr>
+        `;
+        });
+      }
+
+      // Build modal HTML
+      const hasInStock = product.in_stock_jobs && product.in_stock_jobs.length > 0;
+      const hasMemo = product.memo_jobs && product.memo_jobs.length > 0;
+
+      modalDiv.innerHTML = `
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <!-- Header -->
+            <div class="modal-header">
+            <h5 class="modal-title">Order: ${designNo}</h5>
+            <div class="ms-auto">
+                <!-- Add to Wishlist button in modal header -->
+                <button class="btn btn-outline-danger me-2"
+                onclick="toggleWishlist('${designNo}', '${firstJobNo}')">
+                <i class="bi bi-heart"></i> Wishlist
+                </button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            </div>
+
+            <div class="modal-body">
+            ${hasInStock ? `
+                <!-- In Stock Section -->
+                <h6 class="text-center mb-4">
+                <i class="bi bi-check-circle-fill text-success me-2"></i>In Stock
+                </h6>
+                <div class="table-responsive mb-5">
+                <table class="table table-bordered">
+                    <thead class="table-light">
+                    <tr class="text-center">
+                        <th class="text-center">SELECT</th>
+                        <th>JOB NO</th>
+                        <th>METAL</th>
+                        <th>QUALITY</th>
+                        <th>COLOR</th>
+                        <th>DIAMOND QUALITY</th>
+                        <th>DIAMOND COLOR</th>
+                        <th>GWT</th>
+                        <th>SIZE</th>
+                        <th>PRICE</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    ${inStockRows}
+                    </tbody>
+                </table>
+                </div>
+            ` : ''}
+
+            ${hasMemo ? `
+                <!-- Memo Section -->
+                <h6 class="text-center mb-4">
+                <i class="bi bi-bookmark-fill text-warning me-2"></i>On Memo with Others
+                </h6>
+                <div class="table-responsive mb-5">
+                <table class="table table-bordered">
+                    <thead class="table-light">
+                    <tr class="text-center">
+                        <th class="text-center">REQUEST</th>
+                        <th>JOB NO</th>
+                        <th>METAL</th>
+                        <th>QUALITY</th>
+                        <th>COLOR</th>
+                        <th>DIAMOND QUALITY</th>
+                        <th>DIAMOND COLOR</th>
+                        <th>GWT</th>
+                        <th>SIZE</th>
+                        <th>PRICE</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    ${memoRows}
+                    </tbody>
+                </table>
+                <div class="text-end mt-3">
+                    <button class="btn btn-warning request-selected-memo-btn">
+                    <i class="bi bi-bookmark-plus me-1"></i> Request Selected Items
+                    </button>
+                </div>
+                </div>
+            ` : ''}
+
+            ${!hasInStock && !hasMemo ? `
+                <div class="alert alert-secondary mb-4 d-flex">
+                <i class="bi bi-exclamation-circle-fill me-2 fs-4"></i>
+                <div>
+                    <p class="mb-2 fw-bold">Sorry, we are out of stock.</p>
+                    <p class="mb-0">
+                    Contact us at <a href="mailto:abc@gmail.com">abc@gmail.com</a> or
+                    <a href="tel:+12011234567">+1 (201) 123 4567</a>
+                    </p>
+                </div>
+                </div>
+            ` : ''}
+
+            <!-- Custom Order Section -->
+            <h6 class="text-center mb-4">
+                <i class="bi bi-tools me-2"></i>Custom Order
+            </h6>
+            <div class="table-responsive mb-3">
+                <table class="table table-bordered" id="customOrderTable-${index}">
+                <thead class="table-light">
+                    <tr class="text-center">
+                    <th>SERIAL NO.</th>
+                    <th>METAL TYPE</th>
+                    <th>QUALITY</th>
+                    <th>COLOR</th>
+                    <th>DIAMOND QUALITY</th>
+                    <th>DIAMOND COLOR</th>
+                    <th>SIZE (IN)</th>
+                    <th>NUMBER OF PCS</th>
+                    <th>REMARKS</th>
+                    <th>REMOVE</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Custom rows inserted via JS -->
+                </tbody>
+                </table>
+            </div>
+
+            <button class="btn btn-outline-primary btn-sm"
+                onclick="addCustomRow('${index}', '${designNo}')">
+                <i class="bi bi-plus-lg"></i> Add Row
+            </button>
+            </div>
+
+            <div class="modal-footer justify-content-between">
+            <button class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                <i class="bi bi-x-lg"></i> Cancel
+            </button>
+            <button class="btn btn-dark" onclick="addToCart('${designNo}', '${index}')">
+                <i class="bi bi-cart-plus"></i> Add to Cart
+            </button>
+            </div>
+        </div>
+        </div>
+    `;
+
+      return modalDiv;
+    }
+
+    /**
+     * Create image modal for a product - with fixed design number handling
+     */
+    function createImageModal(product, index) {
+      const modalDiv = document.createElement('div');
+      modalDiv.className = 'modal fade';
+      modalDiv.id = `imageModal-${index}`;
+      modalDiv.setAttribute('tabindex', '-1');
+
+      // Store exact design_no for consistency
+      const designNo = product.design_no;
+
+      // First job number for wishlist button
+      const firstJobNo = product.in_stock_jobs && product.in_stock_jobs.length > 0
+        ? product.in_stock_jobs[0].job_no || ''
+        : '';
+
+      modalDiv.innerHTML = `
+        <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+            <h5 class="modal-title">Images - ${designNo}</h5>
+            <div class="ms-auto">
+                <!-- Add to Wishlist button in image modal header -->
+                <button class="btn btn-outline-danger me-2"
+                onclick="toggleWishlist('${designNo}', '${firstJobNo}')">
+                <i class="bi bi-heart"></i> Add to Wishlist
+                </button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            </div>
+            <div class="modal-body">
+            <div class="mb-3 text-center">
+                <button class="btn btn-outline-secondary mx-1 color-btn active" data-color="White"
+                data-design="${designNo}" data-modal="${index}">W</button>
+                <button class="btn btn-outline-secondary mx-1 color-btn" data-color="Yellow"
+                data-design="${designNo}" data-modal="${index}">Y</button>
+                <button class="btn btn-outline-secondary mx-1 color-btn" data-color="Rose"
+                data-design="${designNo}" data-modal="${index}">R</button>
+            </div>
+            <div id="carousel-${index}" class="carousel slide" data-bs-ride="false">
+                <div class="carousel-inner text-center" id="carousel-inner-${index}">
+                <div class="carousel-item active">
+                    <img
+                    src="${product.image_base_path || 'https://dev-jewels.s3.us-east-2.amazonaws.com/products/' + designNo}/White/D_${designNo}-1.jpg"
+                    class="modal-carousel-img d-inline-block" alt="${designNo}">
+                </div>
+                </div>
+                <button class="carousel-control-prev" type="button" data-bs-target="#carousel-${index}"
+                data-bs-slide="prev">
+                <span class="carousel-control-prev-icon"></span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#carousel-${index}"
+                data-bs-slide="next">
+                <span class="carousel-control-next-icon"></span>
+                </button>
+            </div>
+            </div>
+        </div>
+        </div>
+    `;
+
+      return modalDiv;
+    }
+
+    // application/vnd.ant.code language="javascript"
+    /**
+     * Create a product card element - with fixed design number handling
+     */
+    function createProductCard(product, index) {
+      const card = document.createElement('div');
+      card.className = 'col-6 col-md-4 col-lg-3';
+      card.dataset.type = (product.category || '').toLowerCase();
+      card.dataset.status = (product.status || '').toLowerCase();
+
+      // Store exact design_no for consistency
+      const designNo = product.design_no;
+
+      // Set jobs data attributes
+      card.dataset.jobs = (product.in_stock_jobs || []).map(job => job.job_no).join(' ');
+      card.dataset.memojobs = (product.memo_jobs || []).map(job => job.job_no).join(' ');
+
+      // Create status indicators
+      let statusCircles = '';
+      let statusBadges = '';
+      let actionButton = '';
+
+      const hasInStock = product.in_stock_jobs && product.in_stock_jobs.length > 0;
+      const hasMemo = product.memo_jobs && product.memo_jobs.length > 0;
+
+      // Status circles
+      if (hasInStock) {
+        statusCircles += `
+        <div class="status-circle in-stock" title="In Stock">
+            ${product.in_stock_jobs.length}
+        </div>
+        `;
+      }
+
+      if (hasMemo) {
+        statusCircles += `
+        <div class="status-circle on-memo" title="On Memo">
+            ${product.memo_jobs.length}
+        </div>
+        `;
+      }
+
+      if (!hasInStock && !hasMemo) {
+        statusCircles += `
+        <div class="status-circle out-of-stock" title="Not In Stock">0</div>
+        `;
+      }
+
+      // Status badges
+      if (hasInStock && hasMemo) {
+        statusBadges = `
+        <div class="status-icon in-stock me-2"><i class="bi bi-check-circle-fill"></i> In Stock</div>
+        <div class="status-icon on-memo"><i class="bi bi-bookmark-fill"></i> On Memo</div>
+        `;
+      } else if (hasInStock) {
+        statusBadges = `
+        <div class="status-icon in-stock"><i class="bi bi-check-circle-fill"></i> In Stock</div>
+        `;
+      } else if (hasMemo) {
+        statusBadges = `
+        <div class="status-icon on-memo"><i class="bi bi-bookmark-fill"></i> On Memo</div>
+        `;
+      } else {
+        statusBadges = `
+        <div class="status-icon out-of-stock"><i class="bi bi-x-circle-fill"></i> Not In Stock</div>
+        `;
+      }
+
+      // Action button
+      if (!hasInStock && !hasMemo) {
+        actionButton = `
+        <button class="btn btn-sm btn-outline-secondary w-100" data-bs-toggle="modal" data-bs-target="#modal-${index}">
+            <i class="bi bi-tools"></i> Request Custom Order
+        </button>
+        `;
+      } else {
+        actionButton = `
+        <button class="btn btn-sm btn-primary w-100 order-btn" data-bs-toggle="modal" data-bs-target="#modal-${index}">
+            <i class="bi bi-cart-plus"></i> Order Now
+        </button>
+        `;
+      }
+
+      // First job number for wishlist
+      const firstJobNo = hasInStock ? product.in_stock_jobs[0].job_no || '' : '';
+
+      // Build the card HTML - using exact design_no everywhere
+      card.innerHTML = `
+    <div class="card h-100">
+        <div class="card-img-container">
+        <img class="lazy" 
+            src="{% static 'inventory/placeholder.jpg' %}"
+            data-src="${product.image_base_path || 'https://dev-jewels.s3.us-east-2.amazonaws.com/products/' + designNo}/White/D_${designNo}-1.jpg"
+            alt="${designNo}" 
+            data-bs-toggle="modal" 
+            data-bs-target="#imageModal-${index}">
+        <button class="wishlist-btn position-absolute top-0 end-0 m-2"
+            onclick="toggleWishlist('${designNo}', '${firstJobNo}')">
+            <i class="bi bi-heart fs-5"></i>
+        </button>
+        </div>
+        <div class="card-body text-center p-3">
+        <h5 class="card-title mb-1">${designNo}</h5>
+        <p class="text-muted small mb-2">${product.category || ''}</p>
+        <div class="status-circles-container">
+            ${statusCircles}
+        </div>
+        <div class="d-flex justify-content-center mb-3">
+            ${statusBadges}
+        </div>
+        ${actionButton}
+        </div>
+    </div>
+    `;
+
+      return card;
+    }
+
+    /**
+     * Create order modal for a product - with fixed design number handling
+     */
+    function createOrderModal(product, index) {
+      const modalDiv = document.createElement('div');
+      modalDiv.className = 'modal fade';
+      modalDiv.id = `modal-${index}`;
+      modalDiv.setAttribute('tabindex', '-1');
+      modalDiv.setAttribute('aria-hidden', 'true');
+
+      // Store exact design_no for consistency
+      const designNo = product.design_no;
+
+      // First job number for wishlist button
+      const firstJobNo = product.in_stock_jobs && product.in_stock_jobs.length > 0
+        ? product.in_stock_jobs[0].job_no || ''
+        : '';
+
+      // Prepare in-stock table rows
+      let inStockRows = '';
+      if (product.in_stock_jobs && product.in_stock_jobs.length > 0) {
+        product.in_stock_jobs.forEach(job => {
+          inStockRows += `
+            <tr class="text-center">
+            <td class="text-center">
+                <input type="checkbox" class="form-check-input job-checkbox" 
+                data-design="${designNo}"
+                data-job_no="${job.job_no}" 
+                data-price="${job.discounted_price}">
+            </td>
+            <td>${job.job_no}</td>
+            <td>${job.metal_type || ''}</td>
+            <td>${job.metal_quality || ''}</td>
+            <td>${job.metal_color || '-'}</td>
+            <td>${job.diamond_quality || 'VVS-VS'}</td>
+            <td>${job.diamond_color || 'D-E-F'}</td>
+            <td>${job.gwt || ''}</td>
+            <td>${job.size || ''}</td>
+            <td>$${job.discounted_price}</td>
+            </tr>
+        `;
+        });
+      } else {
+        inStockRows = `
+        <tr>
+            <td colspan="10" class="text-center py-3">No items in stock</td>
+        </tr>
+        `;
+      }
+
+      // Prepare memo table rows
+      let memoRows = '';
+      if (product.memo_jobs && product.memo_jobs.length > 0) {
+        product.memo_jobs.forEach(job => {
+          memoRows += `
+            <tr class="text-center">
+            <td class="text-center">
+                <input type="checkbox" class="form-check-input memo-checkbox" 
+                data-design="${designNo}"
+                data-job_no="${job.job_no}">
+            </td>
+            <td>${job.job_no}</td>
+            <td>${job.metal_type || ''}</td>
+            <td>${job.metal_quality || ''}</td>
+            <td>${job.metal_color || '-'}</td>
+            <td>${job.diamond_quality || 'VVS-VS'}</td>
+            <td>${job.diamond_color || 'D-E-F'}</td>
+            <td>${job.gwt || ''}</td>
+            <td>${job.size || ''}</td>
+            <td>$${job.discounted_price}</td>
+            </tr>
+        `;
+        });
+      }
+
+      // Build modal HTML
+      const hasInStock = product.in_stock_jobs && product.in_stock_jobs.length > 0;
+      const hasMemo = product.memo_jobs && product.memo_jobs.length > 0;
+
+      modalDiv.innerHTML = `
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <!-- Header -->
+            <div class="modal-header">
+            <h5 class="modal-title">Order: ${designNo}</h5>
+            <div class="ms-auto">
+                <!-- Add to Wishlist button in modal header -->
+                <button class="btn btn-outline-danger me-2"
+                onclick="toggleWishlist('${designNo}', '${firstJobNo}')">
+                <i class="bi bi-heart"></i> Wishlist
+                </button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            </div>
+
+            <div class="modal-body">
+            ${hasInStock ? `
+                <!-- In Stock Section -->
+                <h6 class="text-center mb-4">
+                <i class="bi bi-check-circle-fill text-success me-2"></i>In Stock
+                </h6>
+                <div class="table-responsive mb-5">
+                <table class="table table-bordered">
+                    <thead class="table-light">
+                    <tr class="text-center">
+                        <th class="text-center">SELECT</th>
+                        <th>JOB NO</th>
+                        <th>METAL</th>
+                        <th>QUALITY</th>
+                        <th>COLOR</th>
+                        <th>DIAMOND QUALITY</th>
+                        <th>DIAMOND COLOR</th>
+                        <th>GWT</th>
+                        <th>SIZE</th>
+                        <th>PRICE</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    ${inStockRows}
+                    </tbody>
+                </table>
+                </div>
+            ` : ''}
+
+            ${hasMemo ? `
+                <!-- Memo Section -->
+                <h6 class="text-center mb-4">
+                <i class="bi bi-bookmark-fill text-warning me-2"></i>On Memo with Others
+                </h6>
+                <div class="table-responsive mb-5">
+                <table class="table table-bordered">
+                    <thead class="table-light">
+                    <tr class="text-center">
+                        <th class="text-center">REQUEST</th>
+                        <th>JOB NO</th>
+                        <th>METAL</th>
+                        <th>QUALITY</th>
+                        <th>COLOR</th>
+                        <th>DIAMOND QUALITY</th>
+                        <th>DIAMOND COLOR</th>
+                        <th>GWT</th>
+                        <th>SIZE</th>
+                        <th>PRICE</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    ${memoRows}
+                    </tbody>
+                </table>
+                <div class="text-end mt-3">
+                    <button class="btn btn-warning request-selected-memo-btn">
+                    <i class="bi bi-bookmark-plus me-1"></i> Request Selected Items
+                    </button>
+                </div>
+                </div>
+            ` : ''}
+
+            ${!hasInStock && !hasMemo ? `
+                <div class="alert alert-secondary mb-4 d-flex">
+                <i class="bi bi-exclamation-circle-fill me-2 fs-4"></i>
+                <div>
+                    <p class="mb-2 fw-bold">Sorry, we are out of stock.</p>
+                    <p class="mb-0">
+                    Contact us at <a href="mailto:abc@gmail.com">abc@gmail.com</a> or
+                    <a href="tel:+12011234567">+1 (201) 123 4567</a>
+                    </p>
+                </div>
+                </div>
+            ` : ''}
+
+            <!-- Custom Order Section -->
+            <h6 class="text-center mb-4">
+                <i class="bi bi-tools me-2"></i>Custom Order
+            </h6>
+            <div class="table-responsive mb-3">
+                <table class="table table-bordered" id="customOrderTable-${index}">
+                <thead class="table-light">
+                    <tr class="text-center">
+                    <th>SERIAL NO.</th>
+                    <th>METAL TYPE</th>
+                    <th>QUALITY</th>
+                    <th>COLOR</th>
+                    <th>DIAMOND QUALITY</th>
+                    <th>DIAMOND COLOR</th>
+                    <th>SIZE (IN)</th>
+                    <th>NUMBER OF PCS</th>
+                    <th>REMARKS</th>
+                    <th>REMOVE</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Custom rows inserted via JS -->
+                </tbody>
+                </table>
+            </div>
+
+            <button class="btn btn-outline-primary btn-sm"
+                onclick="addCustomRow('${index}', '${designNo}')">
+                <i class="bi bi-plus-lg"></i> Add Row
+            </button>
+            </div>
+
+            <div class="modal-footer justify-content-between">
+            <button class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                <i class="bi bi-x-lg"></i> Cancel
+            </button>
+            <button class="btn btn-dark" onclick="addToCart('${designNo}', '${index}')">
+                <i class="bi bi-cart-plus"></i> Add to Cart
+            </button>
+            </div>
+        </div>
+        </div>
+    `;
+
+      return modalDiv;
+    }
+
+    /**
+     * Create image modal for a product - with fixed design number handling
+     */
+    function createImageModal(product, index) {
+      const modalDiv = document.createElement('div');
+      modalDiv.className = 'modal fade';
+      modalDiv.id = `imageModal-${index}`;
+      modalDiv.setAttribute('tabindex', '-1');
+
+      // Store exact design_no for consistency
+      const designNo = product.design_no;
+
+      // First job number for wishlist button
+      const firstJobNo = product.in_stock_jobs && product.in_stock_jobs.length > 0
+        ? product.in_stock_jobs[0].job_no || ''
+        : '';
+
+      modalDiv.innerHTML = `
+        <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+            <h5 class="modal-title">Images - ${designNo}</h5>
+            <div class="ms-auto">
+                <!-- Add to Wishlist button in image modal header -->
+                <button class="btn btn-outline-danger me-2"
+                onclick="toggleWishlist('${designNo}', '${firstJobNo}')">
+                <i class="bi bi-heart"></i> Add to Wishlist
+                </button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            </div>
+            <div class="modal-body">
+            <div class="mb-3 text-center">
+                <button class="btn btn-outline-secondary mx-1 color-btn active" data-color="White"
+                data-design="${designNo}" data-modal="${index}">W</button>
+                <button class="btn btn-outline-secondary mx-1 color-btn" data-color="Yellow"
+                data-design="${designNo}" data-modal="${index}">Y</button>
+                <button class="btn btn-outline-secondary mx-1 color-btn" data-color="Rose"
+                data-design="${designNo}" data-modal="${index}">R</button>
+            </div>
+            <div id="carousel-${index}" class="carousel slide" data-bs-ride="false">
+                <div class="carousel-inner text-center" id="carousel-inner-${index}">
+                <div class="carousel-item active">
+                    <img
+                    src="${product.image_base_path || 'https://dev-jewels.s3.us-east-2.amazonaws.com/products/' + designNo}/White/D_${designNo}-1.jpg"
+                    class="modal-carousel-img d-inline-block" alt="${designNo}">
+                </div>
+                </div>
+                <button class="carousel-control-prev" type="button" data-bs-target="#carousel-${index}"
+                data-bs-slide="prev">
+                <span class="carousel-control-prev-icon"></span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#carousel-${index}"
+                data-bs-slide="next">
+                <span class="carousel-control-next-icon"></span>
+                </button>
+            </div>
+            </div>
+        </div>
+        </div>
+    `;
+
+      return modalDiv;
+    }
+
+    /**
+     * Show a message when no results match the search criteria
+     */
+    function showNoResultsMessage() {
+      if (noResultsMessage) {
+        noResultsMessage.style.display = 'block';
+      } else {
+        console.error('No results message element not found');
+      }
+    }
+
+    /**
+     * Update the load more button state
+     */
+    function updateLoadMoreButton() {
+      if (!loadMoreBtn || !allLoadedMsg) return;
+
+      if (allProductsLoaded) {
+        loadMoreBtn.classList.add('d-none');
+        allLoadedMsg.classList.remove('d-none');
+      } else {
+        loadMoreBtn.classList.remove('d-none');
+        allLoadedMsg.classList.add('d-none');
+      }
+    }
+
+    /**
+     * Show/hide loading indicator
+     */
+    function showLoading(show) {
+      if (loadingOverlay) {
+        if (show) {
+          loadingOverlay.classList.remove('d-none');
+          loadingOverlay.classList.add('d-flex');
+        } else {
+          loadingOverlay.classList.add('d-none');
+          loadingOverlay.classList.remove('d-flex');
+        }
+      }
+    }
+
+    /**
+     * Show error message with a toast
+     */
+    function showErrorMessage(message) {
+      // Create toast
+      const toast = document.createElement('div');
+      toast.className = 'position-fixed bottom-0 end-0 p-3';
+      toast.style.zIndex = '9999';
+      toast.innerHTML = `
+          <div class="toast align-items-center text-bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+              <div class="toast-body">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>${message}
+              </div>
+              <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+          </div>
+        `;
+
+      document.body.appendChild(toast);
+      const bsToast = new bootstrap.Toast(toast.querySelector('.toast'), {
+        delay: 5000
+      });
+      bsToast.show();
+
+      // Remove from DOM after it's hidden
+      toast.addEventListener('hidden.bs.toast', function () {
+        if (toast.parentNode) {
+          toast.parentNode.removeChild(toast);
+        }
+      });
+    }
+
+    /**
+     * Initialize lazy loading for images
+     */
+    function initLazyLoading() {
+      const lazyImages = document.querySelectorAll("img.lazy:not([data-loaded='true'])");
 
       if ('IntersectionObserver' in window) {
         const observer = new IntersectionObserver((entries, obs) => {
@@ -1660,184 +2171,95 @@ document.addEventListener('DOMContentLoaded', function() {
       } else {
         // fallback for unsupported browsers
         lazyImages.forEach(img => {
-          img.src = img.dataset.src;
+          if (img.dataset.src) {
+            img.src = img.dataset.src;
+            img.dataset.loaded = "true";
+            img.classList.remove("lazy");
+          }
         });
+      }
+    }
+
+    /**
+     * Handle infinite scroll
+     */
+    function handleInfiniteScroll() {
+      if (isLoading || allProductsLoaded) return;
+
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      const windowHeight = window.innerHeight;
+      const documentHeight = Math.max(
+        document.body.scrollHeight,
+        document.body.offsetHeight,
+        document.documentElement.clientHeight,
+        document.documentElement.scrollHeight,
+        document.documentElement.offsetHeight
+      );
+
+      // Load more products when user scrolls to bottom
+      if (scrollTop + windowHeight > documentHeight - 500) {
+        loadMoreProducts();
+      }
+    }
+
+    /**
+     * Debounce function
+     */
+    function debounce(func, wait) {
+      let timeout;
+      return function (...args) {
+        const context = this;
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(context, args), wait);
+      };
+    }
+
+    // Handle color button clicks for image modals
+    document.addEventListener('click', function (e) {
+      const colorBtn = e.target.closest('.color-btn');
+      if (colorBtn) {
+        // Remove active class from all siblings
+        const buttons = colorBtn.parentNode.querySelectorAll('.color-btn');
+        buttons.forEach(btn => btn.classList.remove('active'));
+
+        // Add active class to clicked button
+        colorBtn.classList.add('active');
+
+        const designNo = colorBtn.getAttribute('data-design');
+        const color = colorBtn.getAttribute('data-color');
+        const modalId = colorBtn.getAttribute('data-modal');
+
+        // Get carousel container
+        const carouselInner = document.getElementById(`carousel-inner-${modalId}`);
+        if (carouselInner) {
+          // Base URL for images
+          const baseUrl = `https://dev-jewels.s3.us-east-2.amazonaws.com/products/${designNo}/${color}/`;
+
+          // Image file patterns to try
+          const patterns = [
+            { prefix: 'D_', suffix: '-1.jpg' },
+            { prefix: 'H_', suffix: '-2.jpg' },
+            { prefix: '', suffix: '-3.jpg' },
+            { prefix: '', suffix: '-4.jpg' }
+          ];
+
+          // Generate carousel items HTML
+          let html = '';
+          patterns.forEach((pattern, idx) => {
+            html += `
+                <div class="carousel-item ${idx === 0 ? 'active' : ''}">
+                  <img src="${baseUrl}${pattern.prefix}${designNo}${pattern.suffix}" 
+                    class="modal-carousel-img d-inline-block" 
+                    alt="${designNo} ${color} ${idx + 1}"
+                    onerror="this.onerror=null;this.src='{% static 'inventory/placeholder.jpg' %}';">
+                </div>
+              `;
+          });
+
+          carouselInner.innerHTML = html;
+        }
       }
     });
-  </script>
-
-  <!-- Wishlist functionality -->
-  <script>
-    // Toggle item in wishlist
-    function toggleWishlist(designNo, jobNo) {
-      try {
-        // Get current wishlist
-        let wishlist = JSON.parse(localStorage.getItem("user_wishlist") || "[]");
-
-        // Check if this item is already in the wishlist
-        const existingIndex = wishlist.findIndex(item =>
-          item.design_no === designNo && (jobNo ? item.job_no === jobNo : true)
-        );
-
-        if (existingIndex >= 0) {
-          // Remove from wishlist
-          wishlist.splice(existingIndex, 1);
-          showToast('<i class="bi bi-heart"></i> Item removed from wishlist', "warning");
-        } else {
-          // Add to wishlist
-          wishlist.push({
-            design_no: designNo,
-            job_no: jobNo || "", // Use empty string if jobNo is not provided
-            added_on: new Date().toLocaleDateString()
-          });
-          showToast('<i class="bi bi-heart-fill"></i> Item added to wishlist', "success");
-        }
-
-        // Save updated wishlist
-        localStorage.setItem("user_wishlist", JSON.stringify(wishlist));
-
-        // Update all wishlist buttons
-        updateWishlistButtons();
-
-        // Update wishlist count in navbar
-        updateWishlistCount();
-
-      } catch (error) {
-        console.error("Error managing wishlist:", error);
-        showToast("<i class='bi bi-exclamation-triangle'></i> Error managing wishlist", "danger");
-      }
-    }
-
-    // Update all wishlist button icons based on current wishlist
-    function updateWishlistButtons() {
-      try {
-        const wishlist = JSON.parse(localStorage.getItem("user_wishlist") || "[]");
-
-        // Get all wishlist buttons
-        document.querySelectorAll('.wishlist-btn').forEach(btn => {
-          // Find parent row or card to get design number
-          const row = btn.closest('tr');
-          const card = btn.closest('.card');
-
-          let designNo, jobNo;
-
-          if (row) {
-            designNo = row.querySelector('td:nth-child(3)')?.textContent.trim();
-            jobNo = btn.getAttribute('data-job_no') || '';
-          } else if (card) {
-            designNo = card.querySelector('.card-title')?.textContent.trim();
-            jobNo = '';
-          } else {
-            // Button is in a modal
-            const modal = btn.closest('.modal');
-            if (modal) {
-              const title = modal.querySelector('.modal-title')?.textContent || '';
-              designNo = title.replace('Images -', '').replace('Order:', '').trim();
-              jobNo = btn.getAttribute('data-job_no') || '';
-            }
-          }
-
-          // Skip if we couldn't determine the design number
-          if (!designNo) return;
-
-          // Check if this item is in the wishlist
-          const isInWishlist = wishlist.some(item =>
-            item.design_no === designNo && (jobNo ? item.job_no === jobNo : true)
-          );
-
-          // Update button icon
-          const icon = btn.querySelector('.bi');
-          if (icon) {
-            if (isInWishlist) {
-              icon.classList.remove('bi-heart');
-              icon.classList.add('bi-heart-fill');
-              btn.classList.add('active');
-            } else {
-              icon.classList.remove('bi-heart-fill');
-              icon.classList.add('bi-heart');
-              btn.classList.remove('active');
-            }
-          }
-        });
-
-      } catch (error) {
-        console.error("Error updating wishlist buttons:", error);
-      }
-    }
-
-    // Update wishlist count in navbar
-    function updateWishlistCount() {
-      try {
-        const wishlist = JSON.parse(localStorage.getItem("user_wishlist") || "[]");
-        const count = wishlist.length;
-
-        const countBadge = document.querySelector('.wishlist-count');
-        if (countBadge) {
-          countBadge.textContent = count > 0 ? count : '';
-          countBadge.style.display = count > 0 ? 'inline-block' : 'none';
-        }
-      } catch (error) {
-        console.error("Error updating wishlist count:", error);
-      }
-    }
-
-    // Show toast message
-    function showToast(message, type = "success") {
-      const toastEl = document.getElementById("cartToast");
-      const toastBody = toastEl.querySelector(".toast-body");
-
-      // Update toast content and styling
-      toastBody.innerHTML = message;
-
-      // Update Bootstrap classes for different toast types
-      toastEl.className = `toast align-items-center border-0 text-bg-${type}`;
-
-      const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
-      toast.show();
-    }
-
-    // Update cart counter in navbar
-    function updateCartCounter() {
-      const cartCounter = document.querySelector(".cart-counter");
-      if (!cartCounter) return;
-
-      try {
-        // Count all types of items in the cart
-        const stockItems = JSON.parse(localStorage.getItem("cart_customer") || "[]");
-        const memoItems = JSON.parse(localStorage.getItem("memoRequests") || "[]");
-        const customItems = JSON.parse(localStorage.getItem("custom_orders") || "[]");
-
-        const count = stockItems.length + memoItems.length + customItems.length;
-
-        cartCounter.textContent = count > 0 ? count : '';
-        cartCounter.style.display = count > 0 ? 'inline-block' : 'none';
-      } catch (e) {
-        console.error("Error reading cart:", e);
-      }
-    }
-
-    // Update counter for custom orders
-    function updateCustomOrdersCount() {
-      const countBadge = document.querySelector('.custom-orders-count');
-      if (!countBadge) return;
-
-      try {
-        const allOrders = JSON.parse(localStorage.getItem("custom_orders") || "[]");
-        const pendingOrders = allOrders.filter(o => o.status === "pending");
-        const count = pendingOrders.length;
-
-        countBadge.textContent = count > 0 ? count : '';
-        countBadge.style.display = count > 0 ? 'inline-block' : 'none';
-      } catch (error) {
-        console.error('Error updating custom orders count:', error);
-      }
-    }
-
-    // Initialize wishlist buttons on page load
-    document.addEventListener("DOMContentLoaded", function () {
-      updateWishlistButtons();
-      updateWishlistCount();
-      updateCustomOrdersCount();
     });
   </script>
 
@@ -1848,7 +2270,6 @@ document.addEventListener('DOMContentLoaded', function() {
       return 'order-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
     }
 
-    // Add custom order row with diamond fields
     // Add custom order row with diamond fields
     function addCustomRow(modalId, designNo) {
       const table = document.querySelector(`#customOrderTable-${modalId || ''} tbody`);
@@ -1941,6 +2362,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (firstField) firstField.focus();
       }, 10);
     }
+
     function removeCustomRow(rowId) {
       const row = document.getElementById(rowId);
       if (row) {
@@ -1956,8 +2378,6 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
 
-    // Enhanced Cart Management with Diamond Fields
-    // Modified function to add all types of items to cart instead of separate pages
     // Enhanced Cart Management with Diamond Fields
     function addToCart(designNo, modalId) {
       const modal = document.getElementById(`modal-${modalId}`);
@@ -1988,8 +2408,7 @@ document.addEventListener('DOMContentLoaded', function() {
           const diamondQuality = row.cells[5].textContent.trim();
           const diamondColor = row.cells[6].textContent.trim();
           const gwt = row.cells[7].textContent.trim();
-          const dwt = row.cells[8].textContent.trim();
-          const size = row.cells[9].textContent.trim();
+          const size = row.cells[8].textContent.trim();
           const price = parseFloat(chk.dataset.price || 0);
 
           // Store all details
@@ -2002,7 +2421,6 @@ document.addEventListener('DOMContentLoaded', function() {
             diamond_quality: diamondQuality,
             diamond_color: diamondColor,
             gwt: gwt,
-            dwt: dwt,
             size: size,
             qty: 1,
             price: price,
@@ -2012,7 +2430,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
       }
 
-      // Process selected memo items (similar enhancement)
+      // Process selected memo items
       if (memoCheckboxes.length > 0) {
         hasMemoItems = true;
 
@@ -2028,9 +2446,8 @@ document.addEventListener('DOMContentLoaded', function() {
           const diamondQuality = row.cells[5].textContent.trim();
           const diamondColor = row.cells[6].textContent.trim();
           const gwt = row.cells[7].textContent.trim();
-          const dwt = row.cells[8].textContent.trim();
-          const size = row.cells[9].textContent.trim();
-          const price = parseFloat(row.cells[10].textContent.replace('$', '') || 0);
+          const size = row.cells[8].textContent.trim();
+          const price = parseFloat(row.cells[9].textContent.replace('$', '') || 0);
 
           return {
             design_no: chk.dataset.design,
@@ -2041,7 +2458,6 @@ document.addEventListener('DOMContentLoaded', function() {
             diamond_quality: diamondQuality,
             diamond_color: diamondColor,
             gwt: gwt,
-            dwt: dwt,
             size: size,
             requested_at: new Date().toISOString(),
             price: price,
@@ -2050,7 +2466,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
       }
 
-      // Process custom order items (already has all fields)
+      // Process custom order items
       if (customRows.length > 0) {
         // Validate required fields before processing
         const validRows = [];
@@ -2181,6 +2597,154 @@ document.addEventListener('DOMContentLoaded', function() {
       updateCartCounter();
     }
 
+    // Show toast message
+    function showToast(message, type = "success") {
+      const toastEl = document.getElementById("cartToast");
+      const toastBody = toastEl.querySelector(".toast-body");
+
+      // Update toast content and styling
+      toastBody.innerHTML = message;
+
+      // Update Bootstrap classes for different toast types
+      toastEl.className = `toast align-items-center border-0 text-bg-${type}`;
+
+      const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
+      toast.show();
+    }
+
+    // Toggle item in wishlist
+    function toggleWishlist(designNo, jobNo) {
+      try {
+        // Get current wishlist
+        let wishlist = JSON.parse(localStorage.getItem("user_wishlist") || "[]");
+
+        // Check if this item is already in the wishlist
+        const existingIndex = wishlist.findIndex(item =>
+          item.design_no === designNo && (jobNo ? item.job_no === jobNo : true)
+        );
+
+        if (existingIndex >= 0) {
+          // Remove from wishlist
+          wishlist.splice(existingIndex, 1);
+          showToast('<i class="bi bi-heart"></i> Item removed from wishlist', "warning");
+        } else {
+          // Add to wishlist
+          wishlist.push({
+            design_no: designNo,
+            job_no: jobNo || "", // Use empty string if jobNo is not provided
+            added_on: new Date().toLocaleDateString()
+          });
+          showToast('<i class="bi bi-heart-fill"></i> Item added to wishlist', "success");
+        }
+
+        // Save updated wishlist
+        localStorage.setItem("user_wishlist", JSON.stringify(wishlist));
+
+        // Update all wishlist buttons
+        updateWishlistButtons();
+
+        // Update wishlist count in navbar
+        updateWishlistCount();
+
+      } catch (error) {
+        console.error("Error managing wishlist:", error);
+        showToast("<i class='bi bi-exclamation-triangle'></i> Error managing wishlist", "danger");
+      }
+    }
+
+    // Update all wishlist button icons based on current wishlist
+    function updateWishlistButtons() {
+      try {
+        const wishlist = JSON.parse(localStorage.getItem("user_wishlist") || "[]");
+
+        // Get all wishlist buttons
+        document.querySelectorAll('.wishlist-btn').forEach(btn => {
+          // Find parent row or card to get design number
+          const row = btn.closest('tr');
+          const card = btn.closest('.card');
+
+          let designNo, jobNo;
+
+          if (row) {
+            designNo = row.querySelector('td:nth-child(3)')?.textContent.trim();
+            jobNo = btn.getAttribute('data-job_no') || '';
+          } else if (card) {
+            designNo = card.querySelector('.card-title')?.textContent.trim();
+            jobNo = '';
+          } else {
+            // Button is in a modal
+            const modal = btn.closest('.modal');
+            if (modal) {
+              const title = modal.querySelector('.modal-title')?.textContent || '';
+              designNo = title.replace('Images -', '').replace('Order:', '').trim();
+              jobNo = btn.getAttribute('data-job_no') || '';
+            }
+          }
+
+          // Skip if we couldn't determine the design number
+          if (!designNo) return;
+
+          // Check if this item is in the wishlist
+          const isInWishlist = wishlist.some(item =>
+            item.design_no === designNo && (jobNo ? item.job_no === jobNo : true)
+          );
+
+          // Update button icon
+          const icon = btn.querySelector('.bi');
+          if (icon) {
+            if (isInWishlist) {
+              icon.classList.remove('bi-heart');
+              icon.classList.add('bi-heart-fill');
+              btn.classList.add('active');
+            } else {
+              icon.classList.remove('bi-heart-fill');
+              icon.classList.add('bi-heart');
+              btn.classList.remove('active');
+            }
+          }
+        });
+
+      } catch (error) {
+        console.error("Error updating wishlist buttons:", error);
+      }
+    }
+
+    // Update wishlist count in navbar
+    function updateWishlistCount() {
+      try {
+        const wishlist = JSON.parse(localStorage.getItem("user_wishlist") || "[]");
+        const count = wishlist.length;
+
+        const countBadge = document.querySelector('.wishlist-count');
+        if (countBadge) {
+          countBadge.textContent = count > 0 ? count : '';
+          countBadge.style.display = count > 0 ? 'inline-block' : 'none';
+        }
+      } catch (error) {
+        console.error("Error updating wishlist count:", error);
+      }
+    }
+
+    // Update cart counter in navbar
+    function updateCartCounter() {
+      const cartCounter = document.querySelector(".cart-counter");
+      if (!cartCounter) return;
+
+      try {
+        // Count all types of items in the cart
+        const stockItems = JSON.parse(localStorage.getItem("cart_customer") || "[]");
+        const memoItems = JSON.parse(localStorage.getItem("memoRequests") || "[]");
+        const customItems = JSON.parse(localStorage.getItem("custom_orders") || "[]");
+
+        const count = stockItems.length + memoItems.length + customItems.length;
+
+        cartCounter.textContent = count > 0 ? count : '';
+        cartCounter.style.display = count > 0 ? 'inline-block' : 'none';
+      } catch (e) {
+        console.error("Error reading cart:", e);
+      }
+    }
+
     // Memo Request Handler
     document.addEventListener("DOMContentLoaded", function () {
       let selectedMemoJobs = [];
@@ -2235,6 +2799,8 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
           localStorage.setItem("memoRequests", JSON.stringify(memoRequests));
           showToast("<i class='bi bi-check-circle-fill'></i> Memo requests saved successfully.", "success");
+          // Update the cart counter
+          updateCartCounter();
         } catch (e) {
           console.error("Error saving memo requests:", e);
           showToast("<i class='bi bi-exclamation-triangle'></i> Could not save memo requests. Please try again.", "warning");
@@ -2243,11 +2809,113 @@ document.addEventListener('DOMContentLoaded', function() {
 
       // Initialize cart counter if present
       updateCartCounter();
+      updateWishlistCount();
     });
   </script>
 
-  
+  <!-- Scroll to Top Button Functionality -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const scrollToTopBtn = document.getElementById('scrollToTopBtn');
 
+      if (!scrollToTopBtn) {
+        console.error('Scroll to top button not found');
+        return;
+      }
+
+      // Create progress ring (optional enhancement)
+      const progressRing = document.createElement('svg');
+      progressRing.innerHTML = `
+        <circle cx="25" cy="25" r="20" 
+                stroke="#ffffff" 
+                stroke-width="3" 
+                fill="none" 
+                stroke-dasharray="126" 
+                stroke-dashoffset="126"
+                style="transform: rotate(-90deg); transform-origin: center;">
+        </circle>
+      `;
+      progressRing.style.cssText = 'position: absolute; width: 50px; height: 50px; pointer-events: none;';
+      scrollToTopBtn.appendChild(progressRing);
+
+      const circle = progressRing.querySelector('circle');
+      const circumference = 2 * Math.PI * 20;
+
+      // Calculate scroll progress and update button
+      function updateScrollProgress() {
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        const docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+        const scrollPercent = (scrollTop / docHeight) * 100;
+
+        // Show/hide button
+        if (scrollTop > 300) {
+          scrollToTopBtn.classList.add('show');
+        } else {
+          scrollToTopBtn.classList.remove('show');
+        }
+
+        // Update progress ring
+        if (circle) {
+          const offset = circumference - (scrollPercent / 100 * circumference);
+          circle.style.strokeDashoffset = offset;
+        }
+      }
+
+      // Smooth scroll to top with easing
+      function scrollToTop() {
+        const startPosition = window.pageYOffset;
+        const duration = 600; // milliseconds
+        let startTime = null;
+
+        function easeInOutCubic(t) {
+          return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        }
+
+        function animation(currentTime) {
+          if (startTime === null) startTime = currentTime;
+          const timeElapsed = currentTime - startTime;
+          const progress = Math.min(timeElapsed / duration, 1);
+
+          window.scrollTo(0, startPosition * (1 - easeInOutCubic(progress)));
+
+          if (timeElapsed < duration) {
+            requestAnimationFrame(animation);
+          }
+        }
+
+        requestAnimationFrame(animation);
+      }
+
+      // Throttle for better performance
+      function throttle(func, limit) {
+        let inThrottle;
+        return function () {
+          const args = arguments;
+          const context = this;
+          if (!inThrottle) {
+            func.apply(context, args);
+            inThrottle = true;
+            setTimeout(() => inThrottle = false, limit);
+          }
+        }
+      }
+
+      // Event listeners
+      window.addEventListener('scroll', throttle(updateScrollProgress, 50));
+      scrollToTopBtn.addEventListener('click', scrollToTop);
+
+      // Keyboard accessibility
+      scrollToTopBtn.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          scrollToTop();
+        }
+      });
+
+      // Initial check
+      updateScrollProgress();
+    });
+  </script>
 </body>
 
 </html>

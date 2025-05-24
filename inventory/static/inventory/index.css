@@ -1,3 +1,5 @@
+/* === DevERP Inventory Management - Complete CSS === */
+
 /* === General Styling === */
 body {
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
@@ -5,12 +7,22 @@ body {
   color: #333;
   margin: 0;
   padding: 0;
+  overflow-x: hidden;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 /* === Container Spacing === */
 .container {
   max-width: 1320px;
   padding: 1.5rem 1rem;
+  width: 100%;
+  padding-right: var(--bs-gutter-x, 0.75rem);
+  padding-left: var(--bs-gutter-x, 0.75rem);
+  margin-right: auto;
+  margin-left: auto;
 }
 
 /* === Cards and Containers === */
@@ -19,7 +31,6 @@ body {
   border-radius: 8px;
   border: 1px solid rgba(0, 0, 0, 0.125);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  /* transition: all 0.2s ease; */
   background-color: #ffffff;
   height: 100%;
   display: flex;
@@ -49,6 +60,12 @@ body {
   overflow: hidden;
   background-color: #f8f9fa;
   border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+  height: auto !important;
+  aspect-ratio: 1/1;
+  padding: 0 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .card-img-container img {
@@ -57,13 +74,31 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
+  max-height: 100%;
+  max-width: 100%;
   object-fit: contain;
   transition: transform 0.3s ease;
 }
 
 .card-img-container:hover img {
-      transform: scale(1.05);
-    }
+  transform: scale(1.05);
+}
+
+/* === Enhanced card and layout styling === */
+.card-view .card {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border: none;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card-view .card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.12);
+}
+
+.card-view .col-6 {
+  transition: width 0.3s ease;
+}
 
 /* === Product Images === */
 img.img-thumbnail {
@@ -79,20 +114,44 @@ img.img-thumbnail:hover {
 }
 
 /* === Filter Controls === */
+.filter-container {
+  background-color: #fff;
+  padding: 1.25rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  margin-bottom: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.filter-container:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.filter-container .row {
+  margin-left: -0.5rem;
+  margin-right: -0.5rem;
+}
+
+.filter-container .row > * {
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+
 .filter-btn {
   font-weight: 500;
-  border: 1px solid #dee2e6;
-  color: #4b5563;
-  background-color: #ffffff;
-  padding: 0.375rem 0.75rem;
-  border-radius: 0.25rem;
+  border: 2px solid #dee2e6;
+  color: #495057;
+  background-color: #f8f9fa;
+  padding: 0.5rem 1rem;
+  border-radius: 50rem;
   transition: all 0.2s ease;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .filter-btn:hover {
-  background-color: #f3f4f6;
-  border-color: #d1d5db;
+  background-color: #e9ecef;
+  border-color: #adb5bd;
 }
 
 .filter-btn.active {
@@ -119,6 +178,86 @@ img.img-thumbnail:hover {
   border-color: #f44336;
 }
 
+#toggleViewBtn {
+  border-radius: 50rem;
+}
+
+/* === Search Wrapper === */
+.search-wrapper {
+  position: relative;
+}
+
+.search-wrapper input {
+  padding-left: 2.5rem;
+  border-radius: 8px;
+  border: 2px solid #e9ecef;
+  transition: all 0.3s ease;
+}
+
+.search-wrapper input:focus {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+}
+
+/* === Advanced Filters Panel === */
+.advanced-filters-panel {
+  background-color: #f8f9fa;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.advanced-filters-panel label {
+  color: #6c757d;
+  margin-bottom: 0.25rem;
+}
+
+.advanced-filters-panel select {
+  border-radius: 6px;
+  border: 1px solid #dee2e6;
+}
+
+/* === Active Filters Display === */
+.active-filters-display {
+  padding: 0.75rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.filter-tag {
+  display: inline-flex;
+  align-items: center;
+  background-color: #e7f1ff;
+  color: #0c63e4;
+  padding: 0.25rem 0.75rem;
+  border-radius: 16px;
+  font-size: 0.875rem;
+  gap: 0.5rem;
+}
+
+.filter-tag .remove-filter {
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.filter-tag .remove-filter:hover {
+  opacity: 1;
+}
+
 /* === Form Controls === */
 .form-control,
 .form-select {
@@ -134,6 +273,13 @@ img.img-thumbnail:hover {
   border-color: #86b7fe;
   box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
   outline: none;
+}
+
+.form-select.loading {
+  background-image: url('data:image/svg+xml;charset=utf8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"%3E%3Cg fill="none" stroke="%236c757d" stroke-width="2"%3E%3Ccircle cx="8" cy="8" r="6" stroke-opacity=".3"/%3E%3Cpath d="M8 2 A6 6 0 0 1 14 8" stroke-linecap="round"%3E%3CanimateTransform attributeName="transform" type="rotate" from="0 8 8" to="360 8 8" dur="1s" repeatCount="indefinite"/%3E%3C/path%3E%3C/g%3E%3C/svg%3E');
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1rem;
 }
 
 /* === Table Styling === */
@@ -162,10 +308,31 @@ img.img-thumbnail:hover {
   background-color: rgba(0, 0, 0, 0.03);
 }
 
+#table-view .table th {
+  white-space: nowrap;
+}
+
 /* === Table Responsive === */
 .table-responsive {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+}
+
+.table-responsive::-webkit-scrollbar {
+  height: 6px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 3px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+  background: #555;
 }
 
 /* === Status Indicators === */
@@ -178,6 +345,11 @@ img.img-thumbnail:hover {
   margin-bottom: 0.5rem;
 }
 
+.status-pills .status-circle {
+  display: inline-flex !important;
+  vertical-align: middle;
+}
+
 .status-item {
   display: flex;
   flex-direction: column;
@@ -186,17 +358,21 @@ img.img-thumbnail:hover {
 }
 
 .status-circle {
-  display: flex;
+  display: inline-flex !important;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 35px;
+  height: 35px;
+  min-width: 35px;
+  min-height: 35px;
   border-radius: 50%;
+  flex-shrink: 0;
   font-weight: 600;
   font-size: 14px;
   background-color: #4CAF50;
   color: white;
   box-shadow: 0 2px 4px rgba(76, 175, 80, 0.3);
+  animation: pulse 2s infinite ease-in-out;
 }
 
 .status-circle.in-stock {
@@ -209,10 +385,27 @@ img.img-thumbnail:hover {
   color: #333;
 }
 
+.status-circle.out-of-stock {
+  background-color: #F44336;
+}
+
+.status-circles-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin: 0.5rem 0;
+  flex-wrap: nowrap;
+}
+
 .status-label {
   font-size: 10px;
   color: #666;
   display: none;
+}
+
+.status-item:hover .status-label {
+  display: block;
 }
 
 .status-badge {
@@ -270,8 +463,34 @@ img.img-thumbnail:hover {
   color: #333;
 }
 
-.status-item:hover .status-label {
-  display: block;
+.status-icon {
+  padding: 0.35em 0.65em;
+  font-size: 0.8em;
+  border-radius: 50rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.status-icon.out-of-stock {
+  color: #F44336;
+  background-color: rgba(244, 67, 54, 0.1);
+  padding: 0.35em 0.65em;
+  border-radius: 50rem;
+}
+
+.status-icon.in-stock {
+  color: #4CAF50;
+  background-color: rgba(76, 175, 80, 0.1);
+  padding: 0.35em 0.65em;
+  border-radius: 50rem;
+}
+
+.status-icon.on-memo {
+  color: #FFC107;
+  background-color: rgba(255, 193, 7, 0.1);
+  padding: 0.35em 0.65em;
+  border-radius: 50rem;
 }
 
 .inventory-status {
@@ -413,16 +632,50 @@ img.img-thumbnail:hover {
   border-color: #b02a37;
 }
 
+/* === Order Button === */
+.order-btn {
+  color: #0d6efd;
+  background-color: #fff;
+  border: 1px solid #0d6efd;
+  border-radius: 0.25rem;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+  text-align: center;
+  text-decoration: none;
+  vertical-align: middle;
+  cursor: pointer;
+  transition: color 0.15s, background-color 0.15s, border-color 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0.375rem 0.75rem;
+}
+
+.order-btn:hover {
+  background-color: #0d6efd;
+  color: #fff;
+}
+
+.request-selected-memo-btn {
+  background-color: #FFC107;
+  color: #212529;
+  border-color: #FFC107;
+}
+
 /* === Modals === */
 .modal-content {
   background-color: #fff;
-  border-radius: 0.5rem;
-  border: 0;
-  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  border-radius: 15px;
+  border: none;
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
 }
 
 .modal-header {
-  border-bottom: 1px solid #dee2e6;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #eee;
+  border-top-left-radius: 15px;
+  border-top-right-radius: 15px;
   padding: 1rem;
 }
 
@@ -431,8 +684,22 @@ img.img-thumbnail:hover {
 }
 
 .modal-footer {
-  border-top: 1px solid #dee2e6;
+  background-color: #f8f9fa;
+  border-top: 1px solid #eee;
+  border-bottom-left-radius: 15px;
+  border-bottom-right-radius: 15px;
   padding: 1rem;
+}
+
+.modal-dialog-scrollable .modal-content {
+  max-height: calc(100vh - 3.5rem);
+}
+
+/* === Image Modal === */
+.modal-carousel-img {
+  max-height: 70vh;
+  max-width: 100%;
+  object-fit: contain;
 }
 
 /* === Section Headings === */
@@ -489,11 +756,13 @@ img.img-thumbnail:hover {
   z-index: 1050;
 }
 
-/* === Image Modal === */
-.modal-carousel-img {
-  max-height: 70vh;
-  max-width: 100%;
-  object-fit: contain;
+.loading-container {
+  text-align: center;
+}
+
+.loading-container .spinner-border {
+  width: 3rem;
+  height: 3rem;
 }
 
 /* === Form Checkboxes === */
@@ -514,31 +783,6 @@ img.img-thumbnail:hover {
 .form-check-input:checked {
   background-color: #0d6efd;
   border-color: #0d6efd;
-}
-
-/* === Order Button === */
-.order-btn {
-  color: #0d6efd;
-  background-color: #fff;
-  border: 1px solid #0d6efd;
-  border-radius: 0.25rem;
-  padding: 0.375rem 0.75rem;
-  font-size: 0.875rem;
-  text-align: center;
-  text-decoration: none;
-  vertical-align: middle;
-  cursor: pointer;
-  transition: color 0.15s, background-color 0.15s, border-color 0.15s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.25rem;
-  padding: 0.375rem 0.75rem;
-}
-
-.order-btn:hover {
-  background-color: #0d6efd;
-  color: #fff;
 }
 
 /* === Stock Indicator Circle === */
@@ -578,48 +822,282 @@ img.img-thumbnail:hover {
   color: #212529;
 }
 
-.request-selected-memo-btn {
-  background-color: #FFC107;
-  color: #212529;
-  border-color: #FFC107;
-}
-
 .status-label.out-of-stock {
   background-color: #F44336;
 }
 
-/* === Responsive Design === */
+/* === No Results Message === */
+.no-results {
+  text-align: center;
+  padding: 3rem 0;
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
 
-/* Large screens (desktops) */
+.no-results i {
+  font-size: 3rem;
+  color: #ccc;
+  margin-bottom: 1rem;
+}
+
+.no-results h4 {
+  color: #495057;
+  margin-bottom: 0.5rem;
+}
+
+/* === Search Suggestions === */
+.search-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background-color: white;
+  border: 1px solid #dee2e6;
+  border-radius: 0 0 8px 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  max-height: 400px;
+  overflow-y: auto;
+  z-index: 1050;
+  display: none;
+}
+
+.search-suggestions.show {
+  display: block;
+}
+
+.suggestion-item {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.suggestion-item:hover {
+  background-color: #f8f9fa;
+}
+
+.suggestion-item:last-child {
+  border-bottom: none;
+}
+
+.suggestion-item .design-no {
+  font-weight: 600;
+  color: #212529;
+}
+
+.suggestion-item .details {
+  font-size: 0.875rem;
+  color: #6c757d;
+}
+
+/* === Wishlist Button === */
+.wishlist-btn {
+  color: #dc3545;
+  background: rgba(255, 255, 255, 0.85);
+  border: none;
+  border-radius: 50%;
+  width: 35px;
+  height: 35px;
+  padding: 0.375rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.wishlist-btn:hover,
+.wishlist-btn:focus {
+  transform: scale(1.2);
+  color: #dc3545;
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.wishlist-btn.active {
+  color: #dc3545;
+}
+
+.wishlist-btn.active i {
+  color: #dc3545;
+}
+
+/* === Card Action Buttons === */
+.card-action-btns {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.5rem;
+}
+
+/* === Navbar link styles === */
+.navbar-nav .nav-link {
+  position: relative;
+}
+
+.navbar-nav .nav-link .badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  transform: translate(50%, -50%);
+}
+
+/* === Enhanced Scroll to Top Button with Progress === */
+.scroll-to-top-button {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 50px;
+  height: 50px;
+  background-color: #0d6efd;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+  z-index: 1000;
+  opacity: 0;
+  transform: scale(0.8);
+}
+
+.scroll-to-top-button.show {
+  display: flex;
+  opacity: 1;
+  transform: scale(1);
+}
+
+.scroll-to-top-button:hover {
+  background-color: #0b5ed7;
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 6px 20px rgba(13, 110, 253, 0.4);
+  animation: pulse 1.5s infinite;
+}
+
+.scroll-to-top-button:active {
+  transform: translateY(-1px) scale(0.95);
+}
+
+.scroll-to-top-button i {
+  font-size: 20px;
+  z-index: 1;
+}
+
+.scroll-to-top-button svg {
+  transition: stroke-dashoffset 0.1s ease;
+}
+
+/* === Animations === */
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(13, 110, 253, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 15px rgba(13, 110, 253, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(13, 110, 253, 0);
+  }
+}
+
+/* === Make lazy loading images nicer === */
+img.lazy {
+  transition: opacity 0.3s;
+  opacity: 0.5;
+}
+
+img.lazy.loaded {
+  opacity: 1;
+}
+
+/* ========================================== */
+/* === RESPONSIVE DESIGN SECTION === */
+/* ========================================== */
+
+/* === Better Container Scaling === */
+@media (min-width: 576px) {
+  .container {
+    max-width: 540px;
+  }
+}
+
+@media (min-width: 768px) {
+  .container {
+    max-width: 720px;
+  }
+}
+
+@media (min-width: 992px) {
+  .container {
+    max-width: 960px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .container {
+    max-width: 1140px;
+  }
+}
+
+@media (min-width: 1400px) {
+  .container {
+    max-width: 1320px;
+  }
+}
+
+/* === Extra Large Screens Support === */
+@media (min-width: 1600px) {
+  .card-view .col-lg-3 {
+    width: 16.666667% !important;
+  }
+  
+  .container {
+    max-width: 1540px;
+  }
+}
+
+/* === Large screens (desktops) === */
 @media (min-width: 992px) and (max-width: 1199.98px) {
   .col-lg-2-5 {
     width: 25%;
   }
 }
 
-/* Medium screens (tablets) */
+/* === Medium screens (tablets) === */
 @media (min-width: 768px) and (max-width: 991.98px) {
   .col-lg-2-5 {
     width: 33.333333%;
   }
-
-  .container {
-    max-width: 720px;
+  
+  .card-view .col-md-4 {
+    width: 33.333333% !important;
+  }
+  
+  .filter-container {
+    padding: 1rem;
+  }
+  
+  .filter-btn {
+    padding: 0.25rem 0.75rem;
+    font-size: 0.875rem;
+  }
+  
+  .advanced-filters-panel select {
+    font-size: 0.875rem;
   }
 }
 
-/* Small screens (landscape phones) */
+/* === Small screens (landscape phones) === */
 @media (min-width: 576px) and (max-width: 767.98px) {
   .col-lg-2-5 {
     width: 50%;
   }
-
-  .container {
-    max-width: 540px;
-  }
 }
 
-/* Extra small screens (portrait phones) */
+/* === Extra small screens (portrait phones) === */
 @media (max-width: 575.98px) {
   .col-lg-2-5 {
     width: 50%;
@@ -672,161 +1150,454 @@ img.img-thumbnail:hover {
   }
 }
 
-/* Fix for mobile filter controls */
+/* === Mobile-Specific Fixes and Optimizations === */
 @media (max-width: 767.98px) {
-  .d-flex.flex-wrap.justify-content-center.gap-2 {
+  /* Filter container mobile adjustments */
+  .filter-container {
+    padding: 0.75rem !important;
+    border-radius: 8px;
+  }
+  
+  .filter-container .col-md-4,
+  .filter-container .col-md-3,
+  .filter-container .col-md-5 {
+    margin-bottom: 0.75rem;
+  }
+  
+  /* Search wrapper adjustments */
+  .search-wrapper {
+    width: 100%;
+  }
+  
+  .search-wrapper input {
+    font-size: 14px !important;
+    padding: 0.5rem 0.75rem 0.5rem 2.25rem !important;
+  }
+  
+  .search-wrapper i {
+    font-size: 14px;
+  }
+  
+  /* Stack filter buttons */
+  .filter-container .d-flex.gap-2 {
+    flex-wrap: wrap;
+    gap: 0.5rem !important;
+  }
+  
+  /* Make filter buttons responsive */
+  .filter-btn {
+    flex: 1;
+    min-width: calc(33.333% - 0.33rem);
+    padding: 0.375rem 0.5rem !important;
+    font-size: 13px !important;
+    text-align: center;
+  }
+  
+  /* Advanced filters and view toggle buttons */
+  .filter-container .d-flex.justify-content-md-end {
+    flex-direction: column;
+    gap: 0.5rem !important;
+  }
+  
+  #advancedFiltersBtn,
+  #toggleViewBtn {
+    width: 100% !important;
+    justify-content: center;
+    font-size: 14px !important;
+    padding: 0.5rem 0.75rem !important;
+  }
+  
+  /* Advanced filters panel */
+  .advanced-filters-panel {
+    padding: 0.75rem !important;
+    margin-top: 0.75rem !important;
+  }
+  
+  .advanced-filters-panel .row {
+    margin-left: -0.25rem;
+    margin-right: -0.25rem;
+  }
+  
+  .advanced-filters-panel .col-6 {
+    padding-left: 0.25rem;
+    padding-right: 0.25rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .advanced-filters-panel label {
+    font-size: 11px !important;
+    margin-bottom: 0.25rem !important;
+  }
+  
+  .advanced-filters-panel select {
+    font-size: 13px !important;
+    padding: 0.25rem 0.5rem !important;
+    height: auto !important;
+  }
+  
+  #clearFiltersBtn {
+    font-size: 12px !important;
+    padding: 0.25rem 0.5rem !important;
+    margin-top: 0 !important;
+  }
+  
+  /* Active filters display */
+  .active-filters-display {
+    padding: 0.5rem !important;
+    margin-bottom: 0.75rem !important;
+  }
+  
+  .filter-tag {
+    font-size: 11px !important;
+    padding: 0.25rem 0.5rem !important;
+    margin-right: 0.25rem !important;
+    margin-bottom: 0.25rem !important;
+  }
+  
+  .filter-tag .remove-filter {
+    font-size: 12px !important;
+    margin-left: 0.25rem !important;
+  }
+  
+  /* Modal adjustments */
+  .modal-dialog {
+    margin: 0.5rem !important;
+  }
+  
+  .modal-header {
+    padding: 0.75rem !important;
+    flex-wrap: wrap;
+  }
+  
+  .modal-body {
+    padding: 0.75rem !important;
+  }
+  
+  .modal-footer {
+    padding: 0.75rem !important;
+  }
+  
+  .modal-title {
+    font-size: 1rem !important;
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+  
+  /* Fix modal header layout on mobile */
+  .modal-header > div.ms-auto {
+    margin-left: 0 !important;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+  
+  .modal-header .btn-outline-danger {
+    flex: 1;
+    font-size: 0.875rem !important;
+    padding: 0.375rem 0.75rem !important;
+  }
+  
+  .modal-header .btn-close {
+    position: relative;
+    top: auto;
+    right: auto;
+    margin: 0;
+  }
+  
+  /* Table responsiveness in modals */
+  .modal .table-responsive {
+    margin: 0 -0.75rem !important;
+    width: calc(100% + 1.5rem) !important;
+    padding: 0 0.75rem !important;
+  }
+  
+  .modal th,
+  .modal td {
+    white-space: nowrap;
+    padding: 0.4rem !important;
+    font-size: 0.75rem !important;
+  }
+  
+  .modal input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+  }
+  
+  /* Card view adjustments */
+  .card-img-container {
+    height: 150px;
+  }
+  
+  .card-title {
+    font-size: 0.9rem;
+  }
+  
+  .status-circles-container {
+    gap: 4px;
+  }
+  
+  /* Headings */
+  h1 {
+    font-size: 1.5rem !important;
+  }
+  
+  h5 {
+    font-size: 1rem !important;
+  }
+  
+  h6 {
+    font-size: 0.9rem !important;
+  }
+  
+  /* Disable hover animations on mobile */
+  .card:hover {
+    transform: none !important;
+  }
+  
+  .filter-btn {
+    transition: background-color 0.2s ease;
+  }
+  
+  .status-circle {
+    animation: none !important;
+  }
+}
+
+/* === Modal Header Mobile Optimization === */
+@media (max-width: 576px) {
+  .modal-header {
+    padding: 0.75rem !important;
+    display: flex;
     flex-direction: column;
     align-items: stretch;
   }
-
-  .d-flex.flex-wrap.justify-content-center.gap-2>* {
-    width: 100% !important;
-    max-width: 100% !important;
-    margin-bottom: 0.5rem;
+  
+  .modal-header .modal-title {
+    font-size: 0.9rem !important;
+    margin-bottom: 0.75rem;
+    padding-right: 2rem; /* Space for close button */
   }
-
-  .d-flex.flex-wrap.justify-content-center.gap-2 .position-relative {
-    width: 100% !important;
-    max-width: 100% !important;
-  }
-
-  .d-flex.flex-wrap.justify-content-center.gap-2 .btn {
+  
+  .modal-header > div.ms-auto {
+    margin: 0 !important;
+    display: flex;
+    flex-direction: row;
     width: 100%;
+    gap: 0.5rem;
   }
-}
-
-/* Add horizontal scrolling for tables in modals on mobile */
-@media (max-width: 767.98px) {
-  .modal .table-responsive {
-    overflow-x: auto;
-  }
-
-  .modal .table th,
-  .modal .table td {
+  
+  .modal-header .btn-outline-danger {
+    flex: 1;
+    font-size: 0.8rem !important;
+    padding: 0.375rem 0.5rem !important;
     white-space: nowrap;
-    min-width: 80px;
+  }
+  
+  .modal-header .btn-close {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    padding: 0.25rem;
+    margin: 0;
   }
 }
 
-/* Make lazy loading images nicer */
-img.lazy {
-  transition: opacity 0.3s;
-  opacity: 0.5;
+/* === Very Small Screens Modal Adjustments === */
+@media (max-width: 399.98px) {
+  .modal-header .modal-title {
+    font-size: 0.85rem !important;
+  }
+  
+  .modal-header .btn-outline-danger {
+    font-size: 0.75rem !important;
+    padding: 0.25rem 0.5rem !important;
+  }
+  
+  .modal-header .btn-outline-danger i {
+    font-size: 0.875rem;
+  }
 }
 
-img.lazy.loaded {
-  opacity: 1;
+/* === Status Circle Mobile Fixes === */
+@media (max-width: 576px) {
+  .status-circle {
+    width: 30px !important;
+    height: 30px !important;
+    min-width: 30px !important;
+    min-height: 30px !important;
+    font-size: 12px !important;
+  }
+  
+  .status-circles-container {
+    gap: 6px !important;
+  }
+  
+  .card-body {
+    padding: 0.75rem 0.5rem !important;
+  }
+  
+  .card-body .btn {
+    font-size: 12px !important;
+    padding: 0.375rem 0.5rem !important;
+  }
+  
+  .card-title {
+    font-size: 0.9rem;
+  }
+  
+  .text-muted.small {
+    font-size: 0.7rem !important;
+  }
+  
+  .status-icon {
+    font-size: 0.7rem !important;
+    padding: 0.2em 0.4em !important;
+  }
 }
 
-/* Style scrollbars for table-responsive */
-.table-responsive::-webkit-scrollbar {
-  height: 6px;
+/* === Better Handling of Landscape Mode === */
+@media (max-height: 500px) and (orientation: landscape) {
+  .card-view .col-6 {
+    width: 25% !important;
+  }
+  
+  .modal-dialog-scrollable {
+    max-height: 85vh;
+  }
+  
+  .card-img-container {
+    aspect-ratio: 4/3;
+  }
+  
+  .navbar {
+    padding: 0.25rem 0.5rem !important;
+  }
+  
+  .filter-container {
+    padding: 0.5rem !important;
+  }
+  
+  .filter-btn {
+    padding: 0.25rem 0.5rem !important;
+    font-size: 12px !important;
+  }
+  
+  .status-circle {
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+    min-height: 28px !important;
+    font-size: 11px !important;
+  }
 }
 
-.table-responsive::-webkit-scrollbar-track {
-  background: #f1f1f1;
+/* === Scroll to Top Button Mobile === */
+@media (max-width: 576px) {
+  .scroll-to-top-button {
+    width: 40px !important;
+    height: 40px !important;
+    bottom: 20px !important;
+    right: 20px !important;
+  }
+  
+  .scroll-to-top-button i {
+    font-size: 1rem !important;
+  }
 }
 
-.table-responsive::-webkit-scrollbar-thumb {
-  background: #888;
-  border-radius: 3px;
+/* === Responsive Image Modal === */
+@media (max-width: 767.98px) {
+  .modal-carousel-img {
+    max-height: 50vh !important;
+  }
+  
+  .color-btn {
+    padding: 0.25rem 0.5rem !important;
+    font-size: 0.75rem !important;
+    margin: 0 0.25rem !important;
+  }
 }
 
-.table-responsive::-webkit-scrollbar-thumb:hover {
-  background: #555;
+/* === Fix for iOS Safari 100vh Issue === */
+@supports (-webkit-touch-callout: none) {
+  .modal-dialog-scrollable .modal-content {
+    max-height: -webkit-fill-available;
+  }
+  
+  .status-circle {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+  }
+  
+  .filter-container {
+    -webkit-overflow-scrolling: touch;
+  }
 }
 
-/* Wishlist button styles */
-.wishlist-btn {
-  color: #dc3545;
-  background-color: transparent;
-  border: none;
-  padding: 0.375rem;
-  cursor: pointer;
-  transition: transform 0.2s;
+/* === Better Touch Support === */
+@media (pointer: coarse) {
+  .btn,
+  .form-select,
+  .form-control,
+  .wishlist-btn,
+  .filter-btn,
+  .nav-link,
+  .status-circle {
+    min-height: 38px;
+  }
+  
+  .filter-btn {
+    min-height: 44px;
+  }
+  
+  .wishlist-btn {
+    width: 40px !important;
+    height: 40px !important;
+  }
+  
+  .btn {
+    margin-bottom: 0.25rem;
+  }
+  
+  .status-circle {
+    cursor: default;
+  }
 }
 
-.wishlist-btn:hover,
-.wishlist-btn:focus {
-  transform: scale(1.2);
+/* === Print Styles === */
+@media print {
+  .navbar,
+  .filter-container,
+  .scroll-to-top-button,
+  .btn,
+  .wishlist-btn,
+  .modal-footer {
+    display: none !important;
+  }
+  
+  .card {
+    break-inside: avoid;
+    box-shadow: none !important;
+    border: 1px solid #ddd !important;
+  }
+  
+  body {
+    background-color: white !important;
+  }
 }
 
-.wishlist-btn.active {
-  color: #dc3545;
+/* === Touch Device Class === */
+.touch-device .btn,
+.touch-device .filter-btn {
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
 }
 
-
-/* For card view */
-.card-action-btns {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 0.5rem;
+/* === Landscape Mode Class === */
+.landscape-mode .card-view .col-6 {
+  width: 25% !important;
 }
 
-/* Navbar link styles */
-.navbar-nav .nav-link {
-  position: relative;
-}
-
-.navbar-nav .nav-link .badge {
-  position: absolute;
-  top: 0;
-  right: 0;
-  transform: translate(50%, -50%);
-}
-
-/* Status icon badges */
-.status-icon {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  font-size: 0.875rem;
-}
-
-.status-icon.in-stock {
-  color: #4CAF50;
-}
-
-.status-icon.on-memo {
-  color: #FFC107;
-}
-
-.status-icon.out-of-stock {
-  color: #F44336;
-}
-
-/* Scroll to Top Button */
-.scroll-to-top-button {
-  position: fixed;
-  bottom: 30px;
-  right: 30px;
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  background-color: #0d6efd;
-  color: #fff;
-  border: none;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transform: translateY(20px);
-  transition: opacity 0.3s ease, transform 0.3s ease;
-  z-index: 1000;
-}
-
-.scroll-to-top-button.show {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.scroll-to-top-button:hover {
-  background-color: #0b5ed7;
-}
-
-.scroll-to-top-button i {
-  font-size: 1.5rem;
+.landscape-mode .filter-container {
+  padding: 0.5rem !important;
 }

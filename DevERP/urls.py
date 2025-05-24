@@ -26,10 +26,9 @@ urlpatterns = [
     ), name='password_reset_complete'),
     
     # App URLs
-    path('', include('inventory.urls')),
+    path('', include('inventory.urls', namespace='inventory')),   
     path('adminside/', include('adminside.urls')),
-    path('orders/', include('orders.urls')),
-    path('inventory/', include('inventory.urls', namespace='inventory')),    
+    path('orders/', include('orders.urls')),   
 
 ]
 

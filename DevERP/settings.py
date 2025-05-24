@@ -234,3 +234,31 @@ ADMIN_ORDER_EMAIL = 'smitdesai9522@gmail.com'  # Replace with admin email
 
 # For development/testing, you can use the console backend
 # EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# For development (in-memory cache)
+# CACHES = {
+#     'default': {
+#         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+#         'LOCATION': 'unique-snowflake',
+#     }
+# }
+
+# # For production (Redis cache)
+# CACHES = {
+#     'default': {
+#         'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+#         'LOCATION': 'redis://127.0.0.1:6379/1',
+#     }
+# }
+
+# Development cache configuration (no Redis needed)
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-devjewels-cache',
+        'OPTIONS': {
+            'MAX_ENTRIES': 1000,
+            'CULL_FREQUENCY': 3,
+        }
+    }
+}

@@ -161,6 +161,9 @@ class Design(models.Model):
     subcategory = models.CharField(max_length=100, blank=True)
     description = models.TextField(blank=True)
     image_base_path = models.CharField(max_length=255, blank=True)
+    gender = models.CharField(max_length=50, blank=True, db_index=True)
+    collection = models.CharField(max_length=100, blank=True, db_index=True)
+    product_type = models.CharField(max_length=100, blank=True, db_index=True)
     
     # Metadata fields
     last_synced = models.DateTimeField(auto_now=True)
@@ -174,6 +177,10 @@ class Design(models.Model):
             models.Index(fields=['design_no']),
             models.Index(fields=['category']),
             models.Index(fields=['is_active']),
+            models.Index(fields=['gender']),
+            models.Index(fields=['collection']),
+            models.Index(fields=['product_type']),
+            models.Index(fields=['subcategory']),
         ]
 
 

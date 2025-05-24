@@ -1,20 +1,36 @@
+# application/vnd.ant.code language="python"
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib import messages
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.views.decorators.http import require_POST, require_GET
 from django.views.decorators.csrf import csrf_exempt
+from django.db.models import Q, Count
+from django.core.paginator import Paginator
+from django.template.loader import render_to_string, get_template
+from django.utils.html import strip_tags
+from django.conf import settings
 import requests
 import json
 import logging
-from .models import Design
+import io
 from datetime import datetime
 import uuid
+from django.core.cache import cache
+from .models import Design, InventoryItem, Category, UserProfile
 
 # Initialize logger
 logger = logging.getLogger('inventory')
+
+# Try to import PDF generation library
+try:
+    from xhtml2pdf import pisa
+    XHTML2PDF_INSTALLED = True
+except ImportError:
+    logger.warning("xhtml2pdf not installed. PDF generation will be disabled.")
+    XHTML2PDF_INSTALLED = False
 
 # ——— Configuration —————————————————————————————————————
 API_STOCK_URL   = "https://admin.devjewels.com/mobileapi/api_stock.php"
@@ -68,83 +84,177 @@ def logout_view(request):
     logout(request)
     return redirect('login')
 
+def clear_products_cache():
+    """Clear the products cache when designs are updated"""
+    cache.delete('devjewels_products')
+    logger.info("Products cache cleared")
 
 def fetch_products():
     """
-    Fetch stock data from DevJewels API,
-    filter by active designs in our database,
-    compute discounted prices, and group jobs by design.
+    Enhanced fetch_products with additional metadata
     """
+    cached_products = cache.get('devjewels_products')
+    if cached_products:
+        return cached_products
+    
     try:
-        # 1) Fetch raw stock data
+        # Fetch stock data
         stock_resp = requests.post(API_STOCK_URL, json={'userid': USER_ID}, timeout=10)
         stock_resp.raise_for_status()
         stock_data = stock_resp.json().get('data', [])
+        
+        # Fetch design metadata
+        design_resp = requests.post(API_DESIGN_URL, json={'userid': USER_ID}, timeout=10)
+        design_resp.raise_for_status()
+        design_data = design_resp.json().get('data', [])
+        
+        # Create design map
+        api_design_map = {}
+        for design in design_data:
+            if isinstance(design, dict) and 'design_no' in design:
+                api_design_map[design['design_no']] = design
 
-        # 2) Get active designs from our database
+        # Get active designs
         active_designs = set(
             Design.objects.filter(is_active=True)
             .values_list('design_no', flat=True)
         )
         
-        # 3) Group jobs per design and compute discounted_price
+        # Update Design model with API metadata
+        for design_no in active_designs:
+            if design_no in api_design_map:
+                api_design = api_design_map[design_no]
+                Design.objects.filter(design_no=design_no).update(
+                    category=api_design.get('category', ''),
+                    subcategory=api_design.get('subcategory', ''),
+                    description=api_design.get('description', ''),
+                    # Add new fields if they exist in API
+                    gender=api_design.get('gender', ''),
+                    collection=api_design.get('collection', ''),
+                    product_type=api_design.get('product_type', ''),
+                    image_base_path=api_design.get('image_base_path', f"https://dev-jewels.s3.us-east-2.amazonaws.com/products/{design_no}")
+                )
+        
+        # Group jobs by design
         jobs_map = {}
         for item in stock_data:
-            # Skip if design is not active in our database
             design_no = item.get('design_no')
             if design_no not in active_designs:
                 continue
                 
             try:
                 totamt = float(item.get('totamt', 0))
-                # apply percent discount
                 discounted = totamt * (1 - DISCOUNT_PERCENT / 100)
                 item['discounted_price'] = f"{discounted:.2f}"
             except (ValueError, TypeError):
                 item['discounted_price'] = "0.00"
             jobs_map.setdefault(design_no, []).append(item)
 
-        # 4) Get design metadata from our database for all active designs
-        design_metadata = {
-            d.design_no: {
-                'design_no': d.design_no,
-                'category': d.category,
-                'subcategory': d.subcategory,
-                'description': d.description,
-                'image_base_path': d.image_base_path
-            }
-            for d in Design.objects.filter(is_active=True)
-        }
-
-        # 5) Build product summaries
-        # 5) Build product summaries (for all active designs!)
+        # Build products with enhanced metadata
         products = []
-        for d in Design.objects.filter(is_active=True):
-            design_no = d.design_no
+        designs = Design.objects.filter(is_active=True)
+        
+        for design in designs:
+            design_no = design.design_no
             jobs = jobs_map.get(design_no, [])
             in_stock = [j for j in jobs if j.get('memostock') == '0']
             memo_only = [j for j in jobs if j.get('memostock') == '1']
+            
+            # Get metadata from API or database
+            if design_no in api_design_map:
+                api_design = api_design_map[design_no]
+                metadata = {
+                    'category': api_design.get('category', design.category or 'Unknown'),
+                    'subcategory': api_design.get('subcategory', design.subcategory or ''),
+                    'description': api_design.get('description', design.description or ''),
+                    'gender': api_design.get('gender', getattr(design, 'gender', '')),
+                    'collection': api_design.get('collection', getattr(design, 'collection', '')),
+                    'product_type': api_design.get('product_type', getattr(design, 'product_type', '')),
+                    'image_base_path': api_design.get('image_base_path', design.image_base_path)
+                }
+            else:
+                metadata = {
+                    'category': design.category or 'Unknown',
+                    'subcategory': design.subcategory or '',
+                    'description': design.description or '',
+                    'gender': getattr(design, 'gender', ''),
+                    'collection': getattr(design, 'collection', ''),
+                    'product_type': getattr(design, 'product_type', ''),
+                    'image_base_path': design.image_base_path
+                }
+            
             products.append({
                 'design_no': design_no,
-                'category': getattr(d, 'category', 'Unknown'),
-                'subcategory': getattr(d, 'subcategory', ''),
-                'description': getattr(d, 'description', ''),
-                'image_base_path': getattr(d, 'image_base_path', f"https://dev-jewels.s3.us-east-2.amazonaws.com/products/{design_no}"),
+                **metadata,
                 'jobs': jobs,
                 'in_stock_jobs': in_stock,
                 'memo_jobs': memo_only,
                 'pcs': len(in_stock),
                 'status': 'In Stock' if in_stock else 'Not In Stock',
+                'created_at': design.created_at.isoformat() if hasattr(design, 'created_at') else ''
             })
-                    
-        logger.info(f"Successfully fetched {len(products)} products with active designs")
+        
+        # Cache products
+        cache.set('devjewels_products', products, 900)
         return products
+        
     except Exception as e:
-        logger.error(f"Error fetching products: {str(e)}")
-        # Return empty list in case of error
-    return []
+        logger.error(f"Error fetching products: {str(e)}", exc_info=True)
+        return []
 
-
+@require_GET
+def get_filter_options(request):
+    """
+    API endpoint to get all available filter options directly from database
+    """
+    try:
+        # Get unique categories
+        categories = Design.objects.filter(is_active=True).values_list(
+            'category', flat=True).distinct().order_by('category')
+        
+        # Get unique subcategories
+        subcategories = Design.objects.filter(is_active=True).values_list(
+            'subcategory', flat=True).distinct().order_by('subcategory')
+        
+        # Get unique genders - check if gender field exists
+        genders = []
+        if hasattr(Design, 'gender'):
+            genders = Design.objects.filter(is_active=True).exclude(gender='').values_list(
+                'gender', flat=True).distinct().order_by('gender')
+        
+        # Get unique collections - check if collection field exists
+        collections = []
+        if hasattr(Design, 'collection'):
+            collections = Design.objects.filter(is_active=True).exclude(collection='').values_list(
+                'collection', flat=True).distinct().order_by('collection')
+        
+        # Get unique product types - check if product_type field exists
+        product_types = []
+        if hasattr(Design, 'product_type'):
+            product_types = Design.objects.filter(is_active=True).exclude(product_type='').values_list(
+                'product_type', flat=True).distinct().order_by('product_type')
+        
+        # Filter out empty values and convert to lists
+        filter_options = {
+            'categories': [c for c in categories if c],
+            'subcategories': [s for s in subcategories if s],
+            'genders': [g for g in genders if g],
+            'collections': [c for c in collections if c],
+            'product_types': [p for p in product_types if p]
+        }
+        
+        return JsonResponse({
+            'success': True,
+            'filters': filter_options
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting filter options: {str(e)}", exc_info=True)
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+    
 def inventory_dashboard(request):
     """
     Renders the main dashboard (dashboard.html),
@@ -152,14 +262,8 @@ def inventory_dashboard(request):
     """
     try:
         products = fetch_products()
-
-        # → Only keep products whose design_no is marked active
-        active_nos = set(
-            Design.objects.filter(is_active=True)
-                          .values_list('design_no', flat=True)
-        )
-        products = [p for p in products if p.get('design_no') in active_nos]
-
+        
+        # Products are already filtered by active designs in fetch_products()
         return render(request, 'inventory/dashboard.html', {
             'products': products
         })
@@ -168,110 +272,143 @@ def inventory_dashboard(request):
         return render(request, 'inventory/error.html', {
             'error': str(e)
         })
-        
-        
+             
+# application/vnd.ant.code language="python"
 # application/vnd.ant.code language="python"
 @require_GET
 def inventory_list_ajax(request):
     """
-    AJAX endpoint for loading products in batches with search support
+    AJAX endpoint for loading products with advanced filters
+    including job number search capability
     """
     try:
+        # Parse query parameters
         page = int(request.GET.get('page', 1))
         limit = int(request.GET.get('limit', 20))
         search_query = request.GET.get('search', '').strip()
+        
+        # Basic filters
         category_filter = request.GET.get('category', 'all')
         status_filter = request.GET.get('status', 'instock')
         
-        # Log request parameters for debugging
-        logger.info(f"AJAX request - page: {page}, limit: {limit}, search: '{search_query}', category: {category_filter}, status: {status_filter}")
+        # Advanced filters
+        gender_filter = request.GET.get('gender', 'all')
+        collection_filter = request.GET.get('collection', 'all')
+        subcategory_filter = request.GET.get('subcategory', 'all')
+        product_type_filter = request.GET.get('producttype', 'all')
         
-        # Get all products
+        # Get all products from cache/API
         all_products = fetch_products()
-        logger.info(f"Total products fetched from API: {len(all_products)}")
         
-        # Filter by active designs
-        active_nos = set(
-            Design.objects.filter(is_active=True).values_list('design_no', flat=True)
-        )
-        logger.info(f"Total active designs: {len(active_nos)}")
-        
-        products = [
-            prod for prod in all_products
-            if prod.get('design_no') in active_nos and prod.get('design_no')
-        ]
-        logger.info(f"Products after active design filter: {len(products)}")
-        
-        # Apply search filter
+        # Log the search query for debugging
         if search_query:
-            filtered_products = []
-            search_lower = search_query.lower()
+            logger.info(f"Searching for: '{search_query}'")
             
-            for product in products:
-                # Search in design number
-                if search_lower in product.get('design_no', '').lower():
-                    filtered_products.append(product)
+        # First check if the search query exactly matches any job number
+        # This is a more direct approach to find job numbers
+        if search_query:
+            # Check if search query could be a job number
+            job_matches = []
+            for product in all_products:
+                # Check in stock jobs
+                for job in product.get('in_stock_jobs', []):
+                    if search_query.lower() in job.get('job_no', '').lower():
+                        # If job matches, add this product to results
+                        job_matches.append(product)
+                        break  # No need to check other jobs
+                        
+                # If already matched, continue to next product
+                if job_matches and job_matches[-1] == product:
                     continue
                     
-                # Search in category
-                if search_lower in product.get('category', '').lower():
-                    filtered_products.append(product)
-                    continue
-                    
-                # Search in job numbers
-                found_in_jobs = False
-                for job in product.get('in_stock_jobs', []) + product.get('memo_jobs', []):
-                    if search_lower in job.get('job_no', '').lower():
-                        filtered_products.append(product)
-                        found_in_jobs = True
-                        break
+                # Check memo jobs
+                for job in product.get('memo_jobs', []):
+                    if search_query.lower() in job.get('job_no', '').lower():
+                        # If job matches, add this product to results
+                        job_matches.append(product)
+                        break  # No need to check other jobs
+                        
+            # If job matches found, use those results
+            if job_matches:
+                logger.info(f"Found {len(job_matches)} product(s) with matching job numbers")
+                filtered_products = job_matches
+            else:
+                # If no job matches, proceed with regular search
+                search_terms = search_query.lower().split()
+                filtered_products = []
                 
-                if found_in_jobs:
-                    continue
+                for product in all_products:
+                    # Check if any search term matches the design number or category
+                    matches = True
+                    design_no = product.get('design_no', '').lower()
+                    category = product.get('category', '').lower()
+                    subcategory = product.get('subcategory', '').lower()
+                    
+                    # Check if all terms match anywhere in the product data
+                    for term in search_terms:
+                        term_matches = (
+                            term in design_no or
+                            term in category or
+                            term in subcategory
+                        )
+                        
+                        if not term_matches:
+                            matches = False
+                            break
+                    
+                    if matches:
+                        filtered_products.append(product)
+        else:
+            # If no search query, use all products
+            filtered_products = all_products.copy()
             
-            products = filtered_products
-            logger.info(f"Products after search filter: {len(products)}")
-        
         # Apply category filter
         if category_filter != 'all':
-            products = [p for p in products if p.get('category', '').lower() == category_filter.lower()]
-            logger.info(f"Products after category filter: {len(products)}")
+            filtered_products = [p for p in filtered_products if p.get('category', '').lower() == category_filter.lower()]
+        
+        # Apply gender filter
+        if gender_filter != 'all':
+            filtered_products = [p for p in filtered_products if p.get('gender', '').lower() == gender_filter.lower()]
+        
+        # Apply collection filter
+        if collection_filter != 'all':
+            filtered_products = [p for p in filtered_products if p.get('collection', '').lower() == collection_filter.lower()]
+        
+        # Apply subcategory filter
+        if subcategory_filter != 'all':
+            filtered_products = [p for p in filtered_products if p.get('subcategory', '').lower() == subcategory_filter.lower()]
+        
+        # Apply product type filter
+        if product_type_filter != 'all':
+            filtered_products = [p for p in filtered_products if p.get('product_type', '').lower() == product_type_filter.lower()]
         
         # Apply status filter
         if status_filter == 'instock':
-            products = [p for p in products if p.get('in_stock_jobs')]
-            logger.info(f"Products after instock filter: {len(products)}")
+            filtered_products = [p for p in filtered_products if p.get('in_stock_jobs')]
         elif status_filter == 'notinstock':
-            products = [p for p in products if not p.get('in_stock_jobs')]
-            logger.info(f"Products after notinstock filter: {len(products)}")
-        # 'all' doesn't need filtering
+            filtered_products = [p for p in filtered_products if not p.get('in_stock_jobs')]
         
-        # Calculate pagination
-        total_count = len(products)
+        # Sort the results
+        sort_by = request.GET.get('sort', 'design_no')
+        if sort_by == 'design_no':
+            filtered_products.sort(key=lambda p: p.get('design_no', ''))
+        elif sort_by == 'category':
+            filtered_products.sort(key=lambda p: p.get('category', ''))
+        elif sort_by == 'newest':
+            filtered_products.sort(key=lambda p: p.get('created_at', ''), reverse=True)
+        
+        # Paginate the results
+        total_count = len(filtered_products)
         start_idx = (page - 1) * limit
         end_idx = min(start_idx + limit, total_count)
+        paginated_products = filtered_products[start_idx:end_idx]
         
-        # Check for out-of-bounds page
-        if start_idx >= total_count:
-            logger.warning(f"Requested page {page} is out of bounds (total: {total_count})")
-            return JsonResponse({
-                'success': True,
-                'products': [],  # Empty array
-                'has_more': False,
-                'total_count': total_count,
-                'current_page': page
-            })
-        
-        # Get products for current page
-        paginated_products = products[start_idx:end_idx]
-        has_more = end_idx < total_count
-        
-        logger.info(f"Returning {len(paginated_products)} products for page {page} (has_more: {has_more})")
+        logger.info(f"Search found {total_count} products, returning page {page} with {len(paginated_products)} products")
         
         return JsonResponse({
             'success': True,
             'products': paginated_products,
-            'has_more': has_more,
+            'has_more': end_idx < total_count,
             'total_count': total_count,
             'current_page': page
         })
@@ -283,35 +420,34 @@ def inventory_list_ajax(request):
             'error': str(e)
         }, status=500)
 
-# application/vnd.ant.code language="python"
 def inventory_list(request):
+    """
+    Renders the inventory listing page with optimized initial data load
+    """
     try:
-        all_products = fetch_products()
-        logger.info(f"Total products fetched from API: {len(all_products)}")
-
-        # Only active design_nos
-        active_nos = set(
-            Design.objects.filter(is_active=True).values_list('design_no', flat=True)
-        )
-        logger.info(f"Total active designs: {len(active_nos)}")
-
-        # Filter products
-        filtered_products = [
-            prod for prod in all_products
-            if prod.get('design_no') in active_nos and prod.get('design_no')
-        ]
-        logger.info(f"Filtered products count: {len(filtered_products)}")
-
-        # Initial products for first page (limit to 20)
-        initial_products = filtered_products[:20]
-        has_more = len(filtered_products) > 20
+        # Get initial active designs
+        designs = Design.objects.filter(is_active=True).order_by('design_no')[:20]
+        design_nos = [d.design_no for d in designs]
         
-        logger.info(f"Initial products: {len(initial_products)}, has_more: {has_more}")
+        # Get all products
+        all_products = fetch_products()
+        
+        # Filter to only show active designs for the initial page
+        filtered_products = [p for p in all_products if p.get('design_no') in design_nos]
+        
+        # By default, show only in-stock items on first load
+        filtered_products = [p for p in filtered_products if p.get('in_stock_jobs')]
+        
+        # Calculate if there are more products to load
+        total_count = Design.objects.filter(is_active=True).count()
+        has_more = len(designs) < total_count
+        
+        logger.info(f"Initial products: {len(filtered_products)}, has_more: {has_more}")
         
         return render(request, 'inventory/inventory.html', {
-            'products': initial_products,
+            'products': filtered_products,
             'has_more': has_more,
-            'total_count': len(filtered_products)
+            'total_count': total_count
         })
     except Exception as e:
         logger.error(f"Error rendering inventory: {str(e)}", exc_info=True)
@@ -534,17 +670,21 @@ def create_order(request):
         
         # Send email notifications
         customer_email = data['customer']['email']
-        admin_email = settings.ADMIN_ORDER_EMAIL
+        admin_email = getattr(settings, 'ADMIN_ORDER_EMAIL', None)
         
         # Send customer confirmation email
-        customer_email_sent = send_order_confirmation_email(order, customer_email)
-        if not customer_email_sent:
-            logger.warning(f"Failed to send customer confirmation email for order {order_id}")
+        customer_email_sent = False
+        if hasattr(settings, 'EMAIL_HOST') and settings.EMAIL_HOST:
+            customer_email_sent = send_order_confirmation_email(order, customer_email)
+            if not customer_email_sent:
+                logger.warning(f"Failed to send customer confirmation email for order {order_id}")
         
         # Send admin notification email
-        admin_email_sent = send_admin_order_notification(order)
-        if not admin_email_sent:
-            logger.warning(f"Failed to send admin notification email for order {order_id}")
+        admin_email_sent = False
+        if hasattr(settings, 'EMAIL_HOST') and settings.EMAIL_HOST and admin_email:
+            admin_email_sent = send_admin_order_notification(order)
+            if not admin_email_sent:
+                logger.warning(f"Failed to send admin notification email for order {order_id}")
         
         return JsonResponse({
             'success': True,
@@ -999,7 +1139,6 @@ def export_orders_csv(request):
         # For this prototype, return a simple CSV with headers
         
         import csv
-        from django.http import HttpResponse
         
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename="orders.csv"'
@@ -1081,6 +1220,11 @@ def generate_order_pdf(order_data):
         BytesIO: PDF file as BytesIO object, or None if generation fails
     """
     try:
+        # Check if PDF generation is available
+        if not XHTML2PDF_INSTALLED:
+            logger.warning("Cannot generate PDF: xhtml2pdf not installed")
+            return None
+            
         # Get the HTML template
         template = get_template('emails/order_pdf_template.html')
         
@@ -1121,6 +1265,11 @@ def send_order_confirmation_email(order_data, to_email):
         bool: True if email sent successfully, False otherwise
     """
     try:
+        # Check if email settings are configured
+        if not hasattr(settings, 'EMAIL_HOST') or not settings.EMAIL_HOST:
+            logger.warning("Email settings not configured. Skipping email send.")
+            return False
+            
         # Email subject
         subject = f"Order Confirmation - {order_data['order_id']}"
         
@@ -1134,6 +1283,7 @@ def send_order_confirmation_email(order_data, to_email):
         text_content = strip_tags(html_content)
         
         # Create email
+        from django.core.mail import EmailMultiAlternatives
         email = EmailMultiAlternatives(
             subject,
             text_content,
@@ -1172,9 +1322,18 @@ def send_admin_order_notification(order_data):
         bool: True if email sent successfully, False otherwise
     """
     try:
+        # Check if email settings are configured
+        if not hasattr(settings, 'EMAIL_HOST') or not settings.EMAIL_HOST:
+            logger.warning("Email settings not configured. Skipping email send.")
+            return False
+            
         # Get admin email from settings
-        admin_email = settings.ADMIN_ORDER_EMAIL
+        admin_email = getattr(settings, 'ADMIN_ORDER_EMAIL', None)
         
+        if not admin_email:
+            logger.warning("ADMIN_ORDER_EMAIL not configured. Skipping email send.")
+            return False
+            
         # Email subject
         subject = f"New Order Received - {order_data['order_id']}"
         
@@ -1188,6 +1347,7 @@ def send_admin_order_notification(order_data):
         text_content = strip_tags(html_content)
         
         # Create email
+        from django.core.mail import EmailMultiAlternatives
         email = EmailMultiAlternatives(
             subject,
             text_content,
