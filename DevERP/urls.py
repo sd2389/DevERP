@@ -8,6 +8,7 @@ from . import views  # Import your custom views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('accounts/', include('accounts.urls')),
     
     # Authentication URLs
     path('login/', views.customer_login, name='login'),  # Use custom login view

@@ -18,7 +18,7 @@ def login_view(request):
         
         if not username or not password:
             messages.error(request, 'Please provide both username/email and password.')
-            return render(request, 'auth/login.html')
+            return render(request, 'accounts/login.html')
         
         # First try direct authentication with username
         user = authenticate(request, username=username, password=password)
@@ -39,18 +39,18 @@ def login_view(request):
                 
             except Exception as e:
                 messages.error(request, 'An error occurred during login. Please try again.')
-                return render(request, 'auth/login.html')
+                return render(request, 'accounts/login.html')
         
         if user is not None:
             # Check if user is active
             if not user.is_active:
                 messages.error(request, 'Your account has been disabled.')
-                return render(request, 'auth/login.html')
+                return render(request, 'accounts/login.html')
             
             # Check user type if you have custom user types
             # Example: if hasattr(user, 'userprofile') and user.userprofile.user_type != user_type:
             #     messages.error(request, f'Invalid login for {user_type} portal.')
-            #     return render(request, 'auth/login.html')
+            #     return render(request, 'accounts/login.html')
             
             login(request, user)
             messages.success(request, f'Welcome back, {user.get_full_name() or user.username}!')
@@ -61,7 +61,7 @@ def login_view(request):
         else:
             messages.error(request, 'Invalid username/email or password.')
     
-    return render(request, 'auth/login.html')
+    return render(request, 'accounts/login.html')
 
 
 def logout_view(request):
@@ -129,9 +129,9 @@ def signup_view(request):
             
         except Exception as e:
             messages.error(request, 'An error occurred during registration. Please try again.')
-            return render(request, 'auth/signup.html')
+            return render(request, 'accounts/register.html')
     
-    return render(request, 'auth/signup.html')
+    return render(request, 'accounts/register.html')
 
 
 def password_reset_view(request):

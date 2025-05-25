@@ -90,7 +90,12 @@ INSTALLED_APPS = [
     "inventory",
     "orders",
     "adminside",
+    'accounts',
 ]
+
+
+AUTH_USER_MODEL = 'accounts.User'
+
 
 PASSWORD_HASHERS = [
     'django.contrib.auth.hashers.BCryptSHA256PasswordHasher',
@@ -154,7 +159,7 @@ WSGI_APPLICATION = "DevERP.wsgi.application"
 DATABASES = {
     "default": {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.getenv('DB_NAME', 'dev_erp_db'),
+        'NAME': os.getenv('DB_NAME', 'deverp_db'),
         'USER': os.getenv('DB_USER', 'smitdesai'),
         'PASSWORD': os.getenv('DB_PASSWORD', '#$^^!T@95Zz'),
         'HOST': os.getenv('DB_HOST', '127.0.0.1'),

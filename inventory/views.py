@@ -56,7 +56,7 @@ def login_view(request):
             login(request, user)
             return redirect('inventory:dashboard')
         messages.error(request, 'Invalid username or password.')
-    return render(request, 'auth/login.html')
+    return render(request, 'accounts/login.html')
 
 
 def signup_view(request):
@@ -76,7 +76,7 @@ def signup_view(request):
             User.objects.create_user(username=username, email=email, password=pwd1)
             messages.success(request, 'Account created. Please log in.')
             return redirect('login')
-    return render(request, 'auth/signup.html')
+    return render(request, 'accounts/register.html')
 
 
 def logout_view(request):

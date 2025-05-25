@@ -1,10 +1,10 @@
 # inventory/models.py
 from django.db import models
-from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.core.validators import MinValueValidator
 from decimal import Decimal
+from django.conf import settings
 
 class InventoryItem(models.Model):
     job_id        = models.CharField(max_length=50, unique=True)
@@ -121,7 +121,7 @@ class Product(models.Model):
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='products_created')
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='products_created')
     
     class Meta:
         ordering = ['name']
@@ -195,7 +195,7 @@ ORDER_STATUS_CHOICES = [
 # This model represents a group of orders, which can contain multiple order types
 class OrderGroup(models.Model):
     order_id = models.CharField(max_length=20, unique=True)
-    customer = models.ForeignKey(User, on_delete=models.CASCADE)
+    customer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=20, choices=ORDER_STATUS_CHOICES, default="Pending")
 
@@ -238,7 +238,7 @@ class UserProfile(models.Model):
         ('Manufacturer', 'Manufacturer'),
     )
     
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='profile')
     phone = models.CharField(max_length=20, blank=True, null=True)
     account_type = models.CharField(max_length=20, choices=ACCOUNT_TYPES, default='Retailer')
     business_name = models.CharField(max_length=255, blank=True, null=True)
@@ -274,7 +274,7 @@ class StockMovement(models.Model):
     quantity_after = models.IntegerField()
     
     # User tracking
-    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
@@ -317,12 +317,12 @@ class ProductImage(models.Model):
 
 
 # Create a UserProfile when a User is created
-@receiver(post_save, sender=User)
+@receiver(post_save, sender=settings.AUTH_USER_MODEL)
 def create_user_profile(sender, instance, created, **kwargs):
     if created:
         UserProfile.objects.create(user=instance)
 
-@receiver(post_save, sender=User)
+@receiver(post_save, sender=settings.AUTH_USER_MODEL)
 def save_user_profile(sender, instance, **kwargs):
     if not hasattr(instance, 'profile'):
         UserProfile.objects.create(user=instance)

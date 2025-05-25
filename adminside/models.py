@@ -1,14 +1,15 @@
 # adminside/models.py
 from django.db import models
-from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils import timezone
+from django.conf import settings
+
 
 # Extend User model with customer profile
 class CustomerProfile(models.Model):
     """Extended customer profile information"""
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='customer_profile')
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='customer_profile')
     phone = models.CharField(max_length=20, blank=True)
     company = models.CharField(max_length=100, blank=True)
     address_line1 = models.CharField(max_length=255, blank=True)
@@ -36,7 +37,7 @@ class CustomerProfile(models.Model):
     ], default='pending')
     
     deactivated_at = models.DateTimeField(null=True, blank=True)
-    deactivated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='deactivated_customers')
+    deactivated_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='deactivated_customers')
     deactivation_reason = models.TextField(blank=True)
     
     # Customer metrics
@@ -62,12 +63,12 @@ class CustomerProfile(models.Model):
         return self.user.is_active and self.account_status == 'active'
 
 # Signal to create customer profile automatically
-@receiver(post_save, sender=User)
+@receiver(post_save, sender=settings.AUTH_USER_MODEL)
 def create_customer_profile(sender, instance, created, **kwargs):
     if created and not instance.is_staff:
         CustomerProfile.objects.create(user=instance)
 
-@receiver(post_save, sender=User)
+@receiver(post_save, sender=settings.AUTH_USER_MODEL)
 def save_customer_profile(sender, instance, **kwargs):
     if hasattr(instance, 'customer_profile'):
         instance.customer_profile.save()
@@ -85,7 +86,7 @@ class ActivityLog(models.Model):
         ('DEACTIVATE', 'Deactivated'),
     )
     
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='activities')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='activities')
     action = models.CharField(max_length=10, choices=ACTION_CHOICES)
     target_model = models.CharField(max_length=50)
     target_id = models.IntegerField(null=True, blank=True)
@@ -106,7 +107,7 @@ class SystemSetting(models.Model):
     key = models.CharField(max_length=50, unique=True)
     value = models.TextField()
     description = models.TextField(blank=True)
-    updated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    updated_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
     updated_at = models.DateTimeField(auto_now=True)
     
     def __str__(self):

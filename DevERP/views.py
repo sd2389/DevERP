@@ -48,7 +48,7 @@ def customer_login(request):
             # Check if user is active
             if not user.is_active:
                 messages.error(request, 'Your account has been deactivated. Please contact support.')
-                return render(request, 'auth/login.html')  # Updated path
+                return render(request, 'accounts/login.html')  # Updated path
             
             # For customers, check their profile status
             if not user.is_staff and hasattr(user, 'customer_profile'):
@@ -56,15 +56,15 @@ def customer_login(request):
                 
                 if profile.account_status == 'inactive':
                     messages.error(request, 'Your account is inactive. Please contact support.')
-                    return render(request, 'auth/login.html')  # Updated path
+                    return render(request, 'accounts/login.html')  # Updated path
                 
                 elif profile.account_status == 'suspended':
                     messages.error(request, 'Your account has been suspended. Please contact support.')
-                    return render(request, 'auth/login.html')  # Updated path
+                    return render(request, 'accounts/login.html')  # Updated path
                 
                 elif profile.account_status == 'pending':
                     messages.warning(request, 'Your account is pending approval. Please wait for activation.')
-                    return render(request, 'auth/login.html')  # Updated path
+                    return render(request, 'accounts/login.html')  # Updated path
             
             # Login successful
             login(request, user)
@@ -80,7 +80,7 @@ def customer_login(request):
         else:
             messages.error(request, 'Invalid username/email or password.')
     
-    return render(request, 'auth/login.html')  # Updated path
+    return render(request, 'accounts/login.html')  # Updated path
 
 # Import your models with error handling
 try:
