@@ -1,7 +1,13 @@
 from django.shortcuts import render, redirect
-from django.contrib import messages
+from django.contrib.auth import authenticate, login, logout
+from django.urls import reverse_lazy
+from django.contrib.auth.views import PasswordResetView   # <-- THIS LINE
+from django.contrib.auth.views import (
+    PasswordResetView, PasswordResetDoneView,
+    PasswordResetConfirmView, PasswordResetCompleteView
+)
 from .models import User
-from django.contrib.auth.hashers import make_password
+
 
 def register(request):
     if request.method == 'POST':
@@ -40,3 +46,52 @@ def register(request):
         return redirect('login')  # set to your login URL name
 
     return render(request, 'accounts/register.html')
+
+def login_view(request):
+    if request.method == 'POST':
+        username = request.POST['username']  # Email field
+        password = request.POST['password']
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            return redirect('inventory:inventory')  # Or your dashboard
+        else:
+            messages.error(request, 'Invalid email or password')
+    return render(request, 'accounts/login.html')
+
+# class CustomPasswordResetView(PasswordResetView):
+#     form_class = CustomPasswordResetForm
+#     template_name = 'accounts/password_reset.html'
+#     email_template_name = 'accounts/password_reset_email.html'
+#     subject_template_name = 'accounts/password_reset_subject.txt'
+#     success_url = reverse_lazy('accounts:password_reset_done')
+    
+class CustomPasswordResetView(PasswordResetView):
+    template_name = 'accounts/password_reset.html'
+    # ... other config
+
+class CustomPasswordResetDoneView(PasswordResetDoneView):
+    template_name = 'accounts/password_reset_done.html'
+
+class CustomPasswordResetConfirmView(PasswordResetConfirmView):
+    template_name = 'accounts/password_reset_confirm.html'
+
+class CustomPasswordResetCompleteView(PasswordResetCompleteView):
+    template_name = 'accounts/password_reset_complete.html'
+    
+def custom_password_reset_request(request):
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        user_model = get_user_model()
+        try:
+            user = user_model.objects.get(username=email)
+            # Prevent duplicate pending requests for same user
+            if not PasswordResetRequest.objects.filter(user=user, is_approved=False).exists():
+                PasswordResetRequest.objects.create(user=user)
+                messages.success(request, "Your password reset request has been submitted and awaits admin approval.")
+            else:
+                messages.info(request, "You already have a pending password reset request.")
+        except user_model.DoesNotExist:
+            messages.error(request, "No user found with that email address.")
+        return redirect('accounts:login')
+    return render(request, 'accounts/password_reset.html')

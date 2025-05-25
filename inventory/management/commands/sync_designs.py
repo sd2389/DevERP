@@ -73,7 +73,7 @@ class Command(BaseCommand):
                         continue
                     
                     # Extract category and add to set for later processing
-                    category_name = design.get('category', '').strip().title()
+                    category_name = (design.get('category') or '').strip().title()
                     if category_name:
                         categories.add(category_name)
                     
@@ -107,7 +107,7 @@ class Command(BaseCommand):
                             is_active=set_active,
                             category=category_name,
                             subcategory=design.get('subcategory', ''),
-                            description=design.get('description', ''),
+                            description=design.get('titleline', ''),
                             image_base_path=f"https://dev-jewels.s3.us-east-2.amazonaws.com/products/{design_no}",
                             created_at=timezone.now(),
                             last_synced=timezone.now()

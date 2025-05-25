@@ -1,20 +1,21 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{{ page_title|default:"Admin Panel" }} – DevERP</title>
-  
+
   <!-- Favicon -->
   <link rel="shortcut icon" href="{% static 'adminside/img/favicon.ico' %}" type="image/x-icon">
-  
+
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  
+
   <!-- Font Awesome for Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  
+
   <!-- Custom Admin Styles -->
   <style>
     :root {
@@ -26,13 +27,13 @@
       --sidebar-hover: #495057;
       --sidebar-active: #0d6efd;
     }
-    
+
     body {
       background-color: #f8f9fa;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       overflow-x: hidden;
     }
-    
+
     /* Sidebar Styling */
     .sidebar {
       width: var(--sidebar-width);
@@ -44,38 +45,53 @@
       color: white;
       z-index: 1000;
       transition: all 0.3s;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
       overflow-y: auto;
+      display: flex;
+      flex-direction: column;
     }
-    
+
     .sidebar .sidebar-header {
       padding: 1.25rem 1.5rem;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      flex-shrink: 0;
     }
-    
+
+    .sidebar .nav {
+      flex: 1;
+      overflow-y: auto;
+    }
+
     .sidebar .nav-item {
       margin-bottom: 0.25rem;
     }
-    
+
     .sidebar .nav-link {
       color: var(--sidebar-link);
       padding: 0.75rem 1.5rem;
       border-radius: 0.375rem;
       margin: 0 0.5rem;
       transition: all 0.2s;
+      display: flex;
+      align-items: center;
     }
-    
+
     .sidebar .nav-link:hover {
       color: #fff;
       background-color: var(--sidebar-hover);
     }
-    
+
     .sidebar .nav-link.active {
       color: #fff;
       background-color: var(--sidebar-active);
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
     }
-    
+
+    .sidebar .nav-link i {
+      width: 20px;
+      text-align: center;
+    }
+
     .sidebar .nav-heading {
       font-size: 0.75rem;
       text-transform: uppercase;
@@ -84,31 +100,33 @@
       padding: 1.25rem 1.5rem 0.5rem;
       margin-bottom: 0;
     }
-    
+
     /* Main Content Styling */
     .main-content {
       margin-left: var(--sidebar-width);
       padding: 1.5rem;
       transition: all 0.3s;
+      min-height: 100vh;
     }
-    
+
     /* Topbar Styling */
     .topbar {
       height: var(--topbar-height);
       border-bottom: 1px solid #dee2e6;
       padding: 0 1.5rem;
       background: white;
-      box-shadow: 0 1px 5px rgba(0,0,0,0.05);
+      box-shadow: 0 1px 5px rgba(0, 0, 0, 0.05);
       display: flex;
       align-items: center;
       justify-content: space-between;
+      margin-bottom: 1.5rem;
     }
-    
+
     .topbar .user-menu {
       display: flex;
       align-items: center;
     }
-    
+
     .topbar .user-menu .user-avatar {
       width: 38px;
       height: 38px;
@@ -119,21 +137,22 @@
       justify-content: center;
       margin-right: 0.5rem;
     }
-    
+
     /* Mobile Sidebar Styling */
     @media (max-width: 767.98px) {
       .sidebar {
         margin-left: calc(-1 * var(--sidebar-width));
       }
-      
+
       .sidebar.show {
         margin-left: 0;
       }
-      
+
       .main-content {
         margin-left: 0;
+        padding: 1rem;
       }
-      
+
       .sidebar-backdrop {
         display: none;
         position: fixed;
@@ -141,121 +160,94 @@
         left: 0;
         width: 100vw;
         height: 100vh;
-        background: rgba(0,0,0,0.5);
+        background: rgba(0, 0, 0, 0.5);
         z-index: 900;
       }
-      
+
       .sidebar-backdrop.show {
         display: block;
       }
-      
-      .mobile-topbar {
-        display: flex !important;
+
+      .topbar {
+        padding: 0 1rem;
       }
     }
-    
+
     /* Badge Styling */
     .badge {
       padding: 0.35em 0.65em;
     }
-    
+
     /* Card Styling */
     .card {
       border: none;
-      box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
+      box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
       border-radius: 0.5rem;
     }
-    
+
     .card-header {
       background-color: transparent;
-      border-bottom: 1px solid rgba(0,0,0,0.125);
-    }
-    
-    /* Timeline Styling */
-    .timeline-container {
-      padding: 20px 0;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.125);
     }
 
-    .timeline {
-      position: relative;
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-
-    .timeline::after {
-      content: '';
-      position: absolute;
-      width: 2px;
-      background-color: #e9ecef;
-      top: 0;
-      bottom: 0;
-      left: 20px;
-    }
-
-    .timeline-item {
-      position: relative;
-      margin-bottom: 30px;
-      padding-left: 50px;
-    }
-
-    .timeline-badge {
-      position: absolute;
-      left: 10px;
-      width: 20px;
-      height: 20px;
-      background-color: #dee2e6;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1;
-    }
-
-    .timeline-badge i {
-      font-size: 0.7rem;
-      color: white;
-    }
-
-    .timeline-content {
-      padding: 15px;
-      border-radius: 6px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      background-color: #f8f9fa;
-    }
-
-    /* Status-specific styling */
-    .timeline-item.completed .timeline-badge {
-      background-color: #28a745;
-    }
-
-    .timeline-item.active .timeline-badge {
-      background-color: #0d6efd;
-    }
-
-    .timeline-item.cancelled .timeline-badge {
-      background-color: #dc3545;
-    }
-    
     /* Toast Styling */
     .toast-container {
       z-index: 1100;
     }
-    
+
     /* Mobile Toggle Button */
     .mobile-toggle {
       display: none;
+      position: fixed;
+      top: 1rem;
+      left: 1rem;
+      z-index: 1200;
+      width: 45px;
+      height: 45px;
+      padding: 0;
+      border: none;
+      background-color: var(--primary-color);
+      color: white;
+      border-radius: 50%;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+      cursor: pointer;
     }
-    
+
+    .mobile-toggle:hover {
+      background-color: #0056b3;
+    }
+
     @media (max-width: 767.98px) {
       .mobile-toggle {
-        display: block;
-        position: fixed;
-        top: 1rem;
-        left: 1rem;
-        z-index: 1200;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
     }
-    
+
+    /* Scrollbar styling for sidebar */
+    .sidebar::-webkit-scrollbar {
+      width: 5px;
+    }
+
+    .sidebar::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .sidebar::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 5px;
+    }
+
+    .sidebar::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.5);
+    }
+
+    /* Alert Container */
+    .alert-container {
+      max-width: 100%;
+    }
+
     /* Add your custom CSS here */
     {% block extra_css %}{% endblock %}
   </style>
@@ -263,97 +255,26 @@
 
 <body>
   <!-- Mobile Sidebar Toggle Button -->
-  <button class="btn btn-primary rounded-circle shadow mobile-toggle" id="sidebarToggleBtn">
+  <button class="mobile-toggle" id="sidebarToggleBtn" aria-label="Toggle sidebar">
     <i class="fas fa-bars"></i>
   </button>
-  
+
   <!-- Sidebar Backdrop -->
   <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
-  
-  <!-- Sidebar -->
-  <div class="sidebar" id="sidebar">
-    <div class="sidebar-header d-flex align-items-center">
-      <i class="fas fa-gem fa-2x me-2"></i>
-      <h4 class="mb-0">DevERP Admin</h4>
-    </div>
-    
-    <!-- Sidebar Navigation -->
-    <ul class="nav flex-column mt-3">
-      <!-- Dashboard -->
-      <li class="nav-item">
-        <a href="{% url 'adminside:dashboard' %}" class="nav-link {% if request.path == '/adminside/dashboard/' or request.path == '/adminside/' %}active{% endif %}">
-          <i class="fas fa-tachometer-alt fa-fw me-2"></i> Dashboard
-        </a>
-      </li>
-      
-      <!-- Orders -->
-      <li class="nav-item">
-        <a href="{% url 'adminside:orders' %}" class="nav-link {% if '/adminside/orders/' in request.path %}active{% endif %}">
-          <i class="fas fa-shopping-cart fa-fw me-2"></i> 
-          Orders 
-          {% if open_orders_count %}<span class="badge rounded-pill bg-danger float-end">{{ open_orders_count }}</span>{% endif %}
-        </a>
-      </li>
-      
-      <!-- Designs -->
-      <li class="nav-item">
-        <a href="{% url 'adminside:designs' %}" class="nav-link {% if '/adminside/designs/' in request.path %}active{% endif %}">
-          <i class="fas fa-paint-brush fa-fw me-2"></i> Designs
-        </a>
-      </li>
-      
-      <!-- Customers -->
-      <li class="nav-item">
-        <a href="{% url 'adminside:customers' %}" class="nav-link {% if '/adminside/customers/' in request.path %}active{% endif %}">
-          <i class="fas fa-users fa-fw me-2"></i> Customers
-        </a>
-      </li>
-      
-      <!-- Inventory Report -->
-      <li class="nav-item">
-        <a href="{% url 'adminside:inventory_report' %}" class="nav-link {% if '/adminside/inventory-report/' in request.path %}active{% endif %}">
-          <i class="fas fa-cubes fa-fw me-2"></i> Inventory
-        </a>
-      </li>
-      
-      <!-- Divider -->
-      <li class="nav-heading mt-3">System</li>
-      
-      <!-- Activity Log -->
-      <li class="nav-item">
-        <a href="{% url 'adminside:activity_log' %}" class="nav-link {% if '/adminside/activity-log/' in request.path %}active{% endif %}">
-          <i class="fas fa-history fa-fw me-2"></i> Activity Log
-        </a>
-      </li>
-      
-      <!-- System Settings -->
-      <li class="nav-item">
-        <a href="{% url 'adminside:system_settings' %}" class="nav-link {% if '/adminside/system-settings/' in request.path %}active{% endif %}">
-          <i class="fas fa-cog fa-fw me-2"></i> Settings
-        </a>
-      </li>
-    </ul>
-    
-    <!-- Sidebar Footer -->
-    <div class="mt-auto p-3 text-center">
-      <a href="{% url 'adminside:logout' %}" class="btn btn-outline-light btn-sm w-100">
-        <i class="fas fa-sign-out-alt me-1"></i> Logout
-      </a>
-      <div class="mt-3 small text-muted">
-        DevERP Admin v1.0
-      </div>
-    </div>
-  </div>
-  
+
+  <!-- Include Sidebar from separate file -->
+  {% include 'adminside/includes/sidebar.html' %}
+
   <!-- Main Content Container -->
   <div class="main-content">
     <!-- Topbar -->
-    <div class="topbar mb-4">
+    <div class="topbar">
       <div class="breadcrumb mb-0 py-2">
         <span class="text-muted">{{ page_title|default:"Dashboard" }}</span>
       </div>
       <div class="user-menu dropdown">
-        <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+        <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle" id="userDropdown"
+          data-bs-toggle="dropdown" aria-expanded="false">
           <div class="user-avatar bg-primary text-white">
             <i class="fas fa-user"></i>
           </div>
@@ -362,20 +283,25 @@
           </div>
         </a>
         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-          <li><h6 class="dropdown-header">{{ request.user.get_full_name|default:request.user.username }}</h6></li>
+          <li>
+            <h6 class="dropdown-header">{{ request.user.get_full_name|default:request.user.username }}</h6>
+          </li>
           <li><a class="dropdown-item" href="#"><i class="fas fa-user-circle fa-fw me-2"></i> Profile</a></li>
-          <li><a class="dropdown-item" href="#"><i class="fas fa-cog fa-fw me-2"></i> Settings</a></li>
-          <li><hr class="dropdown-divider"></li>
-          <li><a class="dropdown-item" href="{% url 'adminside:logout' %}"><i class="fas fa-sign-out-alt fa-fw me-2"></i> Logout</a></li>
+          <li><a class="dropdown-item" href="{% url 'adminside:settings' %}"><i class="fas fa-cog fa-fw me-2"></i> Settings</a></li>
+          <li>
+            <hr class="dropdown-divider">
+          </li>
+          <li><a class="dropdown-item" href="{% url 'adminside:logout' %}"><i
+                class="fas fa-sign-out-alt fa-fw me-2"></i> Logout</a></li>
         </ul>
       </div>
     </div>
-    
+
     <!-- Flash Messages -->
     {% if messages %}
     <div class="alert-container mb-4">
       {% for message in messages %}
-      <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+      <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
         {% if message.tags == 'success' %}<i class="fas fa-check-circle me-2"></i>{% endif %}
         {% if message.tags == 'error' or message.tags == 'danger' %}<i class="fas fa-exclamation-triangle me-2"></i>{% endif %}
         {% if message.tags == 'warning' %}<i class="fas fa-exclamation-circle me-2"></i>{% endif %}
@@ -386,71 +312,121 @@
       {% endfor %}
     </div>
     {% endif %}
-    
+
     <!-- Main Content Block -->
     {% block content %}{% endblock %}
   </div>
-  
+
   <!-- Toast Container -->
   <div class="toast-container position-fixed bottom-0 end-0 p-3">
-    <div id="liveToast" class="toast align-items-center text-white bg-primary border-0" role="alert" aria-live="assertive" aria-atomic="true">
+    <div id="liveToast" class="toast align-items-center text-white bg-primary border-0" role="alert"
+      aria-live="assertive" aria-atomic="true">
       <div class="d-flex">
         <div class="toast-body">
           <i class="fas fa-info-circle me-2"></i>
           <span id="toastMessage">Notification message</span>
         </div>
-        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+          aria-label="Close"></button>
       </div>
     </div>
   </div>
 
   <!-- Bootstrap JS & Popper -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  
+
   <!-- Core Admin JS -->
   <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
       // Mobile Sidebar Toggle
       const sidebar = document.getElementById('sidebar');
       const backdrop = document.getElementById('sidebarBackdrop');
       const toggleBtn = document.getElementById('sidebarToggleBtn');
-      
+
       function toggleSidebar() {
         sidebar.classList.toggle('show');
         backdrop.classList.toggle('show');
+        document.body.style.overflow = sidebar.classList.contains('show') ? 'hidden' : '';
+      }
+
+      function closeSidebar() {
+        sidebar.classList.remove('show');
+        backdrop.classList.remove('show');
+        document.body.style.overflow = '';
+      }
+
+      if (toggleBtn) {
+        toggleBtn.addEventListener('click', toggleSidebar);
       }
       
-      if (toggleBtn) toggleBtn.addEventListener('click', toggleSidebar);
-      if (backdrop) backdrop.addEventListener('click', toggleSidebar);
-      
+      if (backdrop) {
+        backdrop.addEventListener('click', closeSidebar);
+      }
+
+      // Close sidebar when clicking a link on mobile
+      if (window.innerWidth <= 767) {
+        document.querySelectorAll('.sidebar .nav-link').forEach(link => {
+          link.addEventListener('click', function() {
+            // Small delay to allow navigation
+            setTimeout(closeSidebar, 100);
+          });
+        });
+      }
+
+      // Handle window resize
+      let resizeTimer;
+      window.addEventListener('resize', function() {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(function() {
+          if (window.innerWidth > 767) {
+            closeSidebar();
+          }
+        }, 250);
+      });
+
       // Toast Functionality
-      window.showToast = function(message, type = 'primary') {
+      window.showToast = function (message, type = 'primary') {
         const toast = document.getElementById('liveToast');
         const toastMessage = document.getElementById('toastMessage');
-        
+
         // Set message content
         toastMessage.textContent = message;
-        
+
         // Set toast type/color
-        toast.className = toast.className.replace(/bg-\w+/, `bg-${type}`);
-        
+        toast.className = 'toast align-items-center text-white border-0';
+        toast.classList.add(`bg-${type}`);
+
         // Initialize and show toast
         const toastInstance = new bootstrap.Toast(toast);
         toastInstance.show();
       };
-      
+
       // Add confirm dialog to delete buttons
       document.querySelectorAll('.btn-delete').forEach(button => {
-        button.addEventListener('click', function(e) {
+        button.addEventListener('click', function (e) {
           if (!confirm('Are you sure you want to delete this item? This action cannot be undone.')) {
             e.preventDefault();
           }
         });
       });
+
+      // Prevent body scroll when sidebar is open on mobile
+      function preventBodyScroll(prevent) {
+        if (prevent) {
+          document.body.style.position = 'fixed';
+          document.body.style.top = `-${window.scrollY}px`;
+        } else {
+          const scrollY = document.body.style.top;
+          document.body.style.position = '';
+          document.body.style.top = '';
+          window.scrollTo(0, parseInt(scrollY || '0') * -1);
+        }
+      }
     });
   </script>
-  
+
   <!-- Page-specific scripts -->
   {% block scripts %}{% endblock %}
 </body>
+
 </html>

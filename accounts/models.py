@@ -2,6 +2,7 @@
 
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.conf import settings
 
 class User(AbstractUser):
     username = models.EmailField('email address', unique=True)
@@ -22,3 +23,13 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.username
+
+class PasswordResetRequest(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    requested_at = models.DateTimeField(auto_now_add=True)
+    is_approved = models.BooleanField(default=False)
+    processed_at = models.DateTimeField(null=True, blank=True)
+    
+    
+    def __str__(self):
+        return f"Reset request for {self.user.username} at {self.requested_at}"

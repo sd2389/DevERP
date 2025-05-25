@@ -7,7 +7,12 @@ app_name = 'adminside'
 urlpatterns = [
     # Login URL
     path('login/', views.admin_login, name='admin_login'),
+    path('logout/', views.admin_logout, name='logout'),
+
     
+    path('activity-log/', views.activity_log, name='activity_log'),
+
+
     # Dashboard
     path('', views.dashboard, name='dashboard'),
     path('designs/', views.design_list, name='design_list'),
@@ -20,6 +25,10 @@ urlpatterns = [
     path('customers/bulk-action/', views.bulk_customer_action, name='bulk_customer_action'),
     path('customers/export/', views.customer_export, name='customer_export'),
     path('customers/<int:customer_id>/notes/', views.customer_notes, name='customer_notes'),
+    
+    # Password reset requests
+    path('password-reset-requests/', views.password_reset_requests, name='password_reset_requests'),
+    path('password-reset-requests/approve/<int:req_id>/', views.approve_password_reset, name='approve_password_reset'),
     
     # Orders management
     path('orders/', views.orders_list, name='orders'),

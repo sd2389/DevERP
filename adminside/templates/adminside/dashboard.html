@@ -283,22 +283,22 @@
       padding: 0.35em 0.65em;
     }
 
-    .status-Pending {
+    .status-pending {
       background-color: #6c757d;
       color: white;
     }
 
-    .status-In-Process {
+    .status-processing {
       background-color: #fd7e14;
       color: white;
     }
 
-    .status-Completed {
+    .status-completed {
       background-color: #198754;
       color: white;
     }
 
-    .status-Cancelled {
+    .status-cancelled {
       background-color: #dc3545;
       color: white;
     }
@@ -405,6 +405,11 @@
             <i class="bi bi-graph-up"></i> Reports
           </a>
         </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'adminside:password_reset_requests' %}">
+            <i class="bi bi-key"></i> Reset Password
+          </a>
+        </li>
       </ul>
 
       <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
@@ -422,7 +427,7 @@
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="{% url 'logout' %}">
+          <a class="nav-link" href="{% url 'adminside:logout' %}">
             <i class="bi bi-box-arrow-right"></i> Logout
           </a>
         </li>
@@ -457,7 +462,7 @@
             <div class="stats-icon bg-light-primary">
               <i class="bi bi-bag"></i>
             </div>
-            <div class="stats-value" id="totalOrdersValue">46</div>
+            <div class="stats-value" id="totalOrdersValue">{{ total_orders }}</div>
             <div class="stats-label">Total Orders</div>
             <button class="btn btn-sm btn-outline-primary mt-2" onclick="showOrdersModal('all')">
               View Orders <i class="bi bi-arrow-right"></i>
@@ -472,7 +477,7 @@
             <div class="stats-icon bg-light-warning">
               <i class="bi bi-clock-history"></i>
             </div>
-            <div class="stats-value" id="openOrdersValue">15</div>
+            <div class="stats-value" id="openOrdersValue">{{ pending_orders }}</div>
             <div class="stats-label">Open Orders</div>
             <button class="btn btn-sm btn-outline-warning mt-2" onclick="showOrdersModal('open')">
               View Orders <i class="bi bi-arrow-right"></i>
@@ -487,7 +492,7 @@
             <div class="stats-icon bg-light-success">
               <i class="bi bi-check-circle"></i>
             </div>
-            <div class="stats-value" id="completedOrdersValue">27</div>
+            <div class="stats-value" id="completedOrdersValue">{{ completed_orders|default:"0" }}</div>
             <div class="stats-label">Completed Orders</div>
             <button class="btn btn-sm btn-outline-success mt-2" onclick="showOrdersModal('completed')">
               View Orders <i class="bi bi-arrow-right"></i>
@@ -502,7 +507,7 @@
             <div class="stats-icon bg-light-danger">
               <i class="bi bi-bookmark"></i>
             </div>
-            <div class="stats-value" id="memoRequestsValue">24</div>
+            <div class="stats-value" id="memoRequestsValue">{{ memo_requests|default:"0" }}</div>
             <div class="stats-label">Memo Requests</div>
             <div class="small text-danger mt-2">
               <i class="bi bi-arrow-down"></i> 3% from last month
@@ -571,46 +576,22 @@
           </div>
           <div class="card-body p-0">
             <ul class="activity-list" id="activityList">
+              {% for activity in recent_activities %}
               <li class="activity-item p-3">
-                <div class="activity-icon bg-light-primary">
-                  <i class="bi bi-box"></i>
+                <div class="activity-icon bg-light-{% if activity.action == 'CREATE' %}primary{% elif activity.action == 'UPDATE' %}warning{% elif activity.action == 'DELETE' %}danger{% else %}info{% endif %}">
+                  <i class="bi bi-{% if activity.action == 'CREATE' %}plus-circle{% elif activity.action == 'UPDATE' %}pencil{% elif activity.action == 'DELETE' %}trash{% else %}info-circle{% endif %}"></i>
                 </div>
                 <div class="activity-content">
-                  <div class="activity-title">New order received</div>
-                  <div class="activity-text">Order #ORD12345 placed by John Doe</div>
-                  <div class="activity-time">10 minutes ago</div>
+                  <div class="activity-title">{{ activity.get_action_display|default:activity.action }}</div>
+                  <div class="activity-text">{{ activity.details|truncatechars:50 }}</div>
+                  <div class="activity-time">{{ activity.timestamp|timesince }} ago</div>
                 </div>
               </li>
+              {% empty %}
               <li class="activity-item p-3">
-                <div class="activity-icon bg-light-success">
-                  <i class="bi bi-check-circle"></i>
-                </div>
-                <div class="activity-content">
-                  <div class="activity-title">Order status updated</div>
-                  <div class="activity-text">Order #ORD12341 marked as completed</div>
-                  <div class="activity-time">1 hour ago</div>
-                </div>
+                <div class="text-center">No recent activity</div>
               </li>
-              <li class="activity-item p-3">
-                <div class="activity-icon bg-light-warning">
-                  <i class="bi bi-tools"></i>
-                </div>
-                <div class="activity-content">
-                  <div class="activity-title">Custom order started</div>
-                  <div class="activity-text">Custom order #ORD12339 entered production</div>
-                  <div class="activity-time">2 hours ago</div>
-                </div>
-              </li>
-              <li class="activity-item p-3">
-                <div class="activity-icon bg-light-danger">
-                  <i class="bi bi-bookmark"></i>
-                </div>
-                <div class="activity-content">
-                  <div class="activity-title">Memo request fulfilled</div>
-                  <div class="activity-text">Memo request for Job #12345 is now available</div>
-                  <div class="activity-time">3 hours ago</div>
-                </div>
-              </li>
+              {% endfor %}
             </ul>
           </div>
         </div>
@@ -672,9 +653,30 @@
                   </tr>
                 </thead>
                 <tbody id="recentOrdersTableBody">
+                  {% for order in recent_orders %}
                   <tr>
-                    <td colspan="8" class="text-center py-4">Loading orders...</td>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ order.order_id }}</td>
+                    <td>{{ order.created_at|date:"M d, Y" }}</td>
+                    <td>{{ order.customer.get_full_name|default:order.customer.username }}</td>
+                    <td>
+                      {% for item in order.items.all %}
+                        <span class="item-type-badge item-{{ item.item_type }}">{{ item.item_type|title }}</span>
+                      {% endfor %}
+                    </td>
+                    <td>${{ order.total_amount|floatformat:2 }}</td>
+                    <td><span class="badge status-badge status-{{ order.status|lower }}">{{ order.get_status_display }}</span></td>
+                    <td>
+                      <button class="btn btn-sm btn-outline-primary" onclick="navigateToOrderDetail('{{ order.order_id }}')">
+                        <i class="bi bi-eye"></i>
+                      </button>
+                    </td>
                   </tr>
+                  {% empty %}
+                  <tr>
+                    <td colspan="8" class="text-center py-4">No recent orders found</td>
+                  </tr>
+                  {% endfor %}
                 </tbody>
               </table>
             </div>
@@ -741,57 +743,10 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
   
   <script>
-    // Constants
-    const ORDER_STATUS = {
-      PENDING: 'Pending',
-      IN_PROCESS: 'In Process',
-      COMPLETED: 'Completed',
-      CANCELLED: 'Cancelled'
-    };
-
-    // Item type constants
-    const ITEM_TYPES = {
-      STOCK: 'stock',
-      MEMO: 'memo',
-      CUSTOM: 'custom'
-    };
-
-    // Local storage key for orders
-    const STORAGE_KEY_ORDERS = 'customer_orders';
-
-    // Helper function to safely retrieve data from localStorage
-    function getStorageData(key, defaultValue = []) {
-      try {
-        const data = localStorage.getItem(key);
-        return data ? JSON.parse(data) : defaultValue;
-      } catch (error) {
-        console.error(`Error retrieving data from ${key}:`, error);
-        return defaultValue;
-      }
-    }
-
-    // Format date for display
-    function formatDate(dateString, options = {}) {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        ...options
-      });
-    }
-
-    // Format currency
-    function formatCurrency(amount) {
-      return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      }).format(parseFloat(amount) || 0);
-    }
+    // Get data from Django template
+    const orderTrendsData = {{ order_trends_data|safe }};
+    const orderStatusData = {{ order_status_data|safe }};
+    const allOrders = {{ all_orders_json|safe|default:"[]" }};
 
     // Function to show toast notification
     function showToast(message, type = 'success') {
@@ -846,144 +801,21 @@
       document.getElementById('sidebarBackdrop').classList.toggle('show');
     }
 
-    // Function to load dashboard data
-    function loadDashboardData() {
-      // Get orders from localStorage
-      const orders = getStorageData(STORAGE_KEY_ORDERS, []);
-      
-      // Count orders by status
-      const totalOrders = orders.length;
-      const openOrders = orders.filter(o => o.status === ORDER_STATUS.PENDING || o.status === ORDER_STATUS.IN_PROCESS).length;
-      const completedOrders = orders.filter(o => o.status === ORDER_STATUS.COMPLETED).length;
-      
-      // Count memo requests
-      let memoRequests = 0;
-      orders.forEach(order => {
-        if (order.items && order.items.memo) {
-          memoRequests += order.items.memo.length;
-        }
-      });
-      
-      // Update stats values
-      document.getElementById('totalOrdersValue').textContent = totalOrders;
-      document.getElementById('openOrdersValue').textContent = openOrders;
-      document.getElementById('completedOrdersValue').textContent = completedOrders;
-      document.getElementById('memoRequestsValue').textContent = memoRequests;
-      
-      // Update recent activity
-      updateRecentActivity(orders);
-      
-      // Update charts
-      updateOrderTrendsChart(orders);
-      updateOrderTypesChart(orders);
-      updateRecentOrdersTable(orders);
-    }
-
-    // Update recent activity based on order data
-    function updateRecentActivity(orders) {
-      const activityList = document.getElementById('activityList');
-      if (!activityList) return;
-      
-      // Clear existing activities
-      activityList.innerHTML = '';
-      
-      // Sort orders by date (newest first)
-      const sortedOrders = [...orders].sort((a, b) => new Date(b.date) - new Date(a.date));
-      
-      // Get recent orders for activity feed (limit to 5)
-      const recentOrders = sortedOrders.slice(0, 5);
-      
-      if (recentOrders.length === 0) {
-        activityList.innerHTML = '<li class="activity-item p-3"><div class="text-center">No recent activity</div></li>';
-        return;
-      }
-      
-      // Create activity items
-      recentOrders.forEach(order => {
-        // Determine icon and title based on status
-        let iconClass = 'bi-box';
-        let bgClass = 'bg-light-primary';
-        let title = 'New order received';
-        
-        if (order.status === ORDER_STATUS.COMPLETED) {
-          iconClass = 'bi-check-circle';
-          bgClass = 'bg-light-success';
-          title = 'Order completed';
-        } else if (order.status === ORDER_STATUS.IN_PROCESS) {
-          iconClass = 'bi-gear';
-          bgClass = 'bg-light-warning';
-          title = 'Order in process';
-        } else if (order.status === ORDER_STATUS.CANCELLED) {
-          iconClass = 'bi-x-circle';
-          bgClass = 'bg-light-danger';
-          title = 'Order cancelled';
-        }
-        
-        // Calculate time ago
-        const timeAgo = getTimeAgo(new Date(order.date));
-        
-        // Create activity item
-        const activityItem = document.createElement('li');
-        activityItem.className = 'activity-item p-3';
-        activityItem.innerHTML = `
-          <div class="activity-icon ${bgClass}">
-            <i class="bi ${iconClass}"></i>
-          </div>
-          <div class="activity-content">
-            <div class="activity-title">${title}</div>
-            <div class="activity-text">Order #${order.order_id} - ${order.customer?.name || 'Customer'}</div>
-            <div class="activity-time">${timeAgo}</div>
-          </div>
-        `;
-        
-        activityList.appendChild(activityItem);
-      });
-    }
-
-    // Helper function to format time ago
-    function getTimeAgo(date) {
-      const now = new Date();
-      const diffMs = now - date;
-      const diffSec = Math.round(diffMs / 1000);
-      const diffMin = Math.round(diffSec / 60);
-      const diffHour = Math.round(diffMin / 60);
-      const diffDay = Math.round(diffHour / 24);
-      
-      if (diffSec < 60) {
-        return 'just now';
-      } else if (diffMin < 60) {
-        return `${diffMin} minute${diffMin === 1 ? '' : 's'} ago`;
-      } else if (diffHour < 24) {
-        return `${diffHour} hour${diffHour === 1 ? '' : 's'} ago`;
-      } else if (diffDay < 7) {
-        return `${diffDay} day${diffDay === 1 ? '' : 's'} ago`;
-      } else {
-        return formatDate(date, { year: 'numeric', month: 'short', day: 'numeric' });
-      }
-    }
-
     // Function to show the orders modal with filtered orders
     function showOrdersModal(filterType) {
-      // Get orders from localStorage
-      const orders = getStorageData(STORAGE_KEY_ORDERS, []);
-      
-      // Filter orders based on the type
-      let filteredOrders = orders;
+      let filteredOrders = allOrders;
       let modalTitle = 'All Orders';
       
       if (filterType === 'open') {
-        filteredOrders = orders.filter(o => 
-          o.status === ORDER_STATUS.PENDING || 
-          o.status === ORDER_STATUS.IN_PROCESS
+        filteredOrders = allOrders.filter(o => 
+          o.status.toLowerCase() === 'pending' || 
+          o.status.toLowerCase() === 'processing'
         );
         modalTitle = 'Open Orders';
       } else if (filterType === 'completed') {
-        filteredOrders = orders.filter(o => o.status === ORDER_STATUS.COMPLETED);
+        filteredOrders = allOrders.filter(o => o.status.toLowerCase() === 'completed');
         modalTitle = 'Completed Orders';
       }
-      
-      // Sort orders by date (newest first)
-      filteredOrders.sort((a, b) => new Date(b.date) - new Date(a.date));
       
       // Update modal title
       document.getElementById('ordersListModalLabel').textContent = modalTitle;
@@ -998,38 +830,15 @@
       } else {
         // Populate the table
         filteredOrders.forEach((order, index) => {
-          // Count items by type
-          const stockCount = order.items?.stock?.length || 0;
-          const memoCount = order.items?.memo?.length || 0;
-          const customCount = order.items?.custom?.length || 0;
-          const totalItems = stockCount + memoCount + customCount;
-          
-          // Create item badges HTML
-          let itemBadgesHtml = '';
-          if (stockCount > 0) {
-            itemBadgesHtml += `<span class="item-type-badge item-stock">${stockCount} Stock</span>`;
-          }
-          if (memoCount > 0) {
-            itemBadgesHtml += `<span class="item-type-badge item-memo">${memoCount} Memo</span>`;
-          }
-          if (customCount > 0) {
-            itemBadgesHtml += `<span class="item-type-badge item-custom">${customCount} Custom</span>`;
-          }
-          
-          // Create status badge based on order status
-          const statusClass = `status-${order.status.replace(/\s+/g, '-')}`;
-          const statusBadge = `<span class="badge status-badge ${statusClass}">${order.status}</span>`;
-          
-          // Create row HTML
           const row = document.createElement('tr');
           row.innerHTML = `
             <td>${index + 1}</td>
             <td><a href="javascript:void(0)" onclick="navigateToOrderDetail('${order.order_id}')" class="text-primary fw-bold">${order.order_id}</a></td>
-            <td>${formatDate(order.date)}</td>
-            <td>${order.customer?.name || 'Customer'}</td>
-            <td>${itemBadgesHtml}</td>
-            <td>${formatCurrency(order.payment?.total || 0)}</td>
-            <td>${statusBadge}</td>
+            <td>${new Date(order.created_at).toLocaleDateString()}</td>
+            <td>${order.customer_name || 'Customer'}</td>
+            <td>${order.item_count || 0} items</td>
+            <td>$${parseFloat(order.total_amount || 0).toFixed(2)}</td>
+            <td><span class="badge status-badge status-${order.status.toLowerCase()}">${order.status}</span></td>
           `;
           
           modalTableBody.appendChild(row);
@@ -1044,119 +853,6 @@
     // Function to navigate to order details page
     function navigateToOrderDetail(orderId) {
       window.location.href = `/adminside/orders/${orderId}/`;
-    }
-
-    // Update Order Trends Chart with real data
-    function updateOrderTrendsChart(orders) {
-      // Get the chart
-      const chart = Chart.getChart('orderTrendsChart');
-      if (!chart) return;
-      
-      // Calculate order counts by week
-      // For simplicity, we'll just simulate the data
-      // In a real app, you'd analyze the dates properly
-      
-      chart.data.datasets[0].data = [15, 20, 25, 22, 30, 35]; // Total orders
-      chart.data.datasets[1].data = [2, 4, 5, 7, 10, 12]; // Custom orders
-      chart.data.datasets[2].data = [5, 8, 10, 9, 12, 14]; // Memo requests
-      
-      chart.update();
-    }
-
-    // Update Order Types Pie Chart with real data
-    function updateOrderTypesChart(orders) {
-      // Get the chart
-      const chart = Chart.getChart('orderTypesChart');
-      if (!chart) return;
-      
-      // Count items by type
-      let stockCount = 0;
-      let customCount = 0;
-      let memoCount = 0;
-      
-      orders.forEach(order => {
-        if (order.items) {
-          stockCount += order.items.stock?.length || 0;
-          customCount += order.items.custom?.length || 0;
-          memoCount += order.items.memo?.length || 0;
-        }
-      });
-      
-      const total = stockCount + customCount + memoCount || 1; // Avoid division by zero
-      
-      // Calculate percentages
-      const stockPercent = Math.round((stockCount / total) * 100);
-      const customPercent = Math.round((customCount / total) * 100);
-      const memoPercent = Math.round((memoCount / total) * 100);
-      
-      // Update chart data
-      chart.data.datasets[0].data = [stockPercent, customPercent, memoPercent];
-      
-      chart.update();
-    }
-
-    // Update Recent Orders Table with real data
-    function updateRecentOrdersTable(orders) {
-      const tableBody = document.getElementById('recentOrdersTableBody');
-      if (!tableBody) return;
-      
-      // Clear the table
-      tableBody.innerHTML = '';
-      
-      // Sort orders by date (newest first)
-      const sortedOrders = [...orders].sort((a, b) => new Date(b.date) - new Date(a.date));
-      
-      // Take the 5 most recent orders
-      const recentOrders = sortedOrders.slice(0, 5);
-      
-      // Check if there are any orders
-      if (recentOrders.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="8" class="text-center py-4">No recent orders found</td></tr>';
-        return;
-      }
-      
-      // Populate the table
-      recentOrders.forEach((order, index) => {
-        // Count items by type
-        const stockCount = order.items?.stock?.length || 0;
-        const memoCount = order.items?.memo?.length || 0;
-        const customCount = order.items?.custom?.length || 0;
-        
-        // Create item badges HTML
-        let itemBadgesHtml = '';
-        if (stockCount > 0) {
-          itemBadgesHtml += `<span class="item-type-badge item-stock">${stockCount} Stock</span>`;
-        }
-        if (memoCount > 0) {
-          itemBadgesHtml += `<span class="item-type-badge item-memo">${memoCount} Memo</span>`;
-        }
-        if (customCount > 0) {
-          itemBadgesHtml += `<span class="item-type-badge item-custom">${customCount} Custom</span>`;
-        }
-        
-        // Create status badge based on order status
-        const statusClass = `status-${order.status.replace(/\s+/g, '-')}`;
-        const statusBadge = `<span class="badge status-badge ${statusClass}">${order.status}</span>`;
-        
-        // Create row HTML
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td>${index + 1}</td>
-          <td>${order.order_id}</td>
-          <td>${formatDate(order.date)}</td>
-          <td>${order.customer?.name || 'Customer'}</td>
-          <td>${itemBadgesHtml}</td>
-          <td>${formatCurrency(order.payment?.total || 0)}</td>
-          <td>${statusBadge}</td>
-          <td>
-            <button class="btn btn-sm btn-outline-primary" onclick="navigateToOrderDetail('${order.order_id}')">
-              <i class="bi bi-eye"></i>
-            </button>
-          </td>
-        `;
-        
-        tableBody.appendChild(row);
-      });
     }
 
     // Handle scroll events for the sidebar toggle button
@@ -1176,29 +872,13 @@
       const orderTrendsChart = new Chart(orderTrendsCtx, {
         type: 'line',
         data: {
-          labels: ['Apr 1', 'Apr 8', 'Apr 15', 'Apr 22', 'Apr 29', 'May 6'],
+          labels: orderTrendsData.labels || [],
           datasets: [
             {
               label: 'Total Orders',
-              data: [0, 0, 0, 0, 0, 0], // Will be populated with real data
+              data: orderTrendsData.values || [],
               borderColor: '#0d6efd',
               backgroundColor: 'rgba(13, 110, 253, 0.1)',
-              tension: 0.4,
-              fill: true
-            },
-            {
-              label: 'Custom Orders',
-              data: [0, 0, 0, 0, 0, 0], // Will be populated with real data
-              borderColor: '#6f42c1',
-              backgroundColor: 'rgba(111, 66, 193, 0.1)',
-              tension: 0.4,
-              fill: true
-            },
-            {
-              label: 'Memo Requests',
-              data: [0, 0, 0, 0, 0, 0], // Will be populated with real data
-              borderColor: '#fd7e14',
-              backgroundColor: 'rgba(253, 126, 20, 0.1)',
               tension: 0.4,
               fill: true
             }
@@ -1227,7 +907,7 @@
             x: {
               title: {
                 display: true,
-                text: 'Week'
+                text: 'Date'
               }
             }
           }
@@ -1239,14 +919,15 @@
       const orderTypesChart = new Chart(orderTypesCtx, {
         type: 'doughnut',
         data: {
-          labels: ['Stock Items', 'Custom Orders', 'Memo Requests'],
+          labels: Object.keys(orderStatusData),
           datasets: [
             {
-              data: [0, 0, 0], // Will be populated with real data
+              data: Object.values(orderStatusData),
               backgroundColor: [
                 '#28a745',
                 '#6f42c1',
-                '#fd7e14'
+                '#fd7e14',
+                '#dc3545'
               ],
               borderWidth: 0
             }
@@ -1264,7 +945,7 @@
                 label: function (context) {
                   const label = context.label || '';
                   const value = context.formattedValue || '';
-                  return `${label}: ${value}%`;
+                  return `${label}: ${value}`;
                 }
               }
             }
@@ -1277,12 +958,9 @@
       document.getElementById('sidebarToggle').addEventListener('click', toggleSidebar);
       document.getElementById('sidebarBackdrop').addEventListener('click', toggleSidebar);
       
-      // Load dashboard data
-      loadDashboardData();
-      
       // Set up refresh button
       document.getElementById('refreshDashboard').addEventListener('click', function() {
-        loadDashboardData();
+        window.location.reload();
         showToast('Dashboard refreshed successfully');
       });
       

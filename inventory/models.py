@@ -153,7 +153,7 @@ class Product(models.Model):
 
 
 class Design(models.Model):
-    design_no = models.CharField(max_length=20, unique=True)
+    design_no = models.CharField(max_length=50, unique=True)
     is_active = models.BooleanField(default=True)  # Admin visibility control
     
     # Additional fields from API

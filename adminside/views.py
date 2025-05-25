@@ -11,12 +11,18 @@ from datetime import datetime
 from inventory.models import Design
 from django.contrib.auth import authenticate, login
 from .decorators import admin_login_required
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
+User = get_user_model()
+
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
-from django.db.models import Q
+from django.db.models import Sum,Q
 from django.utils import timezone
 from .models import CustomerProfile, ActivityLog
+from accounts.models import PasswordResetRequest
+from django.contrib.auth.forms import PasswordResetForm
+from django.contrib.admin.views.decorators import staff_member_required
+from orders.models import Order
 
 # Setup logger
 logger = logging.getLogger('adminside')
@@ -47,6 +53,16 @@ def admin_login(request):
     
     return render(request, 'adminside/login.html')
 
+def admin_logout(request):
+    logout(request)
+    return redirect('adminside:admin_login') 
+
+@login_required
+def activity_log(request):
+    activities = ActivityLog.objects.all().order_by('-timestamp')[:100]
+    return render(request, 'adminside/activity_log.html', {'activities': activities})
+
+
 # Define admin check function
 def is_admin(user):
     """Check if the user is an admin"""
@@ -55,21 +71,118 @@ def is_admin(user):
 # @login_required
 # @user_passes_test(is_admin)
 def dashboard(request):
-    """
-    Admin dashboard view showing summary statistics and recent activities.
-    """
     try:
-        # In a real app, you'd fetch this data from database
-        # For demonstration, we're using static data
+        # Import Order model
+        from orders.models import Order
+        # Calculate statistics
+        total_orders = Order.objects.count()
+        pending_orders = Order.objects.filter(status__in=['pending', 'Pending', 'PENDING']).count()
+        completed_orders = Order.objects.filter(status__in=['completed', 'Completed', 'COMPLETED']).count()
+        memo_requests = Order.objects.filter(status__in=['memo', 'on memo', 'MEMO', 'ON MEMO']).count()  # Adjust if your order_type field is different
 
-        # Render the dashboard template
-        return render(request, 'adminside/dashboard.html')
+        # Total revenue from completed orders
+        total_revenue = Order.objects.filter(
+            status__in=['completed', 'Completed', 'COMPLETED']
+        ).aggregate(
+            total=Sum('total_amount')
+        )['total'] or 0
+
+        # Recent orders (last 10)
+        recent_orders = Order.objects.select_related('customer').order_by('-created_at')[:10]
+
+        # Order status distribution for pie chart
+        order_status_counts = Order.objects.values('status').annotate(
+            count=Count('id')
+        ).order_by('status')
+        order_status_data = {}
+        for item in order_status_counts:
+            status = item['status'] or 'Unknown'
+            order_status_data[status] = item['count']
+
+        # Order trends for last 30 days
+        thirty_days_ago = timezone.now() - timedelta(days=30)
+        order_trends = Order.objects.filter(
+            created_at__gte=thirty_days_ago
+        ).extra(
+            select={'day': 'date(created_at)'}
+        ).values('day').annotate(
+            count=Count('id')
+        ).order_by('day')
+        trends_labels = []
+        trends_values = []
+        current_date = thirty_days_ago.date()
+        end_date = timezone.now().date()
+        trends_dict = {item['day']: item['count'] for item in order_trends}
+        while current_date <= end_date:
+            trends_labels.append(current_date.strftime('%m/%d'))
+            trends_values.append(trends_dict.get(str(current_date), 0) if str(current_date) in trends_dict else 0)
+            current_date += timedelta(days=1)
+        order_trends_data = {
+            'labels': trends_labels,
+            'values': trends_values
+        }
+
+        # Active customers (non-staff users)
+        active_customers = User.objects.filter(
+            is_staff=False,
+            is_active=True
+        ).count()
+
+        # Recent activities
+        recent_activities = ActivityLog.objects.select_related('user').order_by('-timestamp')[:10]
+
+        # All orders for the modal (serialize as JSON)
+        all_orders = Order.objects.select_related('customer').all().order_by('-created_at')[:200]
+        all_orders_json = []
+        for order in all_orders:
+            all_orders_json.append({
+                "order_id": order.order_id,
+                "created_at": order.created_at.isoformat(),
+                "customer_name": order.customer.get_full_name() if hasattr(order.customer, 'get_full_name') else str(order.customer),
+                "item_count": getattr(order, "items_count", None) or 0,  # you may need to adjust this field
+                "total_amount": float(order.total_amount) if order.total_amount else 0,
+                "status": order.status,
+            })
+
+        open_orders_count = pending_orders
+
+        context = {
+            'page_title': 'Dashboard',
+            'total_orders': total_orders,
+            'pending_orders': pending_orders,
+            'completed_orders': completed_orders,
+            'memo_requests': memo_requests,
+            'total_revenue': total_revenue,
+            'active_customers': active_customers,
+            'recent_orders': recent_orders,
+            'recent_activities': recent_activities,
+            'order_status_data': json.dumps(order_status_data),
+            'order_trends_data': json.dumps(order_trends_data),
+            'open_orders_count': open_orders_count,
+            'all_orders_json': json.dumps(all_orders_json),
+        }
+        return render(request, 'adminside/dashboard.html', context)
     except Exception as e:
-        logger.error(f"Error rendering admin dashboard: {str(e)}")
-        messages.error(request, f"Error loading dashboard: {str(e)}")
-        return render(request, 'adminside/error.html', {'error': str(e)})
-
-
+        # ... your existing except block is fine ...
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error loading dashboard: {str(e)}")
+        context = {
+            'page_title': 'Dashboard',
+            'total_orders': 0,
+            'pending_orders': 0,
+            'completed_orders': 0,
+            'memo_requests': 0,
+            'total_revenue': 0,
+            'active_customers': 0,
+            'recent_orders': [],
+            'recent_activities': [],
+            'order_status_data': json.dumps({}),
+            'order_trends_data': json.dumps({'labels': [], 'values': []}),
+            'open_orders_count': 0,
+            'all_orders_json': json.dumps([]),
+        }
+        return render(request, 'adminside/dashboard.html', context)
 
 def staff_required(user):
     return user.is_staff
@@ -945,3 +1058,29 @@ def customer_notes(request, customer_id):
     
     # This is handled in customer_detail view
     return redirect('adminside:customer_detail', customer_id=customer.id)
+
+@staff_member_required
+def password_reset_requests(request):
+    requests_list = PasswordResetRequest.objects.select_related('user').order_by('-requested_at')
+    return render(request, 'adminside/password_reset_requests.html', {
+        'reset_requests': requests_list
+    })
+
+@staff_member_required
+def approve_password_reset(request, req_id):
+    reset_req = get_object_or_404(PasswordResetRequest, pk=req_id)
+    if not reset_req.is_approved:
+        # Approve the request
+        reset_req.is_approved = True
+        reset_req.processed_at = timezone.now()
+        # Send password reset email
+        form = PasswordResetForm({'email': reset_req.user.username})
+        if form.is_valid():
+            form.save(request=request)
+            messages.success(request, f"Password reset email sent to {reset_req.user.username}.")
+        else:
+            messages.error(request, "Error sending password reset email.")
+        reset_req.save()
+    else:
+        messages.info(request, "This request was already approved.")
+    return redirect('adminside:password_reset_requests')

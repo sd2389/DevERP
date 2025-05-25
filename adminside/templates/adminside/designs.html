@@ -22,20 +22,21 @@
     <div class="card-body">
       <form method="get" class="row g-3">
         <div class="col-md-4">
-          <input type="text" name="design_no" class="form-control" placeholder="Search by Design No" value="{{ request.GET.design_no }}">
+          <input type="text" name="design_no" class="form-control" placeholder="Search by Design No"
+            value="{{ request.GET.design_no }}">
         </div>
         <div class="col-md-3">
           <select name="status" class="form-select">
             <option value="">All Status</option>
-            <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>Active</option>
-            <option value="inactive" {% if request.GET.status == 'inactive' %}selected{% endif %}>Inactive</option>
+            <option value="active" {% if request.GET.status=='active' %}selected{% endif %}>Active</option>
+            <option value="inactive" {% if request.GET.status=='inactive' %}selected{% endif %}>Inactive</option>
           </select>
         </div>
         <div class="col-md-3 d-flex gap-2">
           <button type="submit" class="btn btn-primary">
             <i class="fas fa-filter me-1"></i> Filter
           </button>
-          <a href="{% url 'adminside:designs' %}" class="btn btn-secondary">
+          <a href="{% url 'adminside:design_list' %}" class="btn btn-secondary">
             <i class="fas fa-undo me-1"></i> Reset
           </a>
         </div>
@@ -60,9 +61,9 @@
             <td>{{ design.design_no }}</td>
             <td>
               {% if design.is_active %}
-                <span class="badge bg-success">Active</span>
+              <span class="badge bg-success">Active</span>
               {% else %}
-                <span class="badge bg-secondary">Inactive</span>
+              <span class="badge bg-secondary">Inactive</span>
               {% endif %}
             </td>
             <td>
@@ -70,16 +71,17 @@
                 {% csrf_token %}
                 <input type="hidden" name="design_id" value="{{ design.id }}">
                 {% if design.is_active %}
-                  <button name="action" value="deactivate" class="btn btn-warning btn-sm">
-                    <i class="fas fa-eye-slash me-1"></i> Deactivate
-                  </button>
+                <button name="action" value="deactivate" class="btn btn-warning btn-sm">
+                  <i class="fas fa-eye-slash me-1"></i> Deactivate
+                </button>
                 {% else %}
-                  <button name="action" value="activate" class="btn btn-success btn-sm">
-                    <i class="fas fa-eye me-1"></i> Activate
-                  </button>
+                <button name="action" value="activate" class="btn btn-success btn-sm">
+                  <i class="fas fa-eye me-1"></i> Activate
+                </button>
                 {% endif %}
               </form>
-              <button class="btn btn-primary btn-sm ms-1" data-bs-toggle="modal" data-bs-target="#viewDesignModal-{{ design.id }}">
+              <button class="btn btn-primary btn-sm ms-1" data-bs-toggle="modal"
+                data-bs-target="#viewDesignModal-{{ design.id }}">
                 <i class="fas fa-search me-1"></i> View
               </button>
             </td>
@@ -180,9 +182,9 @@
           <div class="col-md-4 fw-bold">Status:</div>
           <div class="col-md-8">
             {% if design.is_active %}
-              <span class="badge bg-success">Active</span>
+            <span class="badge bg-success">Active</span>
             {% else %}
-              <span class="badge bg-secondary">Inactive</span>
+            <span class="badge bg-secondary">Inactive</span>
             {% endif %}
           </div>
         </div>
@@ -193,13 +195,13 @@
           {% csrf_token %}
           <input type="hidden" name="design_id" value="{{ design.id }}">
           {% if design.is_active %}
-            <button name="action" value="deactivate" class="btn btn-warning">
-              <i class="fas fa-eye-slash me-1"></i> Deactivate
-            </button>
+          <button name="action" value="deactivate" class="btn btn-warning">
+            <i class="fas fa-eye-slash me-1"></i> Deactivate
+          </button>
           {% else %}
-            <button name="action" value="activate" class="btn btn-success">
-              <i class="fas fa-eye me-1"></i> Activate
-            </button>
+          <button name="action" value="activate" class="btn btn-success">
+            <i class="fas fa-eye me-1"></i> Activate
+          </button>
           {% endif %}
         </form>
       </div>
