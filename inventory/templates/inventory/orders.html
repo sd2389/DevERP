@@ -302,7 +302,7 @@
 
   <!-- Order Details Modal -->
   <div class="modal fade" id="orderDetailsModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
       <div class="modal-content rounded-4 border-0 shadow">
         <div class="modal-header">
           <h5 class="modal-title">Order Details</h5>
@@ -789,7 +789,7 @@
                                         <img src="https://dev-jewels.s3.us-east-2.amazonaws.com/products/${item.design_no}/White/D_${item.design_no}-1.jpg" alt="${item.design_no}" 
                                              class="me-2" style="width: 40px; height: 40px; object-fit: contain;" 
                                              onerror="this.src='{% static 'inventory/placeholder.jpg' %}'">
-                                        <div class="fw-bold">${item.design_no}</div>
+                                        
                                     </div>
                                 </td>
                                 <td>${item.job_no || 'N/A'}</td>
@@ -822,10 +822,13 @@
                                     <tr>
                                         <th>Item</th>
                                         <th>Job No.</th>
-                                        <th>Date</th>
+                                        <th>Metal</th>
+                                        <th>Quality</th>
+                                        <th>Color</th>
+                                        <th>Diamond Quality</th>
+                                        <th>Diamond Color</th>
+                                        <th>Size</th>
                                         <th>Memo Status</th>
-                                        <th>Memo Requested At</th>
-                                        <th>Requested At</th>
                                         <th>Status</th>
                                     </tr>
                                 </thead>
@@ -843,14 +846,16 @@
                                         <img src="https://dev-jewels.s3.us-east-2.amazonaws.com/products/${item.design_no}/White/D_${item.design_no}-1.jpg" alt="${item.design_no}" 
                                              class="me-2" style="width: 40px; height: 40px; object-fit: contain;"
                                              onerror="this.src='{% static 'inventory/placeholder.jpg' %}'">
-                                        <div class="fw-bold">${item.design_no}</div>
                                     </div>
                                 </td>
                                 <td>${item.job_no || 'N/A'}</td>
-                                <td>${item.date || 'N/A'}</td>
+                                <td>${item.metal_type || 'N/A'}</td>
+                                <td>${item.metal_quality || 'N/A'}</td>
+                                <td>${item.metal_color || 'N/A'}</td>
+                                <td>${item.diamond_quality || 'N/A'}</td>
+                                <td>${item.diamond_color || 'N/A'}</td>
+                                <td>${item.size || 'N/A'}</td>
                                 <td>${item.memo_status || 'N/A'}</td>
-                                <td>${item.memo_requested_at ? formatDate(item.memo_requested_at) : 'N/A'}</td>
-                                <td>${item.requested_at ? formatDate(item.requested_at) : 'N/A'}</td>
                                 <td>${statusBadge}</td>
                             </tr>
                         `;
