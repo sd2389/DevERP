@@ -4,7 +4,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import get_user_model
 User = get_user_model()
-
+from orders.utils import get_next_custom_job_no
 from django.contrib import messages
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.http import require_POST, require_GET
@@ -740,9 +740,10 @@ def create_order(request):
                     })
                 
                 elif section == 'custom':
-                    # Custom orders
+                    # Assign a global unique job number to custom orders
+                    from orders.utils import get_next_custom_job_no
+                    order_item_data['job_no'] = get_next_custom_job_no()
                     order_item_data.update({
-                        'job_no': item.get('order_id', ''),  # Use order_id as job_no for custom
                         'metal_type': item.get('metal_type', ''),
                         'metal_quality': item.get('metal_quality', ''),
                         'metal_color': item.get('metal_color', ''),
@@ -750,9 +751,10 @@ def create_order(request):
                         'diamond_color': item.get('diamond_color', ''),
                         'size': item.get('size', ''),
                         'quantity': int(item.get('qty', 1)),
-                        'unit_price': 0,  # Price pending for custom items
+                        'unit_price': 0,
                         'custom_remarks': item.get('remarks', ''),
                     })
+
                 
                 # Calculate total
                 unit_price = float(order_item_data['unit_price'])

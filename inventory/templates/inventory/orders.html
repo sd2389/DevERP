@@ -766,6 +766,10 @@
                                         <th>Item</th>
                                         <th>Job No.</th>
                                         <th>Metal</th>
+                                        <th>Quality</th>
+                                        <th>Color</th>
+                                        <th>Diamond Quality</th>
+                                        <th>Diamond Color</th>
                                         <th>Size</th>
                                         <th>Price</th>
                                         <th>Status</th>
@@ -789,9 +793,13 @@
                                     </div>
                                 </td>
                                 <td>${item.job_no || 'N/A'}</td>
-                                <td>${item.metal_type || 'N/A'} ${item.metal_quality || ''}</td>
+                                <td>${item.metal_type || 'N/A'}</td>
+                                <td>${item.metal_quality || 'N/A'}</td>
+                                <td>${item.metal_color || 'N/A'}</td>
+                                <td>${item.diamond_quality || 'N/A'}</td>
+                                <td>${item.diamond_color || 'N/A'}</td>
                                 <td>${item.size || 'N/A'}</td>
-                                <td>$${parseFloat(item.unit_price || item.price || 0).toFixed(2)}</td>
+                                <td>${item.price ? `$${parseFloat(item.price).toFixed(2)}` : 'N/A'}</td>
                                 <td>${statusBadge}</td>
                             </tr>
                         `;
@@ -814,7 +822,10 @@
                                     <tr>
                                         <th>Item</th>
                                         <th>Job No.</th>
-                                        <th>Requested</th>
+                                        <th>Date</th>
+                                        <th>Memo Status</th>
+                                        <th>Memo Requested At</th>
+                                        <th>Requested At</th>
                                         <th>Status</th>
                                     </tr>
                                 </thead>
@@ -836,7 +847,10 @@
                                     </div>
                                 </td>
                                 <td>${item.job_no || 'N/A'}</td>
-                                <td>${new Date(item.memo_requested_at || item.requested_at || item.created_at).toLocaleDateString()}</td>
+                                <td>${item.date || 'N/A'}</td>
+                                <td>${item.memo_status || 'N/A'}</td>
+                                <td>${item.memo_requested_at ? formatDate(item.memo_requested_at) : 'N/A'}</td>
+                                <td>${item.requested_at ? formatDate(item.requested_at) : 'N/A'}</td>
                                 <td>${statusBadge}</td>
                             </tr>
                         `;
@@ -858,9 +872,18 @@
                                 <thead class="table-light">
                                     <tr>
                                         <th>Item</th>
-                                        <th>Specifications</th>
-                                        <th>Quantity</th>
+                                        <th>Design No.</th>
+                                        <th>Job No.</th>
+                                        <th>Size</th>
+                                        <th>Metal Type</th>
+                                        <th>Metal Quality</th>
+                                        <th>Metal Color</th>
+                                        <th>Diamond Quality</th>
+                                        <th>Diamond Color</th>
+                                        <th>Remark</th>
+                                        <th>Qty</th>
                                         <th>Status</th>
+                                        
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -877,18 +900,19 @@
                                         <img src="https://dev-jewels.s3.us-east-2.amazonaws.com/products/${item.design_no}/White/D_${item.design_no}-1.jpg" alt="${item.design_no}" 
                                              class="me-2" style="width: 40px; height: 40px; object-fit: contain;"
                                              onerror="this.src='{% static 'inventory/placeholder.jpg' %}'">
-                                        <div class="fw-bold">${item.design_no}</div>
+                                        
                                     </div>
                                 </td>
-                                <td>
-                                    <small>
-                                        <strong>Metal:</strong> ${item.metal_type || 'N/A'} ${item.metal_quality || ''} ${item.metal_color || ''}<br>
-                                        <strong>Diamond:</strong> ${item.diamond_quality || 'N/A'}-${item.diamond_color || 'N/A'}<br>
-                                        <strong>Size:</strong> ${item.size || 'N/A'}
-                                        ${item.custom_remarks || item.remarks ? `<br><strong>Note:</strong> ${item.custom_remarks || item.remarks}` : ''}
-                                    </small>
-                                </td>
-                                <td>${item.quantity || item.qty || 1}</td>
+                                <td>${item.design_no || 'N/A'}</td>
+                                <td>${item.job_no || 'N/A'}</td>
+                                <td>${item.size || 'N/A'}</td>
+                                <td>${item.metal_type || 'N/A'}</td>
+                                <td>${item.metal_quality || 'N/A'}</td>
+                                <td>${item.metal_color || 'N/A'}</td>
+                                <td>${item.diamond_quality || 'N/A'}</td>
+                                <td>${item.diamond_color || 'N/A'}</td>
+                                <td>${item.custom_remarks || 'N/A'}</td>
+                                <td>${item.quantity || 'N/A'}</td>
                                 <td>${statusBadge}</td>
                             </tr>
                         `;
