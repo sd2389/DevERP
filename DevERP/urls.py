@@ -5,6 +5,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib.auth import views as auth_views
 from . import views  # Import your custom views
+from inventory import views as inventory_views  # Adjust 'inventory' to your app name
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -30,6 +31,7 @@ urlpatterns = [
     path('', include('inventory.urls', namespace='inventory')),   
     path('adminside/', include('adminside.urls')),
     path('orders/', include('orders.urls')),   
+    path('create_order/', inventory_views.create_order, name='create_order'),
 
 ]
 

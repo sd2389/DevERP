@@ -65,6 +65,7 @@ class Order(models.Model):
     
     # Order identification
     order_number = models.CharField(max_length=50, unique=True)
+    order_id = models.CharField(max_length=50, unique=True)
     
     # Customer information
     customer = models.ForeignKey(Customer, on_delete=models.PROTECT, related_name='orders', null=True, blank=True)
@@ -72,6 +73,11 @@ class Order(models.Model):
     customer_name = models.CharField(max_length=200)
     customer_email = models.EmailField()
     customer_phone = models.CharField(max_length=20)
+    
+    # Shipping information
+    shipping_name = models.CharField(max_length=255, default='')
+    shipping_email = models.EmailField(default='')
+    shipping_phone = models.CharField(max_length=20, default='')
     
     # Shipping address
     shipping_address_line1 = models.CharField(max_length=255)
@@ -90,17 +96,25 @@ class Order(models.Model):
     subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     tax_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     shipping_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    shipping_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     discount_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     
     # Additional information
     notes = models.TextField(blank=True)
     internal_notes = models.TextField(blank=True, help_text="Not visible to customers")
+    customer_notes = models.TextField(blank=True, default='')
+    admin_notes = models.TextField(blank=True, default='')
     
     # Tracking
     tracking_number = models.CharField(max_length=100, blank=True)
     shipped_date = models.DateTimeField(null=True, blank=True)
     delivered_date = models.DateTimeField(null=True, blank=True)
+    
+    # Additional timestamps
+    processed_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    cancelled_at = models.DateTimeField(null=True, blank=True)
     
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
@@ -117,6 +131,14 @@ class Order(models.Model):
         # Generate order number if not set
         if not self.order_number:
             self.order_number = self.generate_order_number()
+        
+        # Set order_id same as order_number if not set
+        if not self.order_id:
+            self.order_id = self.order_number
+            
+        # Copy shipping_cost to shipping_amount for compatibility
+        if self.shipping_cost and not self.shipping_amount:
+            self.shipping_amount = self.shipping_cost
         
         # Calculate total if not set
         if not self.total_amount:
@@ -138,15 +160,54 @@ class Order(models.Model):
         self.total_amount = self.subtotal + self.tax_amount + self.shipping_cost - self.discount_amount
 
 
+# orders/models.py - Update the OrderItem model
+
 class OrderItem(models.Model):
     """Order line items"""
-    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
-    # We'll link to Product using a CharField for now to avoid circular import
-    product_id = models.IntegerField()
+    ITEM_TYPES = [
+        ('stock', 'Stock Item'),
+        ('memo', 'Memo Request'),
+        ('custom', 'Custom Order'),
+    ]
     
-    # Store product info at time of order
-    product_name = models.CharField(max_length=200)
-    product_sku = models.CharField(max_length=100)
+    ITEM_STATUS = [
+        ('pending', 'Pending'),
+        ('confirmed', 'Confirmed'),
+        ('processing', 'Processing'),
+        ('ready', 'Ready'),
+        ('shipped', 'Shipped'),
+        ('delivered', 'Delivered'),
+        ('cancelled', 'Cancelled'),
+    ]
+    
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
+    
+    # Product identification
+    product_id = models.IntegerField(default=0)
+    product_name = models.CharField(max_length=255)
+    product_sku = models.CharField(max_length=100, default='')
+    design_no = models.CharField(max_length=50, default='')
+    job_no = models.CharField(max_length=50, default='')
+    
+    # Item type and status
+    item_type = models.CharField(max_length=20, choices=ITEM_TYPES, default='stock')
+    item_status = models.CharField(max_length=30, choices=ITEM_STATUS, default='pending')
+    status_updated_at = models.DateTimeField(auto_now=True)
+    
+    # Metal specifications
+    metal_type = models.CharField(max_length=50, default='')
+    metal_quality = models.CharField(max_length=20, default='')
+    metal_color = models.CharField(max_length=20, default='')
+    
+    # Diamond specifications
+    diamond_quality = models.CharField(max_length=20, default='')
+    diamond_color = models.CharField(max_length=20, default='')
+    
+    # Weight and size
+    gwt = models.DecimalField(max_digits=8, decimal_places=3, null=True, blank=True)
+    dwt = models.DecimalField(max_digits=8, decimal_places=3, null=True, blank=True)
+    nwt = models.DecimalField(max_digits=8, decimal_places=3, null=True, blank=True)
+    size = models.CharField(max_length=20, default='')
     
     # Quantities and pricing
     quantity = models.IntegerField(default=1)
@@ -154,15 +215,28 @@ class OrderItem(models.Model):
     discount_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     total = models.DecimalField(max_digits=10, decimal_places=2)
     
-    # Status
+    # Memo specific fields
+    memo_requested_at = models.DateTimeField(null=True, blank=True)
+    memo_approved_at = models.DateTimeField(null=True, blank=True)
+    memo_return_date = models.DateField(null=True, blank=True)
+    
+    # Custom order remarks
+    custom_remarks = models.TextField(blank=True, default='')
+    
+    # Cancellation
     is_cancelled = models.BooleanField(default=False)
     cancelled_at = models.DateTimeField(null=True, blank=True)
     
+    # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
         ordering = ['created_at']
+        indexes = [
+            models.Index(fields=['order', 'item_type']),
+            models.Index(fields=['design_no', 'job_no']),
+        ]
     
     def __str__(self):
         return f"{self.product_name} x {self.quantity}"
@@ -171,7 +245,6 @@ class OrderItem(models.Model):
         # Calculate total
         self.total = (self.unit_price * self.quantity) - self.discount_amount
         super().save(*args, **kwargs)
-
 
 class Payment(models.Model):
     """Payment records"""

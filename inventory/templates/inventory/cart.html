@@ -93,40 +93,40 @@
 <body class="container py-4 bg-light">
   <!-- Navigation bar with Cart link -->
   <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4 rounded">
-      <div class="container-fluid">
-        <a class="navbar-brand" href="{% url 'inventory:inventory' %}">DevERP</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-          aria-expanded="false">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-          <ul class="navbar-nav ms-auto">
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'inventory:inventory' %}">
-                <i class="bi bi-grid"></i> Inventory
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'inventory:wishlist' %}">
-                <i class="bi bi-heart"></i> Wishlist
-                <span class="badge rounded-pill bg-danger wishlist-count"></span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link active" href="{% url 'inventory:cart' %}">
-                <i class="bi bi-cart"></i> Cart
-                <span class="badge rounded-pill bg-primary cart-counter"></span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'inventory:orders' %}">
-                <i class="bi bi-box"></i> Orders
-              </a>
-            </li>
-          </ul>
-        </div>
+    <div class="container-fluid">
+      <a class="navbar-brand" href="{% url 'inventory:inventory' %}">DevERP</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+        aria-expanded="false">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'inventory:inventory' %}">
+              <i class="bi bi-grid"></i> Inventory
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'inventory:wishlist' %}">
+              <i class="bi bi-heart"></i> Wishlist
+              <span class="badge rounded-pill bg-danger wishlist-count"></span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link active" href="{% url 'inventory:cart' %}">
+              <i class="bi bi-cart"></i> Cart
+              <span class="badge rounded-pill bg-primary cart-counter"></span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'inventory:orders' %}">
+              <i class="bi bi-box"></i> Orders
+            </a>
+          </li>
+        </ul>
       </div>
-    </nav>
+    </div>
+  </nav>
 
   <div class="container py-4">
     <h2 class="mb-4 fw-bold text-primary">
@@ -261,7 +261,8 @@
           </div>
           <h5 class="mb-2">Thank you for your order!</h5>
           <p class="mb-1">Your order has been placed successfully.</p>
-          <p class="mb-3"><strong>Order Number: <span id="orderIdDisplay" class="text-primary">ORD001</span></strong></p>
+          <p class="mb-3"><strong>Order Number: <span id="orderIdDisplay" class="text-primary">ORD001</span></strong>
+          </p>
           <div class="alert alert-info small">
             <i class="bi bi-info-circle me-2"></i>
             You can track your order status in the Orders section.
@@ -348,7 +349,7 @@
       function loadAllItems() {
         // Load regular cart items (in-stock items)
         const stockItems = JSON.parse(localStorage.getItem("cart_customer") || "[]");
-        
+
         // Load memo requests 
         const memoItems = JSON.parse(localStorage.getItem("memoRequests") || "[]").map(item => ({
           ...item,
@@ -358,7 +359,7 @@
           dateAdded: new Date(item.requested_at || new Date()).toISOString().split('T')[0],
           price: memoItemPrices[item.job_no] || "0.00" // Use price from mapping or default
         }));
-        
+
         // Load custom orders
         const customItems = JSON.parse(localStorage.getItem("custom_orders") || "[]").map(item => ({
           ...item,
@@ -368,14 +369,14 @@
           job_no: item.order_id, // Use order_id as job_no for custom orders
           price: customItemPrices[item.order_id] || "0.00" // Use price from mapping or default
         }));
-        
+
         // Add itemType to stock items
         const stockItemsWithType = stockItems.map(item => ({
           ...item,
           itemType: ORDER_TYPES.STOCK,
           dateAdded: new Date(item.added_at || item.dateAdded || new Date()).toISOString().split('T')[0]
         }));
-        
+
         // Combine all items
         return [...stockItemsWithType, ...memoItems, ...customItems];
       }
@@ -408,7 +409,7 @@
       items.forEach(item => {
         // Use the normalized dateAdded field
         const dateAdded = item.dateAdded;
-        
+
         if (!groupedByDate[dateAdded]) {
           groupedByDate[dateAdded] = {
             stock: [],
@@ -416,7 +417,7 @@
             custom: []
           };
         }
-        
+
         const itemType = item.itemType;
         if (itemType === ORDER_TYPES.STOCK) {
           groupedByDate[dateAdded].stock.push(item);
@@ -446,17 +447,17 @@
         // Select items from today
         if (isToday) {
           const dateGroup = groupedByDate[date];
-          
+
           // Select stock items
           dateGroup.stock.forEach(item => {
             selectedItems[getItemId(item)] = true;
           });
-          
+
           // Select memo items
           dateGroup.memo.forEach(item => {
             selectedItems[getItemId(item)] = true;
           });
-          
+
           // Select custom items
           dateGroup.custom.forEach(item => {
             selectedItems[getItemId(item)] = true;
@@ -527,7 +528,7 @@
         // Render stock items first
         if (dateItems.stock.length > 0) {
           dateGroupsHTML += `<div class="order-type-separator mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>In Stock Items</div>`;
-          
+
           dateItems.stock.forEach((item, index) => {
             const itemId = getItemId(item);
             const isAvailable = inventoryData[item.job_no]?.available !== false;
@@ -590,8 +591,8 @@
                       <div class="d-flex justify-content-between align-items-center mt-3">
                         <div>
                           ${!isAvailable
-                            ? '<div class="badge bg-danger"><i class="bi bi-exclamation-triangle me-1"></i> Currently unavailable</div>'
-                            : '<div class="badge bg-success"><i class="bi bi-check-circle me-1"></i> In stock</div>'}
+                ? '<div class="badge bg-danger"><i class="bi bi-exclamation-triangle me-1"></i> Currently unavailable</div>'
+                : '<div class="badge bg-success"><i class="bi bi-check-circle me-1"></i> In stock</div>'}
                         </div>
                         <div class="text-end">
                           <p class="mb-0 h5 text-success fw-bold">$${parseFloat(item.price || 0).toFixed(2)}</p>
@@ -608,7 +609,7 @@
         // Render memo request items
         if (dateItems.memo.length > 0) {
           dateGroupsHTML += `<div class="order-type-separator mb-2"><i class="bi bi-bookmark-fill text-warning me-2"></i>Requested Items (On Memo)</div>`;
-          
+
           dateItems.memo.forEach((item, index) => {
             const itemId = getItemId(item);
             // For memo items, always consider them "available" for selection
@@ -677,7 +678,7 @@
         // Render custom order items
         if (dateItems.custom.length > 0) {
           dateGroupsHTML += `<div class="order-type-separator mb-2"><i class="bi bi-tools text-info me-2"></i>Custom Orders</div>`;
-          
+
           dateItems.custom.forEach((item, index) => {
             const itemId = getItemId(item);
             // For custom orders, always consider them "available" for selection
@@ -773,7 +774,7 @@
           document.querySelectorAll(`.item-selector[data-date="${date}"]:not(:disabled)`).forEach(itemCheckbox => {
             itemCheckbox.checked = isChecked;
             const itemId = itemCheckbox.value;
-            
+
             if (isChecked) {
               selectedItems[itemId] = true;
             } else {
@@ -832,28 +833,28 @@
 
         // Get all selected items from all sources
         const selectedItemIds = Object.keys(selectedItems);
-        
+
         // First get all in-stock items
-        const stockItems = items.filter(item => 
-          item.itemType === ORDER_TYPES.STOCK && 
+        const stockItems = items.filter(item =>
+          item.itemType === ORDER_TYPES.STOCK &&
           selectedItems[getItemId(item)]
         );
-        
+
         // Then get all memo request items
-        const memoItems = items.filter(item => 
-          item.itemType === ORDER_TYPES.MEMO && 
+        const memoItems = items.filter(item =>
+          item.itemType === ORDER_TYPES.MEMO &&
           selectedItems[getItemId(item)]
         );
-        
+
         // Finally get all custom order items
-        const customItems = items.filter(item => 
-          item.itemType === ORDER_TYPES.CUSTOM && 
+        const customItems = items.filter(item =>
+          item.itemType === ORDER_TYPES.CUSTOM &&
           selectedItems[getItemId(item)]
         );
-        
+
         // Group all these items by date
         const selectedDatesMap = {};
-        
+
         // Process stock items
         stockItems.forEach(item => {
           const date = item.dateAdded;
@@ -866,7 +867,7 @@
           }
           selectedDatesMap[date].stock.push(item);
         });
-        
+
         // Process memo items
         memoItems.forEach(item => {
           const date = item.dateAdded;
@@ -879,7 +880,7 @@
           }
           selectedDatesMap[date].memo.push(item);
         });
-        
+
         // Process custom items
         customItems.forEach(item => {
           const date = item.dateAdded;
@@ -900,7 +901,7 @@
         for (const date of sortedSelectedDates) {
           const dateGroup = selectedDatesMap[date];
           const totalItemsInDay = dateGroup.stock.length + dateGroup.memo.length + dateGroup.custom.length;
-          
+
           if (totalItemsInDay === 0) continue;
 
           const formattedDate = new Date(date).toLocaleDateString('en-US', {
@@ -980,21 +981,21 @@
       // Update all summary calculations
       function updateOrderSummary() {
         // Get all selected items by type
-        const selectedStockItems = items.filter(item => 
-          item.itemType === ORDER_TYPES.STOCK && 
+        const selectedStockItems = items.filter(item =>
+          item.itemType === ORDER_TYPES.STOCK &&
           selectedItems[getItemId(item)]
         );
-        
-        const selectedMemoItems = items.filter(item => 
-          item.itemType === ORDER_TYPES.MEMO && 
+
+        const selectedMemoItems = items.filter(item =>
+          item.itemType === ORDER_TYPES.MEMO &&
           selectedItems[getItemId(item)]
         );
-        
-        const selectedCustomItems = items.filter(item => 
-          item.itemType === ORDER_TYPES.CUSTOM && 
+
+        const selectedCustomItems = items.filter(item =>
+          item.itemType === ORDER_TYPES.CUSTOM &&
           selectedItems[getItemId(item)]
         );
-        
+
         // Total count of all selected items
         const totalSelectedItems = selectedStockItems.length + selectedMemoItems.length + selectedCustomItems.length;
 
@@ -1064,16 +1065,16 @@
       function generateOrderNumber() {
         // Get the last order number from localStorage or start from 0
         let lastOrderSeq = parseInt(localStorage.getItem("lastOrderSequence") || "0");
-        
+
         // Increment the sequence
         lastOrderSeq++;
-        
+
         // Format with leading zeros (ORD001, ORD002, etc.)
         const orderNumber = `ORD${String(lastOrderSeq).padStart(3, '0')}`;
-        
+
         // Save the updated sequence
         localStorage.setItem("lastOrderSequence", lastOrderSeq.toString());
-        
+
         return orderNumber;
       }
 
@@ -1081,38 +1082,38 @@
       function processOrder(selectedItemIds) {
         // Generate a new order number
         const orderNumber = generateOrderNumber();
-        
+
         // Get current date
         const orderDate = new Date().toISOString();
-        
+
         // Get all selected items by type
-        const selectedStockItems = items.filter(item => 
-          item.itemType === ORDER_TYPES.STOCK && 
+        const selectedStockItems = items.filter(item =>
+          item.itemType === ORDER_TYPES.STOCK &&
           selectedItems[getItemId(item)]
         );
-        
-        const selectedMemoItems = items.filter(item => 
-          item.itemType === ORDER_TYPES.MEMO && 
+
+        const selectedMemoItems = items.filter(item =>
+          item.itemType === ORDER_TYPES.MEMO &&
           selectedItems[getItemId(item)]
         );
-        
-        const selectedCustomItems = items.filter(item => 
-          item.itemType === ORDER_TYPES.CUSTOM && 
+
+        const selectedCustomItems = items.filter(item =>
+          item.itemType === ORDER_TYPES.CUSTOM &&
           selectedItems[getItemId(item)]
         );
-        
+
         // Calculate total
         const shippingMethod = standardShipping.checked ? 'standard' : 'express';
         const shippingCost = SHIPPING_RATES[shippingMethod];
-        
+
         const subtotal = selectedStockItems.reduce((sum, item) => {
           return sum + (parseFloat(item.price) || 0);
         }, 0);
-        
+
         const tax = subtotal * TAX_RATE;
         const discount = subtotal * discountRate;
         const total = subtotal + shippingCost + tax - discount;
-        
+
         // Create order object
         const order = {
           order_id: orderNumber,
@@ -1128,7 +1129,7 @@
               item_type: ORDER_TYPES.MEMO
             })),
             custom: selectedCustomItems.map(item => ({
-              ...item, 
+              ...item,
               item_type: ORDER_TYPES.CUSTOM
             }))
           },
@@ -1141,41 +1142,41 @@
             shipping_method: shippingMethod
           }
         };
-        
+
         // Get existing orders or create an empty array
         const existingOrders = JSON.parse(localStorage.getItem("customer_orders") || "[]");
-        
+
         // Add the new order
         existingOrders.push(order);
-        
+
         // Save back to localStorage
         localStorage.setItem("customer_orders", JSON.stringify(existingOrders));
-        
+
         // Remove ordered items from cart, memoRequests, and custom_orders
-        
+
         // 1. Handle stock items (remove from cart)
         let cartItems = JSON.parse(localStorage.getItem("cart_customer") || "[]");
         selectedStockItems.forEach(item => {
           cartItems = cartItems.filter(cartItem => cartItem.job_no !== item.job_no);
         });
         localStorage.setItem("cart_customer", JSON.stringify(cartItems));
-        
+
         // 2. Handle memo items (remove from memoRequests)
         let memoRequests = JSON.parse(localStorage.getItem("memoRequests") || "[]");
         selectedMemoItems.forEach(item => {
-          memoRequests = memoRequests.filter(request => 
+          memoRequests = memoRequests.filter(request =>
             !(request.job_no === item.job_no && request.design_no === item.design_no)
           );
         });
         localStorage.setItem("memoRequests", JSON.stringify(memoRequests));
-        
+
         // 3. Handle custom items (remove from custom_orders)
         let customOrders = JSON.parse(localStorage.getItem("custom_orders") || "[]");
         selectedCustomItems.forEach(item => {
           customOrders = customOrders.filter(order => order.order_id !== item.order_id);
         });
         localStorage.setItem("custom_orders", JSON.stringify(customOrders));
-        
+
         return orderNumber;
       }
 
@@ -1189,25 +1190,110 @@
         }
 
         try {
-          // Process the order
-          const orderNumber = processOrder(selectedItemIds);
-          
-          // Update the order success modal with the order number
-          document.getElementById('orderIdDisplay').textContent = orderNumber;
-          
-          // Show the success modal
-          const successModal = new bootstrap.Modal(document.getElementById('orderSuccessModal'));
-          successModal.show();
-          
-          // Clear selected items
-          for (const id in selectedItems) {
-            delete selectedItems[id];
-          }
-          
-          // Reload the page after closing the modal
-          document.getElementById('orderSuccessModal').addEventListener('hidden.bs.modal', function () {
-            location.reload();
-          });
+          // Process the order and get the full order object (not just order number)
+          const orderNumber = generateOrderNumber();
+          const orderDate = new Date().toISOString();
+
+          // Selected items by type
+          const selectedStockItems = items.filter(item =>
+            item.itemType === ORDER_TYPES.STOCK &&
+            selectedItems[getItemId(item)]
+          );
+          const selectedMemoItems = items.filter(item =>
+            item.itemType === ORDER_TYPES.MEMO &&
+            selectedItems[getItemId(item)]
+          );
+          const selectedCustomItems = items.filter(item =>
+            item.itemType === ORDER_TYPES.CUSTOM &&
+            selectedItems[getItemId(item)]
+          );
+
+          const shippingMethod = standardShipping.checked ? 'standard' : 'express';
+          const shippingCost = SHIPPING_RATES[shippingMethod];
+
+          const subtotal = selectedStockItems.reduce((sum, item) => sum + (parseFloat(item.price) || 0), 0);
+          const tax = subtotal * TAX_RATE;
+          const discount = subtotal * discountRate;
+          const total = subtotal + shippingCost + tax - discount;
+
+          // Build the order object to POST to Django
+          const order = {
+            order_id: orderNumber,
+            date: orderDate,
+            status: "Pending",
+            order_items: {
+              stock: selectedStockItems.map(item => ({
+                ...item,
+                item_type: ORDER_TYPES.STOCK
+              })),
+              memo: selectedMemoItems.map(item => ({
+                ...item,
+                item_type: ORDER_TYPES.MEMO
+              })),
+              custom: selectedCustomItems.map(item => ({
+                ...item,
+                item_type: ORDER_TYPES.CUSTOM
+              }))
+            },
+            payment: {
+              subtotal,
+              shipping: shippingCost,
+              tax,
+              discount,
+              total,
+              shipping_method: shippingMethod
+            },
+            // Optionally: Add customer and address info if you have it
+          };
+
+          // ---- SEND TO DJANGO ----
+          fetch("/create_order/", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRFToken": getCookie("csrftoken")
+            },
+            body: JSON.stringify(order)
+          })
+            .then(res => res.json())
+            .then(data => {
+              if (data.success) {
+                document.getElementById('orderIdDisplay').textContent = data.order_id || orderNumber;
+                const successModal = new bootstrap.Modal(document.getElementById('orderSuccessModal'));
+                successModal.show();
+
+                // Remove items from localStorage as before
+                let cartItems = JSON.parse(localStorage.getItem("cart_customer") || "[]");
+                selectedStockItems.forEach(item => {
+                  cartItems = cartItems.filter(cartItem => cartItem.job_no !== item.job_no);
+                });
+                localStorage.setItem("cart_customer", JSON.stringify(cartItems));
+
+                let memoRequests = JSON.parse(localStorage.getItem("memoRequests") || "[]");
+                selectedMemoItems.forEach(item => {
+                  memoRequests = memoRequests.filter(request => !(request.job_no === item.job_no && request.design_no === item.design_no));
+                });
+                localStorage.setItem("memoRequests", JSON.stringify(memoRequests));
+
+                let customOrders = JSON.parse(localStorage.getItem("custom_orders") || "[]");
+                selectedCustomItems.forEach(item => {
+                  customOrders = customOrders.filter(order => order.order_id !== item.order_id);
+                });
+                localStorage.setItem("custom_orders", JSON.stringify(customOrders));
+
+                for (const id in selectedItems) { delete selectedItems[id]; }
+                document.getElementById('orderSuccessModal').addEventListener('hidden.bs.modal', function () {
+                  location.reload();
+                });
+              } else {
+                showToast("Order failed: " + (data.error || "Unknown error"), "danger");
+              }
+            })
+            .catch(err => {
+              console.error(err);
+              showToast("Error placing order. Please try again.", "danger");
+            });
+
         } catch (error) {
           console.error('Error processing order:', error);
           showToast('An error occurred while processing your order. Please try again.', 'danger');
@@ -1220,6 +1306,22 @@
       // Update cart counter
       updateCartCounter();
     });
+
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0;i < cookies.length;i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
+
 
     // Show toast message
     function showToast(message, type = "success") {
@@ -1268,7 +1370,7 @@
         const stockItems = JSON.parse(localStorage.getItem("cart_customer") || "[]");
         const memoItems = JSON.parse(localStorage.getItem("memoRequests") || "[]");
         const customItems = JSON.parse(localStorage.getItem("custom_orders") || "[]");
-        
+
         const count = stockItems.length + memoItems.length + customItems.length;
 
         cartCounter.textContent = count > 0 ? count : '';
@@ -1281,14 +1383,14 @@
     // Helper function to parse the item ID to get type and actual ID
     function parseItemId(itemId) {
       if (!itemId || typeof itemId !== 'string') return { type: null, id: null };
-      
+
       const parts = itemId.split('-');
       if (parts.length < 2) return { type: null, id: null };
-      
+
       const type = parts[0];
       // The ID is the rest of the string after the first dash
       const id = parts.slice(1).join('-');
-      
+
       return { type, id };
     }
 
@@ -1297,14 +1399,14 @@
       if (confirm('Are you sure you want to remove this item?')) {
         try {
           const { type, id } = parseItemId(itemId);
-          
+
           if (type === 'stock') {
             // Remove from regular cart
             let cart = JSON.parse(localStorage.getItem("cart_customer") || "[]");
             cart = cart.filter(item => item.job_no !== id);
             localStorage.setItem("cart_customer", JSON.stringify(cart));
             showToast("Item removed from cart", "warning");
-          } 
+          }
           else if (type === 'memo') {
             // Remove from memo requests
             let memoRequests = JSON.parse(localStorage.getItem("memoRequests") || "[]");
@@ -1319,7 +1421,7 @@
             localStorage.setItem("custom_orders", JSON.stringify(customOrders));
             showToast("Custom order removed", "warning");
           }
-          
+
           // Reload the page to reflect the changes
           setTimeout(() => location.reload(), 1000);
         } catch (error) {

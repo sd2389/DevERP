@@ -14,6 +14,8 @@ urlpatterns = [
     
     # Fixed AJAX endpoint URL
     path('ajax/', views.inventory_list_ajax, name='inventory_ajax'),
+    path('api/my-orders/', views.my_orders_api, name='my_orders_api'),
+    path('api/order-details/<str:order_id>/', views.get_order_details_api, name='get_order_details_api'),
     
     # Add the filter-options endpoint
     path('api/filter-options/', views.get_filter_options, name='api_filter_options'),

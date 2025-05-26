@@ -1,4 +1,4 @@
-# application/vnd.ant.code language="python"
+# views.py
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -13,6 +13,7 @@ from django.db.models import Q, Count
 from django.core.paginator import Paginator
 from django.template.loader import render_to_string, get_template
 from django.utils.html import strip_tags
+from django.utils import timezone  # Add this line
 from django.conf import settings
 import requests
 import json
@@ -22,6 +23,8 @@ from datetime import datetime
 import uuid
 from django.core.cache import cache
 from .models import Design, InventoryItem, Category, UserProfile
+from orders.models import Order, OrderItem, Customer
+from django.shortcuts import get_object_or_404
 
 # Initialize logger
 logger = logging.getLogger('inventory')
@@ -603,110 +606,266 @@ def get_stock_by_design(request, design_no):
             'memoJobs': []
         }, status=500)
 
-
-@csrf_exempt
 @require_POST
 def create_order(request):
-    """
-    API endpoint to create a new order.
-    
-    Expected JSON format:
-    {
-        "order_items": {
-            "stock": [...],
-            "memo": [...],
-            "custom": [...]
-        },
-        "payment": {
-            "subtotal": 100.00,
-            "shipping": 9.99,
-            "tax": 8.00,
-            "discount": 0.00,
-            "total": 117.99
-        },
-        "customer": {
-            "name": "John Doe",
-            "email": "john.doe@example.com",
-            "phone": "1234567890"
-        },
-        "shipping_address": {...},
-        "billing_address": {...},
-        "payment_method": {...}
-    }
-    """
     try:
-        # Parse request body
         data = json.loads(request.body)
+        user = request.user if request.user.is_authenticated else None
+
+        # -- 1. CUSTOMER LOGIC --
+        customer_info = data.get('customer', {})
+        customer = None
+        if user:
+            customer = Customer.objects.filter(user=user).first()
+        if not customer and customer_info.get('email'):
+            customer = Customer.objects.filter(email=customer_info.get('email')).first()
+        if not customer:
+            customer = Customer.objects.create(
+                user=user if user else None,
+                name=customer_info.get('name', ''),
+                email=customer_info.get('email', ''),
+                phone=customer_info.get('phone', ''),
+                address_line1=customer_info.get('address_line1', ''),
+                address_line2=customer_info.get('address_line2', ''),
+                city=customer_info.get('city', ''),
+                state=customer_info.get('state', ''),
+                country=customer_info.get('country', 'USA'),
+                postal_code=customer_info.get('postal_code', ''),
+            )
+
+        shipping_address = data.get('shipping_address', {})
+        payment_data = data.get('payment', {})
+        order_notes = data.get('notes', '')
+
+        order_number = data.get('order_id') or f"ORD{uuid.uuid4().hex[:8].upper()}"
+
+        # -- 2. CREATE THE ORDER WITH PROPER SHIPPING ADDRESS --
+        # Use shipping address from request, but fall back to customer address if empty
+        shipping_line1 = shipping_address.get('line1', '') or customer.address_line1 or ''
+        shipping_line2 = shipping_address.get('line2', '') or customer.address_line2 or ''
+        shipping_city = shipping_address.get('city', '') or customer.city or ''
+        shipping_state = shipping_address.get('state', '') or customer.state or ''
+        shipping_postal = shipping_address.get('postal_code', '') or customer.postal_code or ''
+        shipping_country = shipping_address.get('country', '') or customer.country or 'USA'
         
-        # Validate required fields
-        if 'order_items' not in data:
-            return JsonResponse({
-                'success': False,
-                'error': 'Missing required field: order_items'
-            }, status=400)
+        order = Order.objects.create(
+            order_number=order_number,
+            order_id=order_number,
+            customer=customer,
+            customer_name=customer.name,
+            customer_email=customer.email,
+            customer_phone=customer.phone,
+            shipping_name=shipping_address.get('name', '') or customer.name,
+            shipping_email=shipping_address.get('email', '') or customer.email,
+            shipping_phone=shipping_address.get('phone', '') or customer.phone,
+            shipping_address_line1=shipping_line1,
+            shipping_address_line2=shipping_line2,
+            shipping_city=shipping_city,
+            shipping_state=shipping_state,
+            shipping_country=shipping_country,
+            shipping_postal_code=shipping_postal,
+            status='pending',
+            payment_status='pending',
+            payment_method=payment_data.get('method', 'standard'),
+            subtotal=payment_data.get('subtotal', 0),
+            tax_amount=payment_data.get('tax', 0),
+            shipping_cost=payment_data.get('shipping', 0),
+            shipping_amount=payment_data.get('shipping', 0),
+            discount_amount=payment_data.get('discount', 0),
+            total_amount=payment_data.get('total', 0),
+            notes=order_notes,
+            customer_notes=order_notes,
+            admin_notes='',
+            internal_notes='',
+            tracking_number='',
+            created_by=user,
+        )
+
+        # -- 3. ORDER ITEMS with complete field mapping --
+        for section in ['stock', 'memo', 'custom']:
+            for item in data.get('order_items', {}).get(section, []):
+                # Prepare common fields
+                order_item_data = {
+                    'order': order,
+                    'product_id': 0,  # Default value as required by DB
+                    'product_name': item.get('design_no', ''),
+                    'product_sku': item.get('job_no', ''),
+                    'design_no': item.get('design_no', ''),
+                    'job_no': item.get('job_no', ''),
+                    'item_type': section,
+                    'item_status': 'pending',
+                    'status_updated_at': timezone.now(),
+                    'quantity': 1,  # Default quantity
+                    'unit_price': 0,  # Default price
+                    'discount_amount': 0,
+                    'total': 0,
+                    # Required string fields with defaults
+                    'metal_type': '',
+                    'metal_quality': '',
+                    'metal_color': '',
+                    'diamond_quality': '',
+                    'diamond_color': '',
+                    'size': '',
+                    'custom_remarks': '',
+                }
+                
+                # Update fields based on item type
+                if section == 'stock':
+                    # Stock items have complete information
+                    order_item_data.update({
+                        'metal_type': item.get('metal_type', ''),
+                        'metal_quality': item.get('metal_quality', ''),
+                        'metal_color': item.get('metal_color', ''),
+                        'diamond_quality': item.get('diamond_quality', ''),
+                        'diamond_color': item.get('diamond_color', ''),
+                        'size': item.get('size', ''),
+                        'unit_price': float(item.get('price', 0)),
+                        'gwt': float(item.get('gwt')) if item.get('gwt') else None,
+                        'dwt': float(item.get('dwt')) if item.get('dwt') else None,
+                    })
+                
+                elif section == 'memo':
+                    # Memo items
+                    order_item_data.update({
+                        'metal_type': item.get('metal_type', ''),
+                        'metal_quality': item.get('metal_quality', ''),
+                        'metal_color': item.get('metal_color', ''),
+                        'diamond_quality': item.get('diamond_quality', ''),
+                        'diamond_color': item.get('diamond_color', ''),
+                        'size': item.get('size', ''),
+                        'unit_price': 0,  # Price pending for memo items
+                        'memo_requested_at': item.get('requested_at', timezone.now()),
+                        'gwt': float(item.get('gwt')) if item.get('gwt') else None,
+                        'dwt': float(item.get('dwt')) if item.get('dwt') else None,
+                    })
+                
+                elif section == 'custom':
+                    # Custom orders
+                    order_item_data.update({
+                        'job_no': item.get('order_id', ''),  # Use order_id as job_no for custom
+                        'metal_type': item.get('metal_type', ''),
+                        'metal_quality': item.get('metal_quality', ''),
+                        'metal_color': item.get('metal_color', ''),
+                        'diamond_quality': item.get('diamond_quality', ''),
+                        'diamond_color': item.get('diamond_color', ''),
+                        'size': item.get('size', ''),
+                        'quantity': int(item.get('qty', 1)),
+                        'unit_price': 0,  # Price pending for custom items
+                        'custom_remarks': item.get('remarks', ''),
+                    })
+                
+                # Calculate total
+                unit_price = float(order_item_data['unit_price'])
+                quantity = int(order_item_data['quantity'])
+                discount = float(order_item_data['discount_amount'])
+                order_item_data['total'] = (unit_price * quantity) - discount
+                
+                # Create the order item
+                OrderItem.objects.create(**order_item_data)
+
+        logger.info(f"Order {order.order_number} created successfully with items")
+        
+        # Send confirmation emails if configured
+        try:
+            # Prepare order data for emails
+            order_data = {
+                'order_id': order.order_number,
+                'date': order.created_at.isoformat(),
+                'status': order.status,
+                'customer': {
+                    'name': customer.name,
+                    'email': customer.email,
+                    'phone': customer.phone,
+                },
+                'shipping_address': {
+                    'line1': shipping_line1,
+                    'line2': shipping_line2,
+                    'city': shipping_city,
+                    'state': shipping_state,
+                    'postal_code': shipping_postal,
+                    'country': shipping_country,
+                },
+                'payment': {
+                    'subtotal': float(order.subtotal),
+                    'shipping': float(order.shipping_cost),
+                    'tax': float(order.tax_amount),
+                    'discount': float(order.discount_amount),
+                    'total': float(order.total_amount),
+                    'method': order.payment_method,
+                },
+                'items': data.get('order_items', {}),
+            }
             
-        if 'customer' not in data or 'email' not in data['customer']:
-            return JsonResponse({
-                'success': False,
-                'error': 'Missing required customer email'
-            }, status=400)
+            # Send customer email
+            if customer.email:
+                send_order_confirmation_email(order_data, customer.email)
             
-        # Generate order ID (in a real app, this would be a database sequence)
-        order_id = f"ORD{datetime.now().strftime('%Y%m%d')}{str(uuid.uuid4())[:8].upper()}"
-        
-        # Create order object (would normally save to database)
-        order = {
-            'order_id': order_id,
-            'date': datetime.now().isoformat(),
-            'status': 'Pending',
-            'items': data.get('order_items', {}),
-            'customer': data.get('customer', {}),
-            'payment': data.get('payment', {}),
-            'shipping_address': data.get('shipping_address', {}),
-            'billing_address': data.get('billing_address', {})
-        }
-        
-        # In a real application, save to database here
-        # For now, just log it
-        logger.info(f"Created order {order_id}")
-        
-        # Send email notifications
-        customer_email = data['customer']['email']
-        admin_email = getattr(settings, 'ADMIN_ORDER_EMAIL', None)
-        
-        # Send customer confirmation email
-        customer_email_sent = False
-        if hasattr(settings, 'EMAIL_HOST') and settings.EMAIL_HOST:
-            customer_email_sent = send_order_confirmation_email(order, customer_email)
-            if not customer_email_sent:
-                logger.warning(f"Failed to send customer confirmation email for order {order_id}")
-        
-        # Send admin notification email
-        admin_email_sent = False
-        if hasattr(settings, 'EMAIL_HOST') and settings.EMAIL_HOST and admin_email:
-            admin_email_sent = send_admin_order_notification(order)
-            if not admin_email_sent:
-                logger.warning(f"Failed to send admin notification email for order {order_id}")
-        
+            # Send admin notification
+            send_admin_order_notification(order_data)
+        except Exception as email_error:
+            logger.error(f"Error sending order emails: {str(email_error)}")
+            # Don't fail the order creation if email sending fails
+
         return JsonResponse({
             'success': True,
-            'order_id': order_id,
-            'message': 'Order created successfully',
-            'customer_email_sent': customer_email_sent,
-            'admin_email_sent': admin_email_sent
+            'order_id': order.order_number,
+            'message': 'Order created and saved successfully'
         })
-    except json.JSONDecodeError:
-        return JsonResponse({
-            'success': False,
-            'error': 'Invalid JSON in request body'
-        }, status=400)
-    except Exception as e:
-        logger.error(f"Error creating order: {str(e)}")
-        return JsonResponse({
-            'success': False,
-            'error': str(e)
-        }, status=500)
 
+    except Exception as e:
+        logger.error(f"Error creating order: {str(e)}", exc_info=True)
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+@login_required
+def my_orders_api(request):
+    """Return orders for the current logged-in customer as JSON."""
+    user = request.user
+    # Try to get the related Customer object for this user
+    customer = getattr(user, 'customer', None)
+    if not customer:
+        # Or, if your Customer model links as: Customer(user=User)
+        customer = Customer.objects.filter(user=user).first()
+    if not customer:
+        return JsonResponse({'success': True, 'orders': []})
+
+    # Get orders for this customer, order by newest first
+    orders = Order.objects.filter(customer=customer).order_by('-created_at')
+    order_list = []
+    for order in orders:
+        items = order.items.all()
+        # Group items by type for display
+        order_items = {
+            'stock': [],
+            'memo': [],
+            'custom': []
+        }
+        for item in items:
+            serialized = {
+                "item_type": item.item_type,
+                "item_status": item.item_status,
+                "design_no": item.design_no,
+                "job_no": item.job_no,
+                "order_id": order.order_id,
+                "quantity": item.quantity,
+                "unit_price": float(item.unit_price),
+                "total": float(item.total),
+                "metal_type": item.metal_type,
+                "metal_quality": item.metal_quality,
+                "metal_color": item.metal_color,
+                "diamond_quality": item.diamond_quality,
+                "diamond_color": item.diamond_color,
+                "size": item.size,
+            }
+            order_items[item.item_type].append(serialized)
+
+        order_list.append({
+            "order_id": order.order_id,
+            "date": order.created_at.isoformat(),
+            "status": order.status.title(),
+            "items": order_items,
+        })
+
+    return JsonResponse({'success': True, 'orders': order_list})
 
 @csrf_exempt
 @require_POST
@@ -1531,3 +1690,187 @@ def download_order_pdf(request, order_id):
         logger.error(f"Error generating PDF for order {order_id}: {str(e)}")
         messages.error(request, f"Error generating PDF: {str(e)}")
         return redirect('admin_order_detail', order_id=order_id)
+    
+@login_required
+@require_GET
+def get_order_details_api(request, order_id):
+    """
+    API endpoint to fetch detailed information about a specific order.
+    Returns order with all items grouped by type (stock, memo, custom).
+    """
+    try:
+        # Get the order with related customer data
+        order = Order.objects.filter(
+            Q(order_id=order_id) | Q(order_number=order_id)
+        ).select_related('customer').prefetch_related('items').first()
+        
+        if not order:
+            return JsonResponse({
+                'success': False,
+                'error': 'Order not found'
+            }, status=404)
+        
+        # Check if user has permission to view this order
+        # For logged-in users, check if they own the order
+        if request.user.is_authenticated:
+            # Check if this order belongs to the current user
+            user_customer = None
+            if hasattr(request.user, 'customer'):
+                user_customer = request.user.customer
+            else:
+                user_customer = Customer.objects.filter(user=request.user).first()
+            
+            # Also check if order was created by this user or belongs to their customer profile
+            if (order.created_by != request.user and 
+                order.customer != user_customer and
+                not request.user.is_staff):
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Permission denied'
+                }, status=403)
+        
+        # Get all order items and group by type
+        items = order.items.all()
+        
+        # Group items by type
+        order_items = {
+            'stock': [],
+            'memo': [],
+            'custom': []
+        }
+        
+        for item in items:
+            item_data = {
+                "id": item.id,
+                "item_type": item.item_type,
+                "item_status": item.item_status,
+                "design_no": item.design_no,
+                "job_no": item.job_no,
+                "product_name": item.product_name,
+                "product_sku": item.product_sku,
+                "quantity": item.quantity,
+                "unit_price": float(item.unit_price),
+                "total": float(item.total),
+                "metal_type": item.metal_type,
+                "metal_quality": item.metal_quality,
+                "metal_color": item.metal_color,
+                "diamond_quality": item.diamond_quality,
+                "diamond_color": item.diamond_color,
+                "size": item.size,
+                "gwt": float(item.gwt) if item.gwt else None,
+                "dwt": float(item.dwt) if item.dwt else None,
+                "custom_remarks": item.custom_remarks,
+                "created_at": item.created_at.isoformat() if item.created_at else None,
+                "status_updated_at": item.status_updated_at.isoformat() if item.status_updated_at else None,
+            }
+            
+            # Add type-specific fields
+            if item.item_type == 'memo':
+                item_data["memo_requested_at"] = item.memo_requested_at.isoformat() if hasattr(item, 'memo_requested_at') and item.memo_requested_at else None
+                item_data["requested_at"] = item_data["memo_requested_at"] or item_data["created_at"]
+            
+            # Add to appropriate list
+            if item.item_type in order_items:
+                order_items[item.item_type].append(item_data)
+        
+        # Get customer data - prioritize order's customer data, then customer object
+        customer_name = order.customer_name or (order.customer.name if order.customer else '') or 'N/A'
+        customer_email = order.customer_email or (order.customer.email if order.customer else '') or 'N/A'
+        customer_phone = order.customer_phone or (order.customer.phone if order.customer else '') or 'N/A'
+        
+        # Get shipping address - prioritize order's shipping data
+        shipping_line1 = order.shipping_address_line1 or ''
+        shipping_line2 = order.shipping_address_line2 or ''
+        shipping_city = order.shipping_city or ''
+        shipping_state = order.shipping_state or ''
+        shipping_postal = order.shipping_postal_code or ''
+        shipping_country = order.shipping_country or 'USA'
+        
+        # If shipping address is empty and we have a customer, use customer's address
+        if not shipping_line1 and order.customer:
+            shipping_line1 = order.customer.address_line1 or ''
+            shipping_line2 = order.customer.address_line2 or ''
+            shipping_city = order.customer.city or ''
+            shipping_state = order.customer.state or ''
+            shipping_postal = order.customer.postal_code or ''
+            shipping_country = order.customer.country or 'USA'
+        
+        # Build response
+        response_data = {
+            "success": True,
+            "order_id": order.order_id,
+            "order_number": order.order_number,
+            "status": order.status.title() if order.status else 'Pending',
+            "date": order.created_at.isoformat(),
+            "created_at": order.created_at.isoformat(),
+            
+            # Customer information
+            "customer": {
+                "name": customer_name,
+                "email": customer_email,
+                "phone": customer_phone,
+            },
+            "customer_name": customer_name,
+            "customer_email": customer_email,
+            "customer_phone": customer_phone,
+            
+            # Shipping address (both nested and flat structure for compatibility)
+            "shipping_address": {
+                "line1": shipping_line1,
+                "line2": shipping_line2,
+                "city": shipping_city,
+                "state": shipping_state,
+                "postal_code": shipping_postal,
+                "country": shipping_country,
+            },
+            "shipping_address_line1": shipping_line1,
+            "shipping_address_line2": shipping_line2,
+            "shipping_city": shipping_city,
+            "shipping_state": shipping_state,
+            "shipping_postal_code": shipping_postal,
+            "shipping_country": shipping_country,
+            
+            # Payment information
+            "payment": {
+                "subtotal": float(order.subtotal or 0),
+                "shipping": float(order.shipping_cost or 0),
+                "tax": float(order.tax_amount or 0),
+                "discount": float(order.discount_amount or 0),
+                "total": float(order.total_amount or 0),
+                "method": order.payment_method or 'Standard',
+                "shipping_method": "Standard",
+            },
+            "payment_method": order.payment_method or 'Standard',
+            "payment_status": order.payment_status or 'pending',
+            "subtotal": float(order.subtotal or 0),
+            "shipping_cost": float(order.shipping_cost or 0),
+            "shipping_amount": float(order.shipping_cost or 0),
+            "tax_amount": float(order.tax_amount or 0),
+            "discount_amount": float(order.discount_amount or 0),
+            "total_amount": float(order.total_amount or 0),
+            
+            # Additional fields
+            "tracking_number": order.tracking_number or '',
+            "notes": order.notes or '',
+            "customer_notes": order.customer_notes or '',
+            "admin_notes": order.admin_notes or '',
+            
+           # Status timestamps (make sure these names match your API response expectations)
+            "processed_at": order.processed_at.isoformat() if hasattr(order, 'processed_at') and order.processed_at else None,
+            "shipped_date": order.shipped_date.isoformat() if hasattr(order, 'shipped_date') and order.shipped_date else None,
+            "delivered_date": order.delivered_date.isoformat() if hasattr(order, 'delivered_date') and order.delivered_date else None,
+            "completed_at": order.completed_at.isoformat() if hasattr(order, 'completed_at') and order.completed_at else None,
+            "cancelled_at": order.cancelled_at.isoformat() if hasattr(order, 'cancelled_at') and order.cancelled_at else None,
+
+            # Items grouped by type
+            "items": order_items,
+        }
+        
+        return JsonResponse(response_data)
+        
+    except Exception as e:
+        logger.error(f"Error fetching order details for {order_id}: {str(e)}", exc_info=True)
+        return JsonResponse({
+            'success': False,
+            'error': 'Internal server error'
+        }, status=500)
