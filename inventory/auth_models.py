@@ -3,6 +3,8 @@ from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 from django.core.validators import RegexValidator
+from django.conf import settings
+User = settings.AUTH_USER_MODEL
 
 class UserManager(BaseUserManager):
     """

@@ -114,6 +114,7 @@ class Migration(migrations.Migration):
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
                         to=settings.AUTH_USER_MODEL,
+                        related_name="order_groups",
                     ),
                 ),
             ],
@@ -351,6 +352,7 @@ class Migration(migrations.Migration):
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         to=settings.AUTH_USER_MODEL,
+                        related_name="stock_movements_created",
                     ),
                 ),
                 (
@@ -399,6 +401,7 @@ class Migration(migrations.Migration):
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
                         to="inventory.ordergroup",
+                        related_name="request_orders",
                     ),
                 ),
             ],
@@ -477,6 +480,7 @@ class Migration(migrations.Migration):
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
                         to="inventory.ordergroup",
+                        related_name="in_stock_orders",
                     ),
                 ),
             ],
@@ -571,6 +575,7 @@ class Migration(migrations.Migration):
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
                         to="inventory.ordergroup",
+                        related_name="custom_orders",
                     ),
                 ),
             ],

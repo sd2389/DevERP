@@ -25,7 +25,7 @@ class User(AbstractUser):
         return self.username
 
 class PasswordResetRequest(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='password_reset_requests')
     requested_at = models.DateTimeField(auto_now_add=True)
     is_approved = models.BooleanField(default=False)
     processed_at = models.DateTimeField(null=True, blank=True)

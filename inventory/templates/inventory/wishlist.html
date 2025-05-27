@@ -126,41 +126,41 @@
   <div class="container py-4">
     <!-- Navigation bar with Wishlist link -->
     <!-- Navigation bar with updated links (no Requests or Custom Orders) -->
-<nav class="navbar navbar-expand-lg navbar-light bg-light mb-4 rounded">
-  <div class="container-fluid">
-    <a class="navbar-brand" href="{% url 'inventory:inventory' %}">DevERP</a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-      aria-expanded="false">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="navbarNav">
-      <ul class="navbar-nav ms-auto">
-        <li class="nav-item">
-          <a class="nav-link" href="{% url 'inventory:inventory' %}">
-            <i class="bi bi-grid"></i> Inventory
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link active" href="{% url 'inventory:wishlist' %}">
-            <i class="bi bi-heart"></i> Wishlist
-            <span class="badge rounded-pill bg-danger wishlist-count"></span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{% url 'inventory:cart' %}">
-            <i class="bi bi-cart"></i> Cart
-            <span class="badge rounded-pill bg-primary cart-counter"></span>
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{% url 'inventory:orders' %}">
-            <i class="bi bi-box"></i> Orders
-          </a>
-        </li>
-      </ul>
-    </div>
-  </div>
-</nav>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4 rounded">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="{% url 'inventory:inventory' %}">DevERP</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+          aria-expanded="false">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'inventory:inventory' %}">
+                <i class="bi bi-grid"></i> Inventory
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link active" href="{% url 'inventory:wishlist' %}">
+                <i class="bi bi-heart"></i> Wishlist
+                <span class="badge rounded-pill bg-danger wishlist-count"></span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'inventory:cart' %}">
+                <i class="bi bi-cart"></i> Cart
+                <span class="badge rounded-pill bg-primary cart-counter"></span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'inventory:orders' %}">
+                <i class="bi bi-box"></i> Orders
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
 
     <h2 class="mb-4">My Wishlist</h2>
     <div class="row mb-3">
@@ -422,26 +422,26 @@
     let currentDesignNo = '';
     let currentJobNo = '';
     let currentStockData = {};
-    
+
     // Debug flag - set to true to see detailed console logs
     const DEBUG = true;
-    
+
     function log(...args) {
       if (DEBUG) {
         console.log(...args);
       }
     }
-  
+
     // Generate a unique order ID
     function generateOrderId() {
       return 'order-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
     }
-  
+
     function toggleWishlistView() {
       isWishlistListView = !isWishlistListView;
       renderWishlist();
     }
-  
+
     async function fetchStock(jobNo) {
       try {
         log(`Fetching stock for job: ${jobNo}`);
@@ -456,12 +456,12 @@
       }
       return {};
     }
-  
+
     async function fetchStockByDesign(designNo) {
       try {
         log(`Fetching stock for design: ${designNo}`);
         const res = await fetch(`/api/get-stock-by-design/${designNo}`);
-  
+
         if (res.ok) {
           const data = await res.json();
           log(`Received data for ${designNo}:`, data);
@@ -474,7 +474,7 @@
       } catch (error) {
         console.error(`Error fetching design stock for ${designNo}:`, error);
       }
-  
+
       // Return a default structure if fetch fails
       return {
         design_no: designNo,
@@ -485,32 +485,32 @@
         pcs: 0
       };
     }
-  
+
     function showToast(message, type = "success") {
       const toastEl = document.getElementById("cartToast");
       const toastBody = toastEl.querySelector(".toast-body");
       toastBody.innerHTML = message;
-      
+
       // Add the right color class for the toast
       toastEl.className = `toast align-items-center text-bg-${type} border-0`;
-      
+
       const toast = new bootstrap.Toast(toastEl);
       toast.show();
     }
-  
+
     // Toggle wishlist item
     function toggleWishlist(designNo, jobNo = '') {
       try {
         log(`Toggling wishlist for design ${designNo}, job ${jobNo || 'none'}`);
-        
+
         // Get current wishlist
         let wishlist = JSON.parse(localStorage.getItem("user_wishlist") || "[]");
-  
+
         // Check if this item is already in the wishlist
         const existingIndex = wishlist.findIndex(item =>
           item.design_no === designNo && (jobNo ? item.job_no === jobNo : true)
         );
-  
+
         if (existingIndex >= 0) {
           // Remove from wishlist
           wishlist.splice(existingIndex, 1);
@@ -524,42 +524,42 @@
           });
           showToast(`<i class="bi bi-heart-fill"></i> Item added to wishlist`);
         }
-  
+
         // Save updated wishlist
         localStorage.setItem("user_wishlist", JSON.stringify(wishlist));
         log("Wishlist updated:", wishlist);
-  
+
         // Update all wishlist buttons
         updateWishlistButtons();
-  
+
         // Update wishlist count in navbar
         updateWishlistCount();
-  
+
         // Re-render wishlist if we're on the wishlist page
         renderWishlist();
-  
+
       } catch (error) {
         console.error("Error managing wishlist:", error);
         showToast(`<i class="bi bi-exclamation-triangle"></i> Error managing wishlist`, "danger");
       }
     }
-  
+
     async function renderWishlist() {
       log("Starting renderWishlist");
       const wishlistItems = JSON.parse(localStorage.getItem("user_wishlist") || "[]");
       log("Wishlist items from localStorage:", wishlistItems);
-      
+
       const search = document.getElementById("wishlistSearch")?.value.toLowerCase() || '';
       const grid = document.getElementById("wishlistGrid");
-      
+
       if (!grid) {
         console.error("Wishlist grid element not found!");
         return;
       }
-      
+
       // Clear the grid
       grid.innerHTML = "";
-  
+
       // Show empty message if no items
       if (wishlistItems.length === 0) {
         grid.innerHTML = `
@@ -571,36 +571,36 @@
         `;
         return;
       }
-  
+
       // Show loading indicator
       grid.innerHTML = '<div class="col-12 text-center py-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">Loading wishlist items...</p></div>';
-  
+
       let renderedItems = 0;
-      
+
       // Process wishlist items one by one
       for (const item of wishlistItems) {
         if (!item.design_no.toLowerCase().includes(search)) continue;
-  
+
         try {
           log(`Processing wishlist item: ${item.design_no}`);
-          
+
           // Get stock info for this design
           const stock = await fetchStockByDesign(item.design_no);
           log(`Fetched stock data for ${item.design_no}:`, stock);
-          
+
           const col = document.createElement("div");
           col.className = isWishlistListView ? "col-12" : "col-6 col-md-4 col-lg-3";
-  
+
           // Check stock status based on actual inventory data
           const inStockCount = stock.inStockJobs && stock.inStockJobs.length ? stock.inStockJobs.length : 0;
           const onMemoCount = stock.memoJobs && stock.memoJobs.length ? stock.memoJobs.length : 0;
-          
+
           log(`${item.design_no} counts: inStock=${inStockCount}, onMemo=${onMemoCount}`);
-          
+
           // Determine actual status from API data rather than the wishlist item
           let statusText = stock.status || 'Not In Stock';
           let statusClass = '';
-  
+
           if (inStockCount > 0) {
             statusText = 'In Stock';
             statusClass = 'text-success';
@@ -611,7 +611,7 @@
             statusText = 'Out of Stock';
             statusClass = 'text-danger';
           }
-  
+
           // Create card HTML
           col.innerHTML = `
             <div class="card h-100 shadow-sm">
@@ -622,9 +622,9 @@
                   onerror="this.src='{% static 'inventory/placeholder.jpg' %}'"
                   alt="${item.design_no}"
                   onclick="openImageModal('${item.design_no}')">
-                <button class="btn btn-sm btn-outline-danger position-absolute top-0 end-0 m-2" onclick="removeFromWishlist('${item.design_no}')">
-                  <i class="bi bi-trash"></i>
-                </button>
+                  <button class="btn btn-sm btn-outline-danger position-absolute top-0 end-0 m-2" onclick="removeFromWishlist(${item.id}, '${item.design_no}')">
+                <i class="bi bi-trash"></i>
+              </button>
               </div>
               <div class="card-body">
                 <h6 class="card-title">${item.design_no}</h6>
@@ -648,20 +648,20 @@
               </div>
             </div>
           `;
-  
+
           grid.appendChild(col);
           renderedItems++;
         } catch (error) {
           console.error(`Error rendering wishlist item ${item.design_no}:`, error);
         }
       }
-  
+
       // Remove loading indicator once done
       const loadingIndicator = document.querySelector('.spinner-border')?.parentElement;
       if (loadingIndicator) {
         loadingIndicator.remove();
       }
-  
+
       // If no items were rendered after filtering, show a message
       if (renderedItems === 0 && wishlistItems.length > 0) {
         grid.innerHTML = `
@@ -672,12 +672,12 @@
           </div>
         `;
       }
-  
+
       // Update wishlist buttons
       updateWishlistButtons();
       log("Finished renderWishlist");
     }
-  
+
     function showQuantityModal(designNo, quantity) {
       // Set modal title to include design number
       document.getElementById('quantityModalLabel').textContent = `Product Details - ${designNo}`;
@@ -685,20 +685,20 @@
       const quantityModal = new bootstrap.Modal(document.getElementById('quantityModal'));
       quantityModal.show();
     }
-  
+
     async function viewItemDetails(designNo) {
       log(`Opening details modal for ${designNo}`);
       currentDesignNo = designNo;
-  
+
       // Show loading state in modal
       document.getElementById('modalDesignNo').textContent = designNo;
       document.getElementById('customOrderTable').querySelector('tbody').innerHTML = '';
-      
+
       // Set initial view states before loading data
       document.getElementById('inStockSection').style.display = 'none';
       document.getElementById('outOfStockMessage').style.display = 'none';
       document.getElementById('memoSection').style.display = 'none';
-      
+
       document.getElementById('inStockJobsBody').innerHTML = `
         <tr>
           <td colspan="12" class="text-center py-3">
@@ -707,37 +707,37 @@
           </td>
         </tr>
       `;
-  
+
       // Set up the wishlist toggle button
       const toggleWishlistBtn = document.getElementById('toggleWishlistBtn');
       toggleWishlistBtn.onclick = function () {
         toggleWishlist(designNo);
         updateWishlistButtons();
       };
-  
+
       // Set up view images button
       const viewImagesBtn = document.getElementById('viewImagesBtn');
       viewImagesBtn.onclick = function () {
         openImageModal(designNo);
       };
-  
+
       // Show the modal while data is loading
       const modal = new bootstrap.Modal(document.getElementById('itemDetailsModal'));
       modal.show();
-  
+
       try {
         // Fetch complete stock data for this design
         const stockData = await fetchStockByDesign(designNo);
         currentStockData = stockData;
         log("Fetched stock data for modal:", stockData);
-  
+
         // Get in-stock and memo jobs
         const inStockJobs = stockData.inStockJobs || [];
         const memoJobs = stockData.memoJobs || [];
-  
+
         // Update the wishlist button state
         updateWishlistButtons();
-  
+
         // Manage visibility of sections based on stock
         if (inStockJobs.length > 0) {
           document.getElementById('inStockSection').style.display = 'block';
@@ -746,11 +746,11 @@
           document.getElementById('inStockSection').style.display = 'none';
           document.getElementById('outOfStockMessage').style.display = 'flex';
         }
-  
+
         // Populate in-stock jobs
         const inStockBody = document.getElementById('inStockJobsBody');
         inStockBody.innerHTML = '';
-  
+
         if (inStockJobs.length > 0) {
           inStockJobs.forEach(job => {
             const row = document.createElement('tr');
@@ -783,15 +783,15 @@
         } else {
           inStockBody.innerHTML = '<tr><td colspan="12" class="text-center py-3">No items in stock</td></tr>';
         }
-  
+
         // Handle memo jobs
         const memoSection = document.getElementById('memoSection');
         const memoBody = document.getElementById('memoJobsBody');
         memoBody.innerHTML = '';
-  
+
         if (memoJobs && memoJobs.length > 0) {
           memoSection.style.display = 'block';
-  
+
           memoJobs.forEach(job => {
             const row = document.createElement('tr');
             row.className = 'text-center';
@@ -822,10 +822,10 @@
         } else {
           memoSection.style.display = 'none';
         }
-  
+
         // Update wishlist button icons
         updateWishlistButtons();
-  
+
         // Initialize event listeners
         initializeModalListeners();
       } catch (error) {
@@ -840,7 +840,7 @@
         `;
       }
     }
-  
+
     // Add custom order row with diamond quality and color fields
     function addCustomRow() {
       const table = document.querySelector('#customOrderTable tbody');
@@ -848,10 +848,10 @@
         console.error("Custom order table not found");
         return;
       }
-      
+
       const rowIndex = table.rows.length + 1;
       const rowId = `custom-row-main-${rowIndex}`;
-  
+
       const row = document.createElement('tr');
       row.setAttribute("id", rowId);
       row.innerHTML = `
@@ -917,7 +917,7 @@
           </button>
         </td>
       `;
-  
+
       // Add event listeners for validation
       const requiredFields = row.querySelectorAll('[required]');
       requiredFields.forEach(field => {
@@ -929,30 +929,30 @@
           }
         });
       });
-  
+
       table.appendChild(row);
-  
+
       // Focus the first field for better UX
       setTimeout(() => {
         const firstField = row.querySelector('select, input');
         if (firstField) firstField.focus();
       }, 10);
     }
-  
+
     function removeCustomRow(rowId) {
       const row = document.getElementById(rowId);
       if (row) {
         row.remove();
-  
+
         // Renumber remaining rows
         const table = document.querySelector('#customOrderTable tbody');
-  
+
         Array.from(table.rows).forEach((row, idx) => {
           row.cells[0].textContent = idx + 1;
         });
       }
     }
-  
+
     function initializeModalListeners() {
       // Request memo button
       const requestMemoBtn = document.querySelector('.request-selected-memo-btn');
@@ -960,66 +960,66 @@
         // Remove any existing listeners to prevent duplicates
         const newBtn = requestMemoBtn.cloneNode(true);
         requestMemoBtn.parentNode.replaceChild(newBtn, requestMemoBtn);
-        
+
         // Add new listener
         newBtn.addEventListener('click', function () {
           handleMemoRequest();
         });
       }
     }
-    
+
     function handleMemoRequest() {
       const memoCheckboxes = document.querySelectorAll('.memo-checkbox:checked');
-  
+
       if (memoCheckboxes.length === 0) {
         showToast('<i class="bi bi-exclamation-triangle"></i> Please select at least one memo item', 'warning');
         return;
       }
-  
+
       // Collect selected jobs
       const selectedMemoJobs = Array.from(memoCheckboxes).map(chk => ({
         design_no: chk.dataset.design,
         job_no: chk.dataset.job_no
       }));
-  
+
       // Render job list in confirmation modal
       const jobList = document.getElementById("memoJobList");
       jobList.innerHTML = selectedMemoJobs.map(j =>
         `<li class="list-group-item">${j.design_no} – Job ${j.job_no}</li>`
       ).join("");
-  
+
       // Set data for the modal
       document.getElementById('memoConfirmModal').dataset.jobs = JSON.stringify(selectedMemoJobs);
-  
+
       // Show the modal
       const modal = new bootstrap.Modal(document.getElementById('memoConfirmModal'));
       modal.show();
     }
-  
+
     function updateSelectedCount(modal, type) {
       const checkboxes = modal.querySelectorAll(`.${type}-checkbox`);
       const checkedBoxes = modal.querySelectorAll(`.${type}-checkbox:checked`);
       const countElement = modal.querySelector(`.selected-count-${type}`);
-  
+
       if (countElement) {
         countElement.textContent = `${checkedBoxes.length} of ${checkboxes.length} selected`;
       }
     }
-  
+
     function addToCart(designNo) {
       const modal = document.getElementById('itemDetailsModal');
       const stockCheckboxes = modal.querySelectorAll(".job-checkbox:checked");
       const customRows = modal.querySelectorAll('#customOrderTable tbody tr');
-  
+
       let hasStockItems = false;
       let hasCustomItems = false;
       let stockCartItems = [];
       let customOrderItems = [];
-  
+
       // Process selected in-stock items
       if (stockCheckboxes.length > 0) {
         hasStockItems = true;
-  
+
         stockCartItems = Array.from(stockCheckboxes).map(chk => ({
           design_no: chk.dataset.design,
           job_no: chk.dataset.job_no,
@@ -1029,17 +1029,17 @@
           added_at: new Date().toISOString()
         }));
       }
-  
+
       // Process custom order items with diamond fields
       if (customRows.length > 0) {
         // Validate required fields before processing
         const validRows = [];
         let hasInvalidRows = false;
-  
+
         customRows.forEach(row => {
           const size = row.querySelector("[name='size']")?.value;
           const qty = row.querySelector("[name='qty']")?.value;
-  
+
           if (!size || !qty) {
             hasInvalidRows = true;
             // Highlight invalid fields
@@ -1051,16 +1051,16 @@
             validRows.push(row);
           }
         });
-  
+
         if (hasInvalidRows) {
           showToast("<i class='bi bi-exclamation-triangle'></i> Please fill in all required fields (Size and Quantity).", "warning");
           return;
         }
-  
+
         // Process valid rows
         if (validRows.length > 0) {
           hasCustomItems = true;
-  
+
           customOrderItems = validRows.map(row => {
             // Basic order data
             const orderData = {
@@ -1070,44 +1070,44 @@
               added_at: new Date().toISOString(),
               status: "pending" // Initial status for custom orders
             };
-  
+
             // Metal specifications
             orderData.metal = {
               type: row.querySelector("[name='metal_type']")?.value || "Gold",
               quality: row.querySelector("[name='metal_quality']")?.value || "14k",
               color: row.querySelector("[name='metal_color']")?.value || "W"
             };
-  
+
             // Flatten metal properties for compatibility with existing code
             orderData.metal_type = orderData.metal.type;
             orderData.metal_quality = orderData.metal.quality;
             orderData.metal_color = orderData.metal.color;
-  
+
             // Diamond specifications
             orderData.diamond = {
               quality: row.querySelector("[name='diamond_quality']")?.value || "VVS",
               color: row.querySelector("[name='diamond_color']")?.value || "D"
             };
-  
+
             // Flatten diamond properties for compatibility
             orderData.diamond_quality = orderData.diamond.quality;
             orderData.diamond_color = orderData.diamond.color;
-  
+
             // Other specifications
             orderData.size = row.querySelector("[name='size']")?.value;
             orderData.qty = parseInt(row.querySelector("[name='qty']")?.value || 1, 10);
             orderData.remarks = row.querySelector("[name='remarks']")?.value || "";
-  
+
             return orderData;
           });
         }
       }
-  
+
       if (!hasStockItems && !hasCustomItems) {
         showToast("<i class='bi bi-exclamation-triangle'></i> Please select at least one item or add a custom order.", "warning");
         return;
       }
-  
+
       // Handle regular stock items in cart
       if (hasStockItems) {
         const cartKey = "cart_customer";
@@ -1117,17 +1117,17 @@
         } catch (e) {
           console.error("Error parsing cart:", e);
         }
-  
+
         // Merge cart items, avoiding duplicates
         stockCartItems.forEach(item => {
           if (!existing.some(e => e.job_no === item.job_no && e.design_no === item.design_no)) {
             existing.push(item);
           }
         });
-  
+
         localStorage.setItem(cartKey, JSON.stringify(existing));
       }
-  
+
       // Handle custom order items separately
       if (hasCustomItems) {
         const customOrdersKey = "custom_orders";
@@ -1137,17 +1137,17 @@
         } catch (e) {
           console.error("Error parsing custom orders:", e);
         }
-  
+
         // Add all custom orders (they all have unique IDs)
         existingOrders.push(...customOrderItems);
-  
+
         localStorage.setItem(customOrdersKey, JSON.stringify(existingOrders));
       }
-  
+
       // Calculate totals for the toast message
       const stockItemsQty = stockCartItems.reduce((sum, item) => sum + (parseInt(item.qty) || 1), 0);
       const customItemsQty = customOrderItems.reduce((sum, item) => sum + (parseInt(item.qty) || 1), 0);
-  
+
       // Prepare a more detailed toast message
       let toastMessage = '';
       if (hasStockItems && hasCustomItems) {
@@ -1157,21 +1157,21 @@
       } else if (hasCustomItems) {
         toastMessage = `<i class='bi bi-check-circle-fill'></i> ${customItemsQty} custom order(s) placed.`;
       }
-  
+
       showToast(toastMessage);
-  
+
       // Close the modal after adding to cart
       const modalInstance = bootstrap.Modal.getInstance(modal);
       if (modalInstance) modalInstance.hide();
-  
+
       // Update counters in the header
       updateCartCounter();
       updateCustomOrdersCount();
     }
-  
+
     function openImageModal(designNo) {
       document.getElementById('imageModalTitle').textContent = designNo;
-  
+
       // Set up color buttons
       document.querySelectorAll('.color-btn').forEach(button => {
         button.setAttribute('data-design', designNo);
@@ -1179,15 +1179,15 @@
           loadImagesForColor(designNo, this.getAttribute('data-color'));
         };
       });
-  
+
       // Load initial images (White)
       loadImagesForColor(designNo, 'White');
-  
+
       // Show modal
       const modal = new bootstrap.Modal(document.getElementById('imageModal'));
       modal.show();
     }
-  
+
     function loadImagesForColor(designNo, color) {
       const baseUrl = `https://dev-jewels.s3.us-east-2.amazonaws.com/products/${designNo}/${color}/`;
       const imageNames = [
@@ -1198,10 +1198,10 @@
         `${designNo}-5.jpg`,
         `${designNo}-6.jpg`
       ];
-  
+
       const carouselInner = document.getElementById('carouselInner');
       carouselInner.innerHTML = '';
-  
+
       imageNames.forEach((name, idx) => {
         const slide = document.createElement('div');
         slide.className = `carousel-item ${idx === 0 ? 'active' : ''}`;
@@ -1214,34 +1214,27 @@
         carouselInner.appendChild(slide);
       });
     }
-  
-    function removeFromWishlist(designNo) {
+
+    function removeFromWishlist(itemId, designNo) {
       if (!confirm(`Remove ${designNo} from your wishlist?`)) return;
-  
-      let wishlist = JSON.parse(localStorage.getItem("user_wishlist") || "[]");
-      wishlist = wishlist.filter(item => item.design_no !== designNo);
-      localStorage.setItem("user_wishlist", JSON.stringify(wishlist));
-  
+      window.location.href = `/wishlist/remove/${itemId}/`;
       showToast(`<i class="bi bi-trash"></i> Item removed from wishlist.`, "warning");
-      renderWishlist();
-  
-      // Update wishlist count
-      updateWishlistCount();
+
     }
-  
+
     // Update wishlist button icons based on current wishlist
     function updateWishlistButtons() {
       try {
         const wishlist = JSON.parse(localStorage.getItem("user_wishlist") || "[]");
-  
+
         // Get all wishlist buttons
         document.querySelectorAll('.wishlist-btn').forEach(btn => {
           // Find parent row or card to get design number
           const row = btn.closest('tr');
           const card = btn.closest('.card');
-  
+
           let designNo, jobNo;
-  
+
           if (row) {
             designNo = row.querySelector('td:nth-child(2)')?.textContent.trim();
             jobNo = btn.getAttribute('data-job_no') || '';
@@ -1257,15 +1250,15 @@
               jobNo = btn.getAttribute('data-job_no') || '';
             }
           }
-  
+
           // Skip if we couldn't determine the design number
           if (!designNo) return;
-  
+
           // Check if this item is in the wishlist
           const isInWishlist = wishlist.some(item =>
             item.design_no === designNo && (jobNo ? item.job_no === jobNo : true)
           );
-  
+
           // Update button icon
           const icon = btn.querySelector('.bi');
           if (icon) {
@@ -1280,18 +1273,18 @@
             }
           }
         });
-  
+
       } catch (error) {
         console.error("Error updating wishlist buttons:", error);
       }
     }
-  
+
     // Handle memo confirmation modal
     document.getElementById('proceedMemoItemsBtn').addEventListener('click', function () {
       const memoModal = document.getElementById('memoConfirmModal');
       const selectedJobs = JSON.parse(memoModal.dataset.jobs || "[]");
       let memoRequests = JSON.parse(localStorage.getItem("memoRequests") || "[]");
-  
+
       selectedJobs.forEach(job => {
         const exists = memoRequests.some(r => r.job_no === job.job_no && r.design_no === job.design_no);
         if (!exists) {
@@ -1303,84 +1296,84 @@
           });
         }
       });
-  
+
       localStorage.setItem("memoRequests", JSON.stringify(memoRequests));
       showToast(`<i class="bi bi-bookmark-check"></i> ${selectedJobs.length} item${selectedJobs.length !== 1 ? 's' : ''} requested successfully.`);
-  
+
       bootstrap.Modal.getInstance(memoModal).hide();
     });
-  
+
     // Update wishlist count in navbar
     function updateWishlistCount() {
       const countBadge = document.querySelector('.wishlist-count');
       if (!countBadge) return;
-  
+
       try {
         const wishlist = JSON.parse(localStorage.getItem("user_wishlist") || "[]");
         const count = wishlist.length;
-  
+
         countBadge.textContent = count > 0 ? count : '';
         countBadge.style.display = count > 0 ? 'inline-block' : 'none';
       } catch (error) {
         console.error("Error updating wishlist count:", error);
       }
     }
-  
+
     // Update cart counter in navbar
     function updateCartCounter() {
       const cartCounter = document.querySelector(".cart-counter");
       if (!cartCounter) return;
-  
+
       try {
         const cartItems = JSON.parse(localStorage.getItem("cart_customer") || "[]");
         const count = cartItems.length;
-  
+
         cartCounter.textContent = count > 0 ? count : '';
         cartCounter.style.display = count > 0 ? 'inline-block' : 'none';
       } catch (e) {
         console.error("Error reading cart:", e);
       }
     }
-  
+
     function updateCustomOrdersCount() {
       const countBadge = document.querySelector('.custom-orders-count');
       if (!countBadge) return;
-  
+
       try {
         const allOrders = JSON.parse(localStorage.getItem("custom_orders") || "[]");
         const pendingOrders = allOrders.filter(o => o.status === "pending");
         const count = pendingOrders.length;
-  
+
         countBadge.textContent = count > 0 ? count : '';
         countBadge.style.display = count > 0 ? 'inline-block' : 'none';
       } catch (error) {
         console.error('Error updating custom orders count:', error);
       }
     }
-  
+
     // Make sure initialization runs
     console.log("Script loaded, waiting for DOM");
-    document.addEventListener("DOMContentLoaded", function() {
+    document.addEventListener("DOMContentLoaded", function () {
       console.log("DOM fully loaded");
       renderWishlist();
       updateWishlistCount();
       updateCartCounter();
       updateCustomOrdersCount();
-      
+
       // Re-attach event listener to search input
       const searchInput = document.getElementById("wishlistSearch");
       if (searchInput) {
-        searchInput.addEventListener("input", function() {
+        searchInput.addEventListener("input", function () {
           console.log("Search input changed");
           renderWishlist();
         });
       }
     });
-  
+
     // Fallback initialization
     if (document.readyState === "complete" || document.readyState === "interactive") {
       console.log("DOM already ready, initializing now");
-      setTimeout(function() {
+      setTimeout(function () {
         renderWishlist();
         updateWishlistCount();
         updateCartCounter();

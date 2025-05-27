@@ -1,5 +1,5 @@
 # views.py
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import get_user_model
@@ -22,9 +22,9 @@ import io
 from datetime import datetime
 import uuid
 from django.core.cache import cache
-from .models import Design, InventoryItem, Category, UserProfile
+from .models import Wishlist, Design, InventoryItem, Category, UserProfile
 from orders.models import Order, OrderItem, Customer
-from django.shortcuts import get_object_or_404
+
 
 # Initialize logger
 logger = logging.getLogger('inventory')
@@ -497,15 +497,52 @@ def cart_view(request):
         })
 
 
+@login_required
 def wishlist_view(request):
-    """Render the wishlist page for users (no login required)"""
-    try:
-        # Since we're using localStorage instead of database for wishlist,
-        # we simply render the template without any database queries
-        return render(request, 'inventory/wishlist.html')
-    except Exception as e:
-        logger.error(f"Error rendering wishlist page: {str(e)}")
-        return render(request, 'inventory/error.html', {'error': str(e)})
+    items = Wishlist.objects.filter(user=request.user).order_by('-added_at')
+    if request.GET.get('format') == 'json':
+        return JsonResponse({'items': [
+            {'id': i.id, 'design_no': i.design_no, 'added_at': i.added_at.isoformat()}
+            for i in items
+        ]})
+    return render(request, 'inventory/wishlist.html', {'items': items})
+
+@login_required
+def add_to_wishlist(request, design_no):
+    # avoid duplicates
+    Wishlist.objects.get_or_create(user=request.user, design_no=design_no)
+    return redirect('inventory:wishlist')
+
+@login_required
+def remove_from_wishlist(request, item_id):
+    item = get_object_or_404(Wishlist, id=item_id, user=request.user)
+    item.delete()
+    return redirect('inventory:wishlist')
+
+@login_required
+def toggle_wishlist(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Only POST allowed'}, status=405)
+
+    data = json.loads(request.body)
+    design_no = data.get('design_no')
+    if not design_no:
+        return JsonResponse({'error': 'Missing design_no'}, status=400)
+
+    # Try to create; if it already exists, delete it instead
+    obj, created = Wishlist.objects.get_or_create(
+        user=request.user,
+        design_no=design_no
+    )
+    if not created:
+        obj.delete()
+        action = 'removed'
+    else:
+        action = 'added'
+
+    # Return the new total count and what we did
+    count = Wishlist.objects.filter(user=request.user).count()
+    return JsonResponse({'action': action, 'count': count})
 
 
 def order_view(request):

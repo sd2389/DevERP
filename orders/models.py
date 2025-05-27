@@ -68,7 +68,13 @@ class Order(models.Model):
     order_id = models.CharField(max_length=50, unique=True)
     
     # Customer information
-    customer = models.ForeignKey(Customer, on_delete=models.PROTECT, related_name='orders', null=True, blank=True)
+    customer = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='orders'
+    )
     # For guest checkouts
     customer_name = models.CharField(max_length=200)
     customer_email = models.EmailField()
@@ -266,7 +272,7 @@ class Payment(models.Model):
     # Timestamps
     payment_date = models.DateTimeField(default=timezone.now)
     created_at = models.DateTimeField(auto_now_add=True)
-    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='payments_created')
     
     class Meta:
         ordering = ['-payment_date']

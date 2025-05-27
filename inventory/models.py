@@ -195,7 +195,7 @@ ORDER_STATUS_CHOICES = [
 # This model represents a group of orders, which can contain multiple order types
 class OrderGroup(models.Model):
     order_id = models.CharField(max_length=20, unique=True)
-    customer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    customer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='order_groups')
     created_at = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=20, choices=ORDER_STATUS_CHOICES, default="Pending")
 
@@ -204,7 +204,7 @@ class OrderGroup(models.Model):
 
 
 class InStockOrder(models.Model):
-    order_group = models.ForeignKey(OrderGroup, on_delete=models.CASCADE)
+    order_group = models.ForeignKey(OrderGroup, on_delete=models.CASCADE, related_name='in_stock_orders')
     design_no = models.CharField(max_length=50)
     qty = models.PositiveIntegerField()
     status = models.CharField(max_length=20, choices=ORDER_STATUS_CHOICES, default="Pending")
@@ -212,7 +212,7 @@ class InStockOrder(models.Model):
 
 
 class CustomOrder(models.Model):
-    order_group = models.ForeignKey(OrderGroup, on_delete=models.CASCADE)
+    order_group = models.ForeignKey(OrderGroup, on_delete=models.CASCADE, related_name='custom_orders')
     design_no = models.CharField(max_length=50)
     custom_details = models.TextField(blank=True, null=True)
     qty = models.PositiveIntegerField()
@@ -221,7 +221,7 @@ class CustomOrder(models.Model):
 
 
 class RequestOrder(models.Model):
-    order_group = models.ForeignKey(OrderGroup, on_delete=models.CASCADE)
+    order_group = models.ForeignKey(OrderGroup, on_delete=models.CASCADE, related_name='request_orders')
     design_no = models.CharField(max_length=50)
     qty = models.PositiveIntegerField()
     status = models.CharField(max_length=20, choices=ORDER_STATUS_CHOICES, default="Pending")
@@ -274,7 +274,7 @@ class StockMovement(models.Model):
     quantity_after = models.IntegerField()
     
     # User tracking
-    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='stock_movements_created')
     created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
@@ -327,3 +327,17 @@ def save_user_profile(sender, instance, **kwargs):
     if not hasattr(instance, 'profile'):
         UserProfile.objects.create(user=instance)
     instance.profile.save()
+    
+class Wishlist(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='wishlist_items'
+    )
+    design_no = models.CharField(max_length=50)
+    added_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'inventory_wishlist'
+        unique_together = ('user', 'design_no')
+        managed = False     # tells Django “the table already exists—don’t try to create or delete it”

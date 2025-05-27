@@ -133,7 +133,7 @@
           </div>
           <div class="col-6 col-md-2">
             <label class="form-label small">Product Type</label>
-            <select id="productTypeFilter" class="form-select form-select-sm">
+            <select id="producttypeFilter" class="form-select form-select-sm">
               <option value="all">All Types</option>
               <!-- Options populated by JavaScript -->
             </select>
@@ -172,9 +172,10 @@
 
             <!-- Wishlist Button overlay on image -->
             <button class="wishlist-btn position-absolute top-0 end-0 m-2"
-              onclick="toggleWishlist('{{ prod.design_no }}', '{{ prod.in_stock_jobs.0.job_no|default:'' }}')">
-              <i class="bi bi-heart fs-5"></i>
-            </button>
+        data-design-no="{{ prod.design_no }}"
+        onclick="toggleWishlist(this)">
+  <i class="bi bi-heart fs-5"></i>
+</button>
           </div>
 
           <div class="card-body text-center p-3">
@@ -316,10 +317,11 @@
               <!-- Actions Column with Wishlist -->
               <td>
                 <div class="d-flex justify-content-center gap-2">
-                  <button class="wishlist-btn"
-                    onclick="toggleWishlist('{{ prod.design_no }}', '{{ prod.in_stock_jobs.0.job_no|default:'' }}')">
-                    <i class="bi bi-heart"></i>
-                  </button>
+                  <button class="wishlist-btn position-absolute top-0 end-0 m-2"
+        data-design-no="{{ prod.design_no }}"
+        onclick="toggleWishlist(this)">
+  <i class="bi bi-heart fs-5"></i>
+</button>
                   <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
                     data-bs-target="#modal-{{ forloop.counter0 }}">
                     <i class="bi bi-cart-plus"></i>
@@ -655,7 +657,7 @@
     const genderFilter = document.getElementById('genderFilter');
     const collectionFilter = document.getElementById('collectionFilter');
     const subcategoryFilter = document.getElementById('subcategoryFilter');
-    const productTypeFilter = document.getElementById('productTypeFilter');
+    const producttypeFilter = document.getElementById('producttypeFilter');
 
     const btnAll = document.getElementById('btn-all');
     const btnInStock = document.getElementById('btn-instock');
@@ -701,8 +703,7 @@
         toggleViewBtn.querySelector('i').classList.remove('bi-table');
         toggleViewBtn.querySelector('i').classList.add('bi-grid');
       }
-    });
-
+      });
     // Toggle advanced filters panel
     advancedFiltersBtn.addEventListener('click', function () {
       advancedFiltersPanel.style.display = advancedFiltersPanel.style.display === 'none' ? 'block' : 'none';
@@ -730,7 +731,7 @@
 
 
     // Add event listeners to filter dropdowns
-    [categoryFilter, genderFilter, collectionFilter, subcategoryFilter, productTypeFilter].forEach(filter => {
+    [categoryFilter, genderFilter, collectionFilter, subcategoryFilter, producttypeFilter].forEach(filter => {
       if (filter) {
         filter.addEventListener('change', function () {
           resetPagination();
@@ -853,12 +854,12 @@
       }
 
       // Product Types
-      if (filters.product_types && productTypeFilter) {
+      if (filters.product_types && producttypeFilter) {
         filters.product_types.forEach(type => {
           const option = document.createElement('option');
           option.value = type.toLowerCase();
           option.textContent = type;
-          productTypeFilter.appendChild(option);
+          producttypeFilter.appendChild(option);
         });
       }
     }
@@ -955,7 +956,7 @@
       }
 
       // Reset all filter dropdowns
-      [categoryFilter, genderFilter, collectionFilter, subcategoryFilter, productTypeFilter].forEach(filter => {
+      [categoryFilter, genderFilter, collectionFilter, subcategoryFilter, producttypeFilter].forEach(filter => {
         if (filter) {
           filter.value = 'all';
         }
@@ -994,7 +995,7 @@
         { el: genderFilter, name: 'gender' },
         { el: collectionFilter, name: 'collection' },
         { el: subcategoryFilter, name: 'subcategory' },
-        { el: productTypeFilter, name: 'producttype' }
+        { el: producttypeFilter, name: 'producttype' }
       ];
 
       dropdowns.forEach(dropdown => {
@@ -1120,8 +1121,8 @@
         params.append('subcategory', subcategoryFilter.value);
       }
 
-      if (productTypeFilter && productTypeFilter.value !== 'all') {
-        params.append('producttype', productTypeFilter.value);
+      if (producttypeFilter && producttypeFilter.value !== 'all') {
+        params.append('producttype', producttypeFilter.value);
       }
 
       // Debug - log the query we're making
@@ -1367,9 +1368,10 @@
             data-bs-toggle="modal" 
             data-bs-target="#imageModal-${index}">
         <button class="wishlist-btn position-absolute top-0 end-0 m-2"
-            onclick="toggleWishlist('${designNo}', '${firstJobNo}')">
-            <i class="bi bi-heart fs-5"></i>
-        </button>
+        data-design-no="{{ prod.design_no }}"
+        onclick="toggleWishlist(this)">
+  <i class="bi bi-heart fs-5"></i>
+</button>
         </div>
         <div class="card-body text-center p-3">
         <h5 class="card-title mb-1">${designNo}</h5>
@@ -1767,9 +1769,10 @@
             data-bs-toggle="modal" 
             data-bs-target="#imageModal-${index}">
         <button class="wishlist-btn position-absolute top-0 end-0 m-2"
-            onclick="toggleWishlist('${designNo}', '${firstJobNo}')">
-            <i class="bi bi-heart fs-5"></i>
-        </button>
+        data-design-no="{{ prod.design_no }}"
+        onclick="toggleWishlist(this)">
+  <i class="bi bi-heart fs-5"></i>
+</button>
         </div>
         <div class="card-body text-center p-3">
         <h5 class="card-title mb-1">${designNo}</h5>
@@ -2612,45 +2615,73 @@
       toast.show();
     }
 
-    // Toggle item in wishlist
-    function toggleWishlist(designNo, jobNo) {
-      try {
-        // Get current wishlist
-        let wishlist = JSON.parse(localStorage.getItem("user_wishlist") || "[]");
 
-        // Check if this item is already in the wishlist
-        const existingIndex = wishlist.findIndex(item =>
-          item.design_no === designNo && (jobNo ? item.job_no === jobNo : true)
-        );
-
-        if (existingIndex >= 0) {
-          // Remove from wishlist
-          wishlist.splice(existingIndex, 1);
-          showToast('<i class="bi bi-heart"></i> Item removed from wishlist', "warning");
-        } else {
-          // Add to wishlist
-          wishlist.push({
-            design_no: designNo,
-            job_no: jobNo || "", // Use empty string if jobNo is not provided
-            added_on: new Date().toLocaleDateString()
-          });
-          showToast('<i class="bi bi-heart-fill"></i> Item added to wishlist', "success");
-        }
-
-        // Save updated wishlist
-        localStorage.setItem("user_wishlist", JSON.stringify(wishlist));
-
-        // Update all wishlist buttons
-        updateWishlistButtons();
-
-        // Update wishlist count in navbar
-        updateWishlistCount();
-
-      } catch (error) {
-        console.error("Error managing wishlist:", error);
-        showToast("<i class='bi bi-exclamation-triangle'></i> Error managing wishlist", "danger");
-      }
+     // 1) CSRF helper
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      document.cookie.split(';').forEach(c => {
+        const [k, v] = c.trim().split('=');
+        if (k === name) cookieValue = decodeURIComponent(v);
+      });
     }
+    return cookieValue;
+  }
+
+    // Toggle item in wishlist
+    function toggleWishlist(btn) {
+    const designNo = btn.dataset.designNo;
+    fetch("{% url 'inventory:toggle_wishlist' %}", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken'),
+      },
+      body: JSON.stringify({ design_no: designNo }),
+    })
+    .then(res => res.json())
+    .then(data => {
+      const icon = btn.querySelector('.bi');
+      if (data.action === 'added') {
+        icon.classList.replace('bi-heart', 'bi-heart-fill');
+        btn.classList.add('active');
+      } else {
+        icon.classList.replace('bi-heart-fill', 'bi-heart');
+        btn.classList.remove('active');
+      }
+      // update the badge/count in your nav if you have one:
+      const badge = document.querySelector('.wishlist-count');
+      if (badge) {
+        badge.textContent = data.count || '';
+        badge.style.display = data.count > 0 ? 'inline-block' : 'none';
+      }
+    })
+    .catch(err => console.error('Wishlist error:', err));
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    // Fetch the user’s current wishlist from the server once
+    fetch("{% url 'inventory:wishlist' %}?format=json")
+      .then(res => res.json())
+      .then(json => {
+        const existing = new Set(json.items.map(i => i.design_no));
+        document.querySelectorAll('.wishlist-btn').forEach(btn => {
+          const d = btn.dataset.designNo;
+          const icon = btn.querySelector('.bi');
+          if (existing.has(d)) {
+            icon.classList.replace('bi-heart', 'bi-heart-fill');
+            btn.classList.add('active');
+          }
+        });
+        // also update count badge
+        const badge = document.querySelector('.wishlist-count');
+        if (badge) {
+          badge.textContent = json.items.length || '';
+          badge.style.display = json.items.length > 0 ? 'inline-block' : 'none';
+        }
+      })
+      .catch(() => {/* ignore if endpoint not JSON */});
+  });
 
     // Update all wishlist button icons based on current wishlist
     function updateWishlistButtons() {
