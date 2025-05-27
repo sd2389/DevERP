@@ -18,7 +18,10 @@ urlpatterns = [
     path('api/my-orders/', views.my_orders_api, name='my_orders_api'),
     path('api/order-details/<str:order_id>/', views.get_order_details_api, name='get_order_details_api'),
     path('wishlist/toggle/', views.toggle_wishlist, name='toggle_wishlist'),
+    path('wishlist/remove/<int:item_id>/', views.remove_from_wishlist, name='remove_from_wishlist'),
+    path('wishlist/add/<int:item_id>/', views.add_to_wishlist, name='add_to_wishlist'),
     
+
     # Add the filter-options endpoint
     path('api/filter-options/', views.get_filter_options, name='api_filter_options'),
     
