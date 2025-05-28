@@ -24,6 +24,8 @@ import uuid
 from django.core.cache import cache
 from .models import Wishlist, Design, InventoryItem, Category, UserProfile
 from orders.models import Order, OrderItem, Customer
+from orders.utils import get_next_order_number
+order_number = get_next_order_number()
 
 
 # Initialize logger
@@ -652,6 +654,8 @@ def create_order(request):
         # -- 1. CUSTOMER LOGIC --
         customer_info = data.get('customer', {})
         customer = None
+        
+        # Get or create Customer object for record keeping
         if user:
             customer = Customer.objects.filter(user=user).first()
         if not customer and customer_info.get('email'):
@@ -674,10 +678,14 @@ def create_order(request):
         payment_data = data.get('payment', {})
         order_notes = data.get('notes', '')
 
-        order_number = data.get('order_id') or f"ORD{uuid.uuid4().hex[:8].upper()}"
+        # -- IMPORTANT: ALWAYS generate order number server-side --
+        from orders.utils import get_next_order_number
+        order_number = get_next_order_number()
+        
+        # Log the generated order number
+        logger.info(f"Generated order number: {order_number}")
 
-        # -- 2. CREATE THE ORDER WITH PROPER SHIPPING ADDRESS --
-        # Use shipping address from request, but fall back to customer address if empty
+        # -- 2. CREATE THE ORDER --
         shipping_line1 = shipping_address.get('line1', '') or customer.address_line1 or ''
         shipping_line2 = shipping_address.get('line2', '') or customer.address_line2 or ''
         shipping_city = shipping_address.get('city', '') or customer.city or ''
@@ -687,8 +695,8 @@ def create_order(request):
         
         order = Order.objects.create(
             order_number=order_number,
-            order_id=order_number,
-            customer=customer,
+            order_id=order_number,  # Keep both fields synchronized
+            customer=user,  # Use user instead of customer object
             customer_name=customer.name,
             customer_email=customer.email,
             customer_phone=customer.phone,
@@ -778,7 +786,6 @@ def create_order(request):
                 
                 elif section == 'custom':
                     # Assign a global unique job number to custom orders
-                    from orders.utils import get_next_custom_job_no
                     order_item_data['job_no'] = get_next_custom_job_no()
                     order_item_data.update({
                         'metal_type': item.get('metal_type', ''),
@@ -854,57 +861,79 @@ def create_order(request):
     except Exception as e:
         logger.error(f"Error creating order: {str(e)}", exc_info=True)
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
-
+    
+    
 @login_required
 def my_orders_api(request):
     """Return orders for the current logged-in customer as JSON."""
     user = request.user
-    # Try to get the related Customer object for this user
-    customer = getattr(user, 'customer', None)
-    if not customer:
-        # Or, if your Customer model links as: Customer(user=User)
-        customer = Customer.objects.filter(user=user).first()
-    if not customer:
-        return JsonResponse({'success': True, 'orders': []})
-
-    # Get orders for this customer, order by newest first
-    orders = Order.objects.filter(customer=customer).order_by('-created_at')
-    order_list = []
-    for order in orders:
-        items = order.items.all()
-        # Group items by type for display
-        order_items = {
-            'stock': [],
-            'memo': [],
-            'custom': []
-        }
-        for item in items:
-            serialized = {
-                "item_type": item.item_type,
-                "item_status": item.item_status,
-                "design_no": item.design_no,
-                "job_no": item.job_no,
-                "order_id": order.order_id,
-                "quantity": item.quantity,
-                "unit_price": float(item.unit_price),
-                "total": float(item.total),
-                "metal_type": item.metal_type,
-                "metal_quality": item.metal_quality,
-                "metal_color": item.metal_color,
-                "diamond_quality": item.diamond_quality,
-                "diamond_color": item.diamond_color,
-                "size": item.size,
+    
+    try:
+        # Since Order.customer points to User model, filter directly
+        orders = Order.objects.filter(customer=user).order_by('-created_at')
+        
+        # Also check for orders created by this user
+        # (in case some orders were created without customer field)
+        if not orders.exists():
+            orders = Order.objects.filter(created_by=user).order_by('-created_at')
+        
+        # Process orders
+        order_list = []
+        for order in orders:
+            items = order.items.all()
+            
+            # Group items by type for display
+            order_items = {
+                'stock': [],
+                'memo': [],
+                'custom': []
             }
-            order_items[item.item_type].append(serialized)
-
-        order_list.append({
-            "order_id": order.order_id,
-            "date": order.created_at.isoformat(),
-            "status": order.status.title(),
-            "items": order_items,
+            
+            for item in items:
+                serialized = {
+                    "item_type": item.item_type,
+                    "item_status": item.item_status,
+                    "design_no": item.design_no,
+                    "job_no": item.job_no,
+                    "order_id": order.order_id,
+                    "quantity": item.quantity,
+                    "unit_price": float(item.unit_price) if item.unit_price else 0.0,
+                    "total": float(item.total) if item.total else 0.0,
+                    "metal_type": item.metal_type,
+                    "metal_quality": item.metal_quality,
+                    "metal_color": item.metal_color,
+                    "diamond_quality": item.diamond_quality,
+                    "diamond_color": item.diamond_color,
+                    "size": item.size,
+                }
+                
+                # Add to appropriate category
+                if item.item_type in order_items:
+                    order_items[item.item_type].append(serialized)
+            
+            order_list.append({
+                "order_id": order.order_id,
+                "date": order.created_at.isoformat(),
+                "status": order.status.title() if order.status else "Pending",
+                "items": order_items,
+                "total_items": len(items),
+            })
+        
+        return JsonResponse({
+            'success': True, 
+            'orders': order_list,
+            'total_orders': len(order_list)
         })
-
-    return JsonResponse({'success': True, 'orders': order_list})
+        
+    except Exception as e:
+        print(f"Error fetching orders: {e}")
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({
+            'success': False,
+            'error': 'Failed to fetch orders',
+            'orders': []
+        }, status=500)
 
 @csrf_exempt
 @require_POST
@@ -1750,23 +1779,42 @@ def get_order_details_api(request, order_id):
             }, status=404)
         
         # Check if user has permission to view this order
-        # For logged-in users, check if they own the order
         if request.user.is_authenticated:
-            # Check if this order belongs to the current user
-            user_customer = None
-            if hasattr(request.user, 'customer'):
-                user_customer = request.user.customer
+            # For staff users, allow access to all orders
+            if request.user.is_staff:
+                pass  # Staff can view all orders
             else:
-                user_customer = Customer.objects.filter(user=request.user).first()
-            
-            # Also check if order was created by this user or belongs to their customer profile
-            if (order.created_by != request.user and 
-                order.customer != user_customer and
-                not request.user.is_staff):
-                return JsonResponse({
-                    'success': False,
-                    'error': 'Permission denied'
-                }, status=403)
+                # For regular users, check if they own the order
+                can_view = False
+                
+                # Check if order.customer points to the user (based on your current model)
+                if order.customer == request.user:
+                    can_view = True
+                
+                # Also check if order was created by this user
+                if order.created_by == request.user:
+                    can_view = True
+                
+                # Check if there's a Customer object for this user
+                if not can_view and hasattr(order, 'customer') and order.customer:
+                    # If order.customer is actually a Customer model instance
+                    try:
+                        from orders.models import Customer
+                        if isinstance(order.customer, Customer):
+                            if order.customer.user == request.user:
+                                can_view = True
+                    except:
+                        pass
+                
+                # Check by email as fallback
+                if not can_view and order.customer_email == request.user.email:
+                    can_view = True
+                
+                if not can_view:
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'Permission denied'
+                    }, status=403)
         
         # Get all order items and group by type
         items = order.items.all()
@@ -1812,10 +1860,17 @@ def get_order_details_api(request, order_id):
             if item.item_type in order_items:
                 order_items[item.item_type].append(item_data)
         
-        # Get customer data - prioritize order's customer data, then customer object
-        customer_name = order.customer_name or (order.customer.name if order.customer else '') or 'N/A'
-        customer_email = order.customer_email or (order.customer.email if order.customer else '') or 'N/A'
-        customer_phone = order.customer_phone or (order.customer.phone if order.customer else '') or 'N/A'
+        # Get customer data - handle both User and Customer models
+        if hasattr(order.customer, 'name'):
+            # order.customer is a Customer model instance
+            customer_name = order.customer_name or order.customer.name or 'N/A'
+            customer_email = order.customer_email or order.customer.email or 'N/A'
+            customer_phone = order.customer_phone or order.customer.phone or 'N/A'
+        else:
+            # order.customer is a User model instance
+            customer_name = order.customer_name or (order.customer.get_full_name() if order.customer else '') or 'N/A'
+            customer_email = order.customer_email or (order.customer.email if order.customer else '') or 'N/A'
+            customer_phone = order.customer_phone or 'N/A'
         
         # Get shipping address - prioritize order's shipping data
         shipping_line1 = order.shipping_address_line1 or ''
@@ -1824,15 +1879,6 @@ def get_order_details_api(request, order_id):
         shipping_state = order.shipping_state or ''
         shipping_postal = order.shipping_postal_code or ''
         shipping_country = order.shipping_country or 'USA'
-        
-        # If shipping address is empty and we have a customer, use customer's address
-        if not shipping_line1 and order.customer:
-            shipping_line1 = order.customer.address_line1 or ''
-            shipping_line2 = order.customer.address_line2 or ''
-            shipping_city = order.customer.city or ''
-            shipping_state = order.customer.state or ''
-            shipping_postal = order.customer.postal_code or ''
-            shipping_country = order.customer.country or 'USA'
         
         # Build response
         response_data = {
@@ -1894,7 +1940,7 @@ def get_order_details_api(request, order_id):
             "customer_notes": order.customer_notes or '',
             "admin_notes": order.admin_notes or '',
             
-           # Status timestamps (make sure these names match your API response expectations)
+            # Status timestamps
             "processed_at": order.processed_at.isoformat() if hasattr(order, 'processed_at') and order.processed_at else None,
             "shipped_date": order.shipped_date.isoformat() if hasattr(order, 'shipped_date') and order.shipped_date else None,
             "delivered_date": order.delivered_date.isoformat() if hasattr(order, 'delivered_date') and order.delivered_date else None,

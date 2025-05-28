@@ -1,5 +1,5 @@
 # orders/models.py
-from django.db import models
+from django.db import models, transaction
 from django.conf import settings
 from django.utils import timezone
 
@@ -34,7 +34,46 @@ class Customer(models.Model):
     def __str__(self):
         return self.name
 
-
+class OrderSequence(models.Model):
+    """Singleton model to track order number sequence"""
+    last_number = models.IntegerField(default=0)
+    
+    class Meta:
+        db_table = 'order_sequence'
+    
+    @classmethod
+    def get_next_number(cls):
+        with transaction.atomic():
+            # Get or create the singleton instance
+            seq, created = cls.objects.select_for_update().get_or_create(id=1)
+            
+            # If created, sync with existing orders
+            if created:
+                # Find the highest existing order number
+                last_order = Order.objects.filter(
+                    order_number__regex=r'^ORD\d+$'
+                ).order_by('-id').first()
+                
+                if last_order:
+                    try:
+                        # Extract number from ORD22, ORD023, etc.
+                        last_num = int(last_order.order_number.replace('ORD', ''))
+                        seq.last_number = last_num
+                    except ValueError:
+                        seq.last_number = 0
+            
+            # Increment and save
+            seq.last_number += 1
+            seq.save()
+            
+            # Keep checking until we find a unique number
+            while Order.objects.filter(order_number=f"ORD{seq.last_number}").exists():
+                seq.last_number += 1
+                seq.save()
+            
+            return f"ORD{seq.last_number}"
+        
+        
 class Order(models.Model):
     """Order model"""
     ORDER_STATUS = [

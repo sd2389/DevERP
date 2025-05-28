@@ -1058,124 +1058,6 @@
         updateOrderSummary();
       });
 
-      // Generate order number with sequence
-      function generateOrderNumber() {
-        // Get the last order number from localStorage or start from 0
-        let lastOrderSeq = parseInt(localStorage.getItem("lastOrderSequence") || "0");
-
-        // Increment the sequence
-        lastOrderSeq++;
-
-        // Format with leading zeros (ORD001, ORD002, etc.)
-        const orderNumber = `ORD${String(lastOrderSeq).padStart(3, '0')}`;
-
-        // Save the updated sequence
-        localStorage.setItem("lastOrderSequence", lastOrderSeq.toString());
-
-        return orderNumber;
-      }
-
-      // Function to process the order and save to localStorage
-      function processOrder(selectedItemIds) {
-        // Generate a new order number
-        const orderNumber = generateOrderNumber();
-
-        // Get current date
-        const orderDate = new Date().toISOString();
-
-        // Get all selected items by type
-        const selectedStockItems = items.filter(item =>
-          item.itemType === ORDER_TYPES.STOCK &&
-          selectedItems[getItemId(item)]
-        );
-
-        const selectedMemoItems = items.filter(item =>
-          item.itemType === ORDER_TYPES.MEMO &&
-          selectedItems[getItemId(item)]
-        );
-
-        const selectedCustomItems = items.filter(item =>
-          item.itemType === ORDER_TYPES.CUSTOM &&
-          selectedItems[getItemId(item)]
-        );
-
-        // Calculate total
-        const shippingMethod = standardShipping.checked ? 'standard' : 'express';
-        const shippingCost = SHIPPING_RATES[shippingMethod];
-
-        const subtotal = selectedStockItems.reduce((sum, item) => {
-          return sum + (parseFloat(item.price) || 0);
-        }, 0);
-
-        const tax = subtotal * TAX_RATE;
-        const discount = subtotal * discountRate;
-        const total = subtotal + shippingCost + tax - discount;
-
-        // Create order object
-        const order = {
-          order_id: orderNumber,
-          date: orderDate,
-          status: "Pending",
-          items: {
-            stock: selectedStockItems.map(item => ({
-              ...item,
-              item_type: ORDER_TYPES.STOCK
-            })),
-            memo: selectedMemoItems.map(item => ({
-              ...item,
-              item_type: ORDER_TYPES.MEMO
-            })),
-            custom: selectedCustomItems.map(item => ({
-              ...item,
-              item_type: ORDER_TYPES.CUSTOM
-            }))
-          },
-          payment: {
-            subtotal,
-            shipping: shippingCost,
-            tax,
-            discount,
-            total,
-            shipping_method: shippingMethod
-          }
-        };
-
-        // Get existing orders or create an empty array
-        const existingOrders = JSON.parse(localStorage.getItem("customer_orders") || "[]");
-
-        // Add the new order
-        existingOrders.push(order);
-
-        // Save back to localStorage
-        localStorage.setItem("customer_orders", JSON.stringify(existingOrders));
-
-        // Remove ordered items from cart, memoRequests, and custom_orders
-
-        // 1. Handle stock items (remove from cart)
-        let cartItems = JSON.parse(localStorage.getItem("cart_customer") || "[]");
-        selectedStockItems.forEach(item => {
-          cartItems = cartItems.filter(cartItem => cartItem.job_no !== item.job_no);
-        });
-        localStorage.setItem("cart_customer", JSON.stringify(cartItems));
-
-        // 2. Handle memo items (remove from memoRequests)
-        let memoRequests = JSON.parse(localStorage.getItem("memoRequests") || "[]");
-        selectedMemoItems.forEach(item => {
-          memoRequests = memoRequests.filter(request =>
-            !(request.job_no === item.job_no && request.design_no === item.design_no)
-          );
-        });
-        localStorage.setItem("memoRequests", JSON.stringify(memoRequests));
-
-        // 3. Handle custom items (remove from custom_orders)
-        let customOrders = JSON.parse(localStorage.getItem("custom_orders") || "[]");
-        selectedCustomItems.forEach(item => {
-          customOrders = customOrders.filter(order => order.order_id !== item.order_id);
-        });
-        localStorage.setItem("custom_orders", JSON.stringify(customOrders));
-
-        return orderNumber;
-      }
 
       // Add event listener to checkout button
       checkoutBtn.addEventListener('click', () => {
@@ -1187,8 +1069,7 @@
         }
 
         try {
-          // Process the order and get the full order object (not just order number)
-          const orderNumber = generateOrderNumber();
+          // Don't generate order number - server will do it
           const orderDate = new Date().toISOString();
 
           // Selected items by type
@@ -1215,7 +1096,7 @@
 
           // Build the order object to POST to Django
           const order = {
-            order_id: orderNumber,
+            // Remove order_id - server will generate it
             date: orderDate,
             status: "Pending",
             order_items: {
@@ -1238,9 +1119,24 @@
               tax,
               discount,
               total,
-              shipping_method: shippingMethod
+              shipping_method: shippingMethod,
+              method: "standard" // Add payment method
             },
-            // Optionally: Add customer and address info if you have it
+            // Add customer info if available
+            customer: {
+              name: "Guest User", // Update this with actual customer data if available
+              email: "",
+              phone: ""
+            },
+            shipping_address: {
+              line1: "",
+              line2: "",
+              city: "",
+              state: "",
+              postal_code: "",
+              country: "USA"
+            },
+            notes: "" // Add any order notes if needed
           };
 
           // ---- SEND TO DJANGO ----
@@ -1255,7 +1151,8 @@
             .then(res => res.json())
             .then(data => {
               if (data.success) {
-                document.getElementById('orderIdDisplay').textContent = data.order_id || orderNumber;
+                // Use the server-generated order ID
+                document.getElementById('orderIdDisplay').textContent = data.order_id;
                 const successModal = new bootstrap.Modal(document.getElementById('orderSuccessModal'));
                 successModal.show();
 
