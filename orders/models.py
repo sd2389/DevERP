@@ -2,6 +2,8 @@
 from django.db import models, transaction
 from django.conf import settings
 from django.utils import timezone
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 class Customer(models.Model):
     """Customer model"""
@@ -318,3 +320,15 @@ class Payment(models.Model):
     
     def __str__(self):
         return f"Payment {self.amount} for Order {self.order.order_number}"
+    
+@receiver(post_save, sender=Order)
+def update_customer_metrics(sender, instance, created, **kwargs):
+    if created and instance.status == 'completed':
+        try:
+            profile = CustomerProfile.objects.get(user=instance.customer)
+        except CustomerProfile.DoesNotExist:
+            return
+        profile.total_orders += 1
+        profile.total_spent += instance.total_amount
+        profile.last_order_date = timezone.now()
+        profile.save()

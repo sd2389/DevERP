@@ -2,8 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Register | DevERP</title>
+    <title>Register | DevERP - Inventory Management System</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Register for DevERP - Professional Inventory Management Solution">
     
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -14,13 +15,24 @@
         :root {
             --primary: #6366f1;
             --primary-dark: #4f46e5;
+            --primary-light: #818cf8;
             --secondary: #8b5cf6;
             --accent: #ec4899;
             --success: #10b981;
             --danger: #ef4444;
             --warning: #f59e0b;
+            --info: #3b82f6;
             --light: #f8fafc;
             --dark: #1e293b;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-400: #94a3b8;
+            --gray-500: #64748b;
+            --gray-600: #475569;
+            --gray-700: #334155;
+            --gray-800: #1e293b;
+            --gray-900: #0f172a;
         }
         
         * {
@@ -37,15 +49,72 @@
             align-items: center;
             justify-content: center;
             padding: 20px;
+            position: relative;
+            overflow-x: hidden;
         }
         
+        /* Animated Background Shapes */
+        .bg-shapes {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 0;
+        }
+        
+        .shape {
+            position: absolute;
+            opacity: 0.1;
+        }
+        
+        .shape-1 {
+            width: 300px;
+            height: 300px;
+            background: white;
+            border-radius: 50%;
+            top: -150px;
+            right: -150px;
+            animation: float 20s ease-in-out infinite;
+        }
+        
+        .shape-2 {
+            width: 200px;
+            height: 200px;
+            background: white;
+            border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+            bottom: -100px;
+            left: -100px;
+            animation: float 15s ease-in-out infinite reverse;
+        }
+        
+        .shape-3 {
+            width: 150px;
+            height: 150px;
+            background: white;
+            border-radius: 50%;
+            top: 50%;
+            left: 10%;
+            animation: float 25s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+        
+        /* Main Container */
         .registration-wrapper {
             width: 100%;
             max-width: 1200px;
-            background: rgba(255, 255, 255, 0.95);
+            background: rgba(255, 255, 255, 0.98);
             border-radius: 24px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
             overflow: hidden;
+            position: relative;
+            z-index: 1;
+            backdrop-filter: blur(10px);
         }
         
         .registration-container {
@@ -62,24 +131,93 @@
             display: flex;
             flex-direction: column;
             justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .info-panel::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: rotate 30s linear infinite;
+        }
+        
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .logo-section {
+            margin-bottom: 3rem;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 1rem;
+        }
+        
+        .logo-icon {
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            backdrop-filter: blur(10px);
+        }
+        
+        .logo-text {
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
         }
         
         .info-panel h1 {
             font-size: 2.5rem;
             font-weight: 700;
             margin-bottom: 1.5rem;
+            position: relative;
+            z-index: 1;
         }
         
         .info-panel p {
             font-size: 1.125rem;
-            opacity: 0.9;
+            opacity: 0.95;
             margin-bottom: 3rem;
+            line-height: 1.6;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .features {
+            position: relative;
+            z-index: 1;
         }
         
         .feature-item {
             display: flex;
             align-items: center;
             margin-bottom: 2rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+        
+        .feature-item:hover {
+            transform: translateX(5px);
+            background: rgba(255, 255, 255, 0.15);
         }
         
         .feature-icon {
@@ -102,7 +240,7 @@
         
         .feature-content p {
             font-size: 0.875rem;
-            opacity: 0.8;
+            opacity: 0.9;
             margin: 0;
         }
         
@@ -112,6 +250,21 @@
             padding: 60px 50px;
             overflow-y: auto;
             max-height: 90vh;
+            scrollbar-width: thin;
+            scrollbar-color: var(--gray-300) transparent;
+        }
+        
+        .form-panel::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .form-panel::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        .form-panel::-webkit-scrollbar-thumb {
+            background: var(--gray-300);
+            border-radius: 3px;
         }
         
         .form-header {
@@ -127,7 +280,7 @@
         }
         
         .form-header p {
-            color: #64748b;
+            color: var(--gray-500);
             font-size: 1rem;
         }
         
@@ -147,22 +300,25 @@
         }
         
         .step-circle {
-            width: 40px;
-            height: 40px;
-            background: #e2e8f0;
+            width: 44px;
+            height: 44px;
+            background: var(--gray-200);
+            border: 3px solid white;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 0 auto 0.5rem;
             font-weight: 600;
-            color: #64748b;
+            color: var(--gray-500);
             transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
         
         .step.active .step-circle {
             background: var(--primary);
             color: white;
+            transform: scale(1.1);
         }
         
         .step.completed .step-circle {
@@ -170,9 +326,13 @@
             color: white;
         }
         
+        .step.completed .step-circle i {
+            font-size: 1.25rem;
+        }
+        
         .step-label {
             font-size: 0.875rem;
-            color: #64748b;
+            color: var(--gray-500);
             font-weight: 500;
         }
         
@@ -181,25 +341,77 @@
             font-weight: 600;
         }
         
+        .step.completed .step-label {
+            color: var(--success);
+        }
+        
         /* Progress Line */
         .progress-steps::before {
             content: '';
             position: absolute;
-            top: 20px;
-            left: 50px;
-            right: 50px;
-            height: 2px;
-            background: #e2e8f0;
+            top: 22px;
+            left: 15%;
+            right: 15%;
+            height: 3px;
+            background: var(--gray-200);
             z-index: 0;
         }
         
-        /* Form Styling */
+        .progress-line {
+            position: absolute;
+            top: 22px;
+            left: 15%;
+            height: 3px;
+            background: var(--primary);
+            z-index: 0;
+            transition: width 0.3s ease;
+            width: 0;
+        }
+        
+        /* Alert Messages */
+        .alert {
+            padding: 1rem 1.25rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            border: none;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+        
+        .alert-danger {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .alert i {
+            font-size: 1.25rem;
+            margin-top: 2px;
+        }
+        
+        .alert ul {
+            margin: 0;
+            padding-left: 1.25rem;
+        }
+        
+        /* Form Sections */
         .form-section {
             display: none;
+            animation: fadeIn 0.3s ease;
         }
         
         .form-section.active {
             display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         
         .section-title {
@@ -209,13 +421,17 @@
             margin-bottom: 1.5rem;
             display: flex;
             align-items: center;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--gray-100);
         }
         
         .section-title i {
             color: var(--primary);
-            margin-right: 0.5rem;
+            margin-right: 0.75rem;
+            font-size: 1.5rem;
         }
         
+        /* Form Fields */
         .form-group {
             margin-bottom: 1.5rem;
         }
@@ -224,14 +440,18 @@
             display: block;
             font-size: 0.875rem;
             font-weight: 500;
-            color: var(--dark);
+            color: var(--gray-700);
             margin-bottom: 0.5rem;
+        }
+        
+        .form-label .required {
+            color: var(--danger);
         }
         
         .form-control {
             width: 100%;
             padding: 0.75rem 1rem 0.75rem 2.75rem;
-            border: 2px solid #e2e8f0;
+            border: 2px solid var(--gray-200);
             border-radius: 12px;
             font-size: 1rem;
             transition: all 0.3s ease;
@@ -241,45 +461,100 @@
         .form-control:focus {
             outline: none;
             border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        }
+        
+        .form-control.is-invalid {
+            border-color: var(--danger);
+        }
+        
+        .form-control.is-invalid:focus {
+            box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
         }
         
         .input-icon {
             position: absolute;
             left: 1rem;
             top: 2.75rem;
-            color: #94a3b8;
+            color: var(--gray-400);
             pointer-events: none;
+            transition: color 0.3s ease;
+        }
+        
+        .form-group:focus-within .input-icon {
+            color: var(--primary);
         }
         
         .password-toggle {
             position: absolute;
             right: 1rem;
             top: 2.75rem;
-            color: #94a3b8;
+            color: var(--gray-400);
             cursor: pointer;
             background: none;
             border: none;
-            padding: 0;
+            padding: 0.25rem;
+            transition: color 0.3s ease;
         }
         
         .password-toggle:hover {
             color: var(--primary);
         }
         
-        /* Error Alert */
-        .alert-danger {
-            background: #fee2e2;
-            border: 1px solid #fecaca;
-            color: #991b1b;
-            padding: 1rem;
-            border-radius: 12px;
-            margin-bottom: 1.5rem;
+        .text-danger {
+            color: var(--danger);
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
         }
         
-        .alert-danger ul {
-            margin: 0;
-            padding-left: 1.25rem;
+        /* Password Strength Indicator */
+        .password-strength {
+            margin-top: 0.5rem;
+        }
+        
+        .strength-bar {
+            height: 6px;
+            background: var(--gray-200);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        
+        .strength-fill {
+            height: 100%;
+            width: 0;
+            transition: all 0.3s ease;
+            border-radius: 3px;
+        }
+        
+        .strength-fill.bg-danger {
+            background: var(--danger);
+        }
+        
+        .strength-fill.bg-warning {
+            background: var(--warning);
+        }
+        
+        .strength-fill.bg-success {
+            background: var(--success);
+        }
+        
+        .strength-text {
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
+            font-weight: 500;
+        }
+        
+        .text-danger { color: var(--danger); }
+        .text-warning { color: var(--warning); }
+        .text-success { color: var(--success); }
+        
+        /* Form Navigation */
+        .form-navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 2px solid var(--gray-100);
         }
         
         /* Buttons */
@@ -294,6 +569,13 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
+            gap: 0.5rem;
+            text-decoration: none;
+        }
+        
+        .btn:focus {
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
         }
         
         .btn-primary {
@@ -308,48 +590,41 @@
         }
         
         .btn-secondary {
-            background: #f1f5f9;
-            color: var(--dark);
+            background: var(--gray-100);
+            color: var(--gray-700);
         }
         
         .btn-secondary:hover {
-            background: #e2e8f0;
+            background: var(--gray-200);
+            transform: translateY(-1px);
         }
         
-        .btn i {
-            margin: 0 0.5rem;
-        }
-        
-        .form-navigation {
-            display: flex;
-            justify-content: space-between;
+        /* Login Link */
+        .login-link {
+            text-align: center;
             margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 2px solid var(--gray-100);
         }
         
-        /* Password Strength */
-        .password-strength {
-            margin-top: 0.5rem;
+        .login-link p {
+            color: var(--gray-500);
+            margin-bottom: 0;
         }
         
-        .strength-bar {
-            height: 4px;
-            background: #e2e8f0;
-            border-radius: 2px;
-            overflow: hidden;
+        .login-link a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
         }
         
-        .strength-fill {
-            height: 100%;
-            width: 0;
-            transition: all 0.3s ease;
+        .login-link a:hover {
+            color: var(--primary-dark);
+            text-decoration: underline;
         }
         
-        .strength-text {
-            font-size: 0.75rem;
-            margin-top: 0.25rem;
-        }
-        
-        /* Responsive */
+        /* Responsive Design */
         @media (max-width: 992px) {
             .info-panel {
                 display: none;
@@ -358,20 +633,31 @@
             .form-panel {
                 padding: 40px 30px;
             }
+            
+            .registration-wrapper {
+                max-width: 600px;
+            }
         }
         
         @media (max-width: 576px) {
             body {
                 padding: 0;
+                align-items: flex-start;
             }
             
             .registration-wrapper {
                 border-radius: 0;
                 min-height: 100vh;
+                box-shadow: none;
             }
             
             .form-panel {
                 padding: 30px 20px;
+                max-height: none;
+            }
+            
+            .form-header h2 {
+                font-size: 1.5rem;
             }
             
             .progress-steps {
@@ -381,16 +667,72 @@
             .step-label {
                 font-size: 0.75rem;
             }
+            
+            .step-circle {
+                width: 36px;
+                height: 36px;
+                font-size: 0.875rem;
+            }
+            
+            .form-navigation {
+                flex-wrap: wrap;
+                gap: 1rem;
+            }
+            
+            .btn {
+                flex: 1;
+                min-width: 120px;
+            }
+        }
+        
+        /* Loading State */
+        .btn.loading {
+            position: relative;
+            color: transparent;
+        }
+        
+        .btn.loading::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            top: 50%;
+            left: 50%;
+            margin: -10px 0 0 -10px;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 0.8s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
+    <!-- Background Shapes -->
+    <div class="bg-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+    </div>
+
     <div class="registration-wrapper">
         <div class="registration-container">
             <!-- Left Info Panel -->
             <div class="info-panel">
+                <div class="logo-section">
+                    <div class="logo">
+                        <div class="logo-icon">
+                            <i class="fas fa-cube"></i>
+                        </div>
+                        <div class="logo-text">DevERP</div>
+                    </div>
+                </div>
+                
                 <h1>Welcome to DevERP</h1>
-                <p>Join thousands of businesses managing their inventory efficiently</p>
+                <p>Join thousands of businesses managing their inventory efficiently with our comprehensive ERP solution.</p>
                 
                 <div class="features">
                     <div class="feature-item">
@@ -398,8 +740,8 @@
                             <i class="fas fa-shield-alt"></i>
                         </div>
                         <div class="feature-content">
-                            <h3>Secure & Reliable</h3>
-                            <p>Enterprise-grade security for your data</p>
+                            <h3>Enterprise Security</h3>
+                            <p>Bank-level encryption for your data</p>
                         </div>
                     </div>
                     
@@ -409,7 +751,7 @@
                         </div>
                         <div class="feature-content">
                             <h3>Real-time Analytics</h3>
-                            <p>Track inventory and sales in real-time</p>
+                            <p>Track inventory and sales instantly</p>
                         </div>
                     </div>
                     
@@ -418,8 +760,8 @@
                             <i class="fas fa-users"></i>
                         </div>
                         <div class="feature-content">
-                            <h3>Multi-user Support</h3>
-                            <p>Collaborate with your team seamlessly</p>
+                            <h3>Team Collaboration</h3>
+                            <p>Multi-user support with role management</p>
                         </div>
                     </div>
                 </div>
@@ -428,19 +770,20 @@
             <!-- Right Form Panel -->
             <div class="form-panel">
                 <div class="form-header">
-                    <h2>Create Account</h2>
-                    <p>Fill in your details to get started</p>
+                    <h2>Create Your Account</h2>
+                    <p>Get started with DevERP in just a few steps</p>
                 </div>
                 
                 <!-- Progress Steps -->
                 <div class="progress-steps">
+                    <div class="progress-line" id="progressLine"></div>
                     <div class="step active" id="step1">
                         <div class="step-circle">1</div>
-                        <div class="step-label">Personal</div>
+                        <div class="step-label">Personal Info</div>
                     </div>
                     <div class="step" id="step2">
                         <div class="step-circle">2</div>
-                        <div class="step-label">Company</div>
+                        <div class="step-label">Company Details</div>
                     </div>
                     <div class="step" id="step3">
                         <div class="step-circle">3</div>
@@ -448,21 +791,36 @@
                     </div>
                 </div>
                 
-                <!-- Error Messages -->
+                <!-- Success/Error Messages -->
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                            {% if message.tags == 'success' %}
+                                <i class="fas fa-check-circle"></i>
+                            {% else %}
+                                <i class="fas fa-exclamation-circle"></i>
+                            {% endif %}
+                            <div>{{ message }}</div>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+                
                 {% if errors %}
                     <div class="alert alert-danger">
-                        <i class="fas fa-exclamation-circle me-2"></i>
-                        <strong>Please correct the following errors:</strong>
-                        <ul class="mt-2 mb-0">
-                            {% for error in errors %}
-                                <li>{{ error }}</li>
-                            {% endfor %}
-                        </ul>
+                        <i class="fas fa-exclamation-circle"></i>
+                        <div>
+                            <strong>Please correct the following errors:</strong>
+                            <ul class="mt-2 mb-0">
+                                {% for error in errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
                     </div>
                 {% endif %}
                 
                 <!-- Registration Form -->
-                <form method="post" autocomplete="off" id="registrationForm">
+                <form method="post" autocomplete="off" id="registrationForm" novalidate>
                     {% csrf_token %}
                     
                     <!-- Step 1: Personal Information -->
@@ -473,27 +831,37 @@
                         </h3>
                         
                         <div class="form-group position-relative">
-                            <label class="form-label">Full Name *</label>
+                            <label class="form-label">Full Name <span class="required">*</span></label>
                             <i class="fas fa-user input-icon"></i>
-                            <input type="text" class="form-control" name="full_name" 
-                                   placeholder="John Doe" value="{{ form.full_name|default:'' }}" 
-                                   required autocomplete="name">
+                            {{ form.full_name }}
+                            {% if form.full_name.errors %}
+                                <div class="text-danger small mt-1">
+                                    <i class="fas fa-exclamation-circle"></i> {{ form.full_name.errors.0 }}
+                                </div>
+                            {% endif %}
                         </div>
                         
                         <div class="form-group position-relative">
-                            <label class="form-label">Email Address *</label>
+                            <label class="form-label">Email Address <span class="required">*</span></label>
                             <i class="fas fa-envelope input-icon"></i>
-                            <input type="email" class="form-control" name="username" 
-                                   placeholder="john@example.com" value="{{ form.username|default:'' }}" 
-                                   required autocomplete="email">
+                            {{ form.email }}
+                            {% if form.email.errors %}
+                                <div class="text-danger small mt-1">
+                                    <i class="fas fa-exclamation-circle"></i> {{ form.email.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <small class="text-muted">This will be your username for login</small>
                         </div>
                         
                         <div class="form-group position-relative">
-                            <label class="form-label">Mobile Number *</label>
+                            <label class="form-label">Mobile Number <span class="required">*</span></label>
                             <i class="fas fa-phone input-icon"></i>
-                            <input type="text" class="form-control" name="mobile_no" 
-                                   placeholder="+1 (555) 123-4567" value="{{ form.mobile_no|default:'' }}" 
-                                   required autocomplete="tel">
+                            {{ form.mobile_no }}
+                            {% if form.mobile_no.errors %}
+                                <div class="text-danger small mt-1">
+                                    <i class="fas fa-exclamation-circle"></i> {{ form.mobile_no.errors.0 }}
+                                </div>
+                            {% endif %}
                         </div>
                     </div>
                     
@@ -505,38 +873,50 @@
                         </h3>
                         
                         <div class="form-group position-relative">
-                            <label class="form-label">Company Name *</label>
+                            <label class="form-label">Company Name <span class="required">*</span></label>
                             <i class="fas fa-building input-icon"></i>
-                            <input type="text" class="form-control" name="company_name" 
-                                   placeholder="Acme Corporation" value="{{ form.company_name|default:'' }}" 
-                                   required>
+                            {{ form.company_name }}
+                            {% if form.company_name.errors %}
+                                <div class="text-danger small mt-1">
+                                    <i class="fas fa-exclamation-circle"></i> {{ form.company_name.errors.0 }}
+                                </div>
+                            {% endif %}
                         </div>
                         
                         <div class="form-group position-relative">
-                            <label class="form-label">Street Address *</label>
+                            <label class="form-label">Street Address <span class="required">*</span></label>
                             <i class="fas fa-location-dot input-icon"></i>
-                            <input type="text" class="form-control" name="address" 
-                                   placeholder="123 Main Street" value="{{ form.address|default:'' }}" 
-                                   required autocomplete="street-address">
+                            {{ form.address }}
+                            {% if form.address.errors %}
+                                <div class="text-danger small mt-1">
+                                    <i class="fas fa-exclamation-circle"></i> {{ form.address.errors.0 }}
+                                </div>
+                            {% endif %}
                         </div>
                         
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group position-relative">
-                                    <label class="form-label">City *</label>
+                                    <label class="form-label">City <span class="required">*</span></label>
                                     <i class="fas fa-city input-icon"></i>
-                                    <input type="text" class="form-control" name="city" 
-                                           placeholder="New York" value="{{ form.city|default:'' }}" 
-                                           required autocomplete="address-level2">
+                                    {{ form.city }}
+                                    {% if form.city.errors %}
+                                        <div class="text-danger small mt-1">
+                                            <i class="fas fa-exclamation-circle"></i> {{ form.city.errors.0 }}
+                                        </div>
+                                    {% endif %}
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group position-relative">
-                                    <label class="form-label">State *</label>
+                                    <label class="form-label">State/Province <span class="required">*</span></label>
                                     <i class="fas fa-map input-icon"></i>
-                                    <input type="text" class="form-control" name="state" 
-                                           placeholder="NY" value="{{ form.state|default:'' }}" 
-                                           required autocomplete="address-level1">
+                                    {{ form.state }}
+                                    {% if form.state.errors %}
+                                        <div class="text-danger small mt-1">
+                                            <i class="fas fa-exclamation-circle"></i> {{ form.state.errors.0 }}
+                                        </div>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
@@ -544,20 +924,26 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group position-relative">
-                                    <label class="form-label">Country *</label>
+                                    <label class="form-label">Country <span class="required">*</span></label>
                                     <i class="fas fa-flag input-icon"></i>
-                                    <input type="text" class="form-control" name="country" 
-                                           placeholder="United States" value="{{ form.country|default:'' }}" 
-                                           required autocomplete="country">
+                                    {{ form.country }}
+                                    {% if form.country.errors %}
+                                        <div class="text-danger small mt-1">
+                                            <i class="fas fa-exclamation-circle"></i> {{ form.country.errors.0 }}
+                                        </div>
+                                    {% endif %}
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group position-relative">
-                                    <label class="form-label">Zip Code *</label>
+                                    <label class="form-label">ZIP/Postal Code <span class="required">*</span></label>
                                     <i class="fas fa-mail-bulk input-icon"></i>
-                                    <input type="text" class="form-control" name="zip_code" 
-                                           placeholder="10001" value="{{ form.zip_code|default:'' }}" 
-                                           required autocomplete="postal-code">
+                                    {{ form.zip_code }}
+                                    {% if form.zip_code.errors %}
+                                        <div class="text-danger small mt-1">
+                                            <i class="fas fa-exclamation-circle"></i> {{ form.zip_code.errors.0 }}
+                                        </div>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
@@ -573,18 +959,26 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group position-relative">
-                                    <label class="form-label">GST Number (Optional)</label>
+                                    <label class="form-label">GST Number <small class="text-muted">(Optional)</small></label>
                                     <i class="fas fa-receipt input-icon"></i>
-                                    <input type="text" class="form-control" name="gst_no" 
-                                           placeholder="GST Number" value="{{ form.gst_no|default:'' }}">
+                                    {{ form.gst_no }}
+                                    {% if form.gst_no.errors %}
+                                        <div class="text-danger small mt-1">
+                                            <i class="fas fa-exclamation-circle"></i> {{ form.gst_no.errors.0 }}
+                                        </div>
+                                    {% endif %}
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group position-relative">
-                                    <label class="form-label">PAN Number (Optional)</label>
+                                    <label class="form-label">PAN Number <small class="text-muted">(Optional)</small></label>
                                     <i class="fas fa-id-card input-icon"></i>
-                                    <input type="text" class="form-control" name="pan_no" 
-                                           placeholder="PAN Number" value="{{ form.pan_no|default:'' }}">
+                                    {{ form.pan_no }}
+                                    {% if form.pan_no.errors %}
+                                        <div class="text-danger small mt-1">
+                                            <i class="fas fa-exclamation-circle"></i> {{ form.pan_no.errors.0 }}
+                                        </div>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
@@ -592,11 +986,10 @@
                         <hr class="my-4">
                         
                         <div class="form-group position-relative">
-                            <label class="form-label">Password *</label>
+                            <label class="form-label">Password <span class="required">*</span></label>
                             <i class="fas fa-lock input-icon"></i>
-                            <input type="password" class="form-control" name="password1" id="password1"
-                                   placeholder="Create a strong password" required>
-                            <button type="button" class="password-toggle" onclick="togglePassword('password1', this)">
+                            {{ form.password1 }}
+                            <button type="button" class="password-toggle" onclick="togglePassword('id_password1', this)">
                                 <i class="fas fa-eye"></i>
                             </button>
                             <div class="password-strength">
@@ -605,17 +998,38 @@
                                 </div>
                                 <div class="strength-text" id="strengthText"></div>
                             </div>
+                            {% if form.password1.errors %}
+                                <div class="text-danger small mt-1">
+                                    <i class="fas fa-exclamation-circle"></i> {{ form.password1.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <small class="text-muted">Minimum 8 characters with letters, numbers, and symbols</small>
                         </div>
                         
                         <div class="form-group position-relative">
-                            <label class="form-label">Confirm Password *</label>
+                            <label class="form-label">Confirm Password <span class="required">*</span></label>
                             <i class="fas fa-lock input-icon"></i>
-                            <input type="password" class="form-control" name="password2" id="password2"
-                                   placeholder="Confirm your password" required>
-                            <button type="button" class="password-toggle" onclick="togglePassword('password2', this)">
+                            {{ form.password2 }}
+                            <button type="button" class="password-toggle" onclick="togglePassword('id_password2', this)">
                                 <i class="fas fa-eye"></i>
                             </button>
+                            {% if form.password2.errors %}
+                                <div class="text-danger small mt-1">
+                                    <i class="fas fa-exclamation-circle"></i> {{ form.password2.errors.0 }}
+                                </div>
+                            {% endif %}
                         </div>
+                        
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <div>
+                                    {% for error in form.non_field_errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endif %}
                     </div>
                     
                     <!-- Navigation Buttons -->
@@ -625,7 +1039,7 @@
                             Previous
                         </button>
                         <button type="button" class="btn btn-primary ms-auto" id="nextBtn">
-                            Next
+                            Next Step
                             <i class="fas fa-arrow-right"></i>
                         </button>
                         <button type="submit" class="btn btn-primary ms-auto" id="submitBtn" style="display: none;">
@@ -635,10 +1049,10 @@
                     </div>
                 </form>
                 
-                <div class="text-center mt-4">
-                    <p class="text-muted">
+                <div class="login-link">
+                    <p>
                         Already have an account? 
-                        <a href="/accounts/login/" class="text-primary text-decoration-none fw-medium">Sign In</a>
+                        <a href="{% url 'accounts:login' %}">Sign in here</a>
                     </p>
                 </div>
             </div>
@@ -656,6 +1070,12 @@
         const prevBtn = document.getElementById('prevBtn');
         const nextBtn = document.getElementById('nextBtn');
         const submitBtn = document.getElementById('submitBtn');
+        const progressLine = document.getElementById('progressLine');
+        
+        function updateProgressLine() {
+            const progress = ((currentStep - 1) / (totalSteps - 1)) * 70;
+            progressLine.style.width = progress + '%';
+        }
         
         function showStep(step) {
             // Hide all sections
@@ -669,21 +1089,32 @@
             // Update progress steps
             for (let i = 1; i <= totalSteps; i++) {
                 const stepEl = document.getElementById(`step${i}`);
+                const stepCircle = stepEl.querySelector('.step-circle');
+                
                 if (i < step) {
                     stepEl.classList.add('completed');
                     stepEl.classList.remove('active');
+                    stepCircle.innerHTML = '<i class="fas fa-check"></i>';
                 } else if (i === step) {
                     stepEl.classList.add('active');
                     stepEl.classList.remove('completed');
+                    stepCircle.innerHTML = i;
                 } else {
                     stepEl.classList.remove('active', 'completed');
+                    stepCircle.innerHTML = i;
                 }
             }
+            
+            // Update progress line
+            updateProgressLine();
             
             // Update buttons
             prevBtn.style.display = step === 1 ? 'none' : 'flex';
             nextBtn.style.display = step === totalSteps ? 'none' : 'flex';
             submitBtn.style.display = step === totalSteps ? 'flex' : 'none';
+            
+            // Scroll to top of form
+            document.querySelector('.form-panel').scrollTop = 0;
         }
         
         // Button event listeners
@@ -703,20 +1134,65 @@
             }
         });
         
+        // Form submission
+        document.getElementById('registrationForm').addEventListener('submit', function(e) {
+            if (!validateStep(currentStep)) {
+                e.preventDefault();
+                return false;
+            }
+            
+            // Add loading state to button
+            submitBtn.classList.add('loading');
+            submitBtn.disabled = true;
+        });
+        
         // Validate current step
         function validateStep(step) {
             const section = document.getElementById(`section${step}`);
-            const inputs = section.querySelectorAll('input[required]');
+            const inputs = section.querySelectorAll('input[required], select[required]');
             let isValid = true;
             
             inputs.forEach(input => {
                 if (!input.value.trim()) {
                     input.classList.add('is-invalid');
                     isValid = false;
+                    
+                    // Show error message
+                    let errorDiv = input.parentElement.querySelector('.text-danger');
+                    if (!errorDiv) {
+                        errorDiv = document.createElement('div');
+                        errorDiv.className = 'text-danger small mt-1';
+                        errorDiv.innerHTML = '<i class="fas fa-exclamation-circle"></i> This field is required';
+                        input.parentElement.appendChild(errorDiv);
+                    }
                 } else {
                     input.classList.remove('is-invalid');
+                    // Remove error message if field is valid
+                    const errorDiv = input.parentElement.querySelector('.text-danger:not(.form-error)');
+                    if (errorDiv && errorDiv.textContent.includes('This field is required')) {
+                        errorDiv.remove();
+                    }
                 }
             });
+            
+            // Special validation for step 3 (passwords)
+            if (step === 3 && isValid) {
+                const password1 = document.getElementById('id_password1');
+                const password2 = document.getElementById('id_password2');
+                
+                if (password1.value !== password2.value) {
+                    password2.classList.add('is-invalid');
+                    
+                    let errorDiv = password2.parentElement.querySelector('.text-danger');
+                    if (!errorDiv) {
+                        errorDiv = document.createElement('div');
+                        errorDiv.className = 'text-danger small mt-1';
+                        errorDiv.innerHTML = '<i class="fas fa-exclamation-circle"></i> Passwords do not match';
+                        password2.parentElement.appendChild(errorDiv);
+                    }
+                    isValid = false;
+                }
+            }
             
             return isValid;
         }
@@ -738,52 +1214,66 @@
         }
         
         // Password strength checker
-        const password1 = document.getElementById('password1');
-        const strengthBar = document.getElementById('strengthBar');
-        const strengthText = document.getElementById('strengthText');
-        
-        password1.addEventListener('input', function() {
-            const password = this.value;
-            let strength = 0;
-            let strengthClass = '';
-            let strengthMessage = '';
+        document.addEventListener('DOMContentLoaded', function() {
+            const password1 = document.getElementById('id_password1');
+            const strengthBar = document.getElementById('strengthBar');
+            const strengthText = document.getElementById('strengthText');
             
-            if (password.length >= 8) strength++;
-            if (password.match(/[a-z]+/)) strength++;
-            if (password.match(/[A-Z]+/)) strength++;
-            if (password.match(/[0-9]+/)) strength++;
-            if (password.match(/[$@#&!]+/)) strength++;
-            
-            switch (strength) {
-                case 0:
-                case 1:
-                    strengthClass = 'bg-danger';
-                    strengthMessage = 'Weak password';
-                    break;
-                case 2:
-                case 3:
-                    strengthClass = 'bg-warning';
-                    strengthMessage = 'Medium password';
-                    break;
-                case 4:
-                case 5:
-                    strengthClass = 'bg-success';
-                    strengthMessage = 'Strong password';
-                    break;
+            if (password1) {
+                password1.addEventListener('input', function() {
+                    const password = this.value;
+                    let strength = 0;
+                    let strengthClass = '';
+                    let strengthMessage = '';
+                    
+                    // Check password strength
+                    if (password.length >= 8) strength++;
+                    if (password.length >= 12) strength++;
+                    if (password.match(/[a-z]+/)) strength++;
+                    if (password.match(/[A-Z]+/)) strength++;
+                    if (password.match(/[0-9]+/)) strength++;
+                    if (password.match(/[$@#&!%*?_\-]+/)) strength++;
+                    
+                    // Determine strength level
+                    if (password.length === 0) {
+                        strengthBar.style.width = '0%';
+                        strengthText.textContent = '';
+                        return;
+                    }
+                    
+                    if (strength <= 2) {
+                        strengthClass = 'bg-danger';
+                        strengthMessage = 'Weak password';
+                    } else if (strength <= 4) {
+                        strengthClass = 'bg-warning';
+                        strengthMessage = 'Good password';
+                    } else {
+                        strengthClass = 'bg-success';
+                        strengthMessage = 'Strong password';
+                    }
+                    
+                    strengthBar.className = 'strength-fill ' + strengthClass;
+                    strengthBar.style.width = (strength * 16.66) + '%';
+                    strengthText.textContent = strengthMessage;
+                    strengthText.className = 'strength-text text-' + strengthClass.replace('bg-', '');
+                });
             }
-            
-            strengthBar.className = 'strength-fill ' + strengthClass;
-            strengthBar.style.width = (strength * 20) + '%';
-            strengthText.textContent = strengthMessage;
-            strengthText.className = 'strength-text text-' + strengthClass.replace('bg-', '');
         });
         
         // Remove validation classes on input
         document.querySelectorAll('.form-control').forEach(input => {
             input.addEventListener('input', function() {
                 this.classList.remove('is-invalid');
+                // Remove generic error messages
+                const errorDiv = this.parentElement.querySelector('.text-danger');
+                if (errorDiv && errorDiv.textContent.includes('This field is required')) {
+                    errorDiv.remove();
+                }
             });
         });
+        
+        // Initialize form on load
+        showStep(currentStep);
     </script>
 </body>
 </html>

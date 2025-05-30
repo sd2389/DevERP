@@ -60,4 +60,6 @@ urlpatterns = [
     path('users/', views.users_list, name='users'),
     path('users/add/', views.add_user, name='add_user'),
     path('users/<int:user_id>/edit/', views.edit_user, name='edit_user'),
+    path('pending-users/', views.pending_users, name='pending_users'),
+    path('approve-user/<int:user_id>/', views.approve_user, name='approve_user'),
 ]

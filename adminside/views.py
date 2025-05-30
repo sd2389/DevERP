@@ -23,6 +23,10 @@ from accounts.models import PasswordResetRequest
 from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.admin.views.decorators import staff_member_required
 from orders.models import Order
+from accounts.models import User
+from adminside.models import CustomerProfile
+
+
 
 # Setup logger
 logger = logging.getLogger('adminside')
@@ -198,8 +202,6 @@ def toggle_design(request, pk):
     d.is_active = not d.is_active
     d.save()
     return redirect('adminside:design_list')
-
-
 
 
 # @login_required
@@ -680,6 +682,28 @@ def email_settings(request):
     
     # GET request - show the form
     return render(request, 'adminside/email_settings.html')
+
+
+def pending_users(request):
+    # List inactive customers pending approval
+    pending = User.objects.filter(is_active=False)
+    return render(request, 'adminside/pending_users.html', {'pending': pending})
+
+def approve_user(request, user_id):
+    user = User.objects.get(id=user_id)
+    user.is_active = True
+    user.save()
+    # Optionally update the CustomerProfile too
+    try:
+        profile = CustomerProfile.objects.get(user=user)
+        profile.account_status = 'active'
+        profile.save()
+    except CustomerProfile.DoesNotExist:
+        pass
+    # (Optionally: Send welcome email here)
+    return redirect('pending_users')
+
+
 
 #@login_required
 #@user_passes_test(is_admin)

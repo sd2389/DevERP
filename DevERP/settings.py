@@ -15,6 +15,7 @@ from dotenv import load_dotenv
 # load .env
 load_dotenv()
 from pathlib import Path
+from django.contrib.messages import constants as messages
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -92,9 +93,6 @@ INSTALLED_APPS = [
     "adminside",
     'accounts',
 ]
-
-
-AUTH_USER_MODEL = 'accounts.User'
 
 
 PASSWORD_HASHERS = [
@@ -176,14 +174,16 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',  # Keep the default as fallback
 ]
 
+# Custom user model
+AUTH_USER_MODEL = 'accounts.User'
+
 # Login URLs
-LOGIN_URL = 'login'
+LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = 'inventory:inventory'  # Default redirect after login
-LOGOUT_REDIRECT_URL = 'login'
+LOGOUT_REDIRECT_URL = '/login/'
 
 # Session settings
-SESSION_COOKIE_AGE = 1209600  # 2 weeks
-SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+SESSION_COOKIE_AGE = 6 * 60 * 60  # 6 hours (in seconds)
 SESSION_SAVE_EVERY_REQUEST = True
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
@@ -265,4 +265,13 @@ CACHES = {
             'CULL_FREQUENCY': 3,
         }
     }
+}
+
+# Configure message tags to match Bootstrap alert classes
+MESSAGE_TAGS = {
+    messages.DEBUG: 'info',
+    messages.INFO: 'info',
+    messages.SUCCESS: 'success',
+    messages.WARNING: 'warning',
+    messages.ERROR: 'danger',
 }
