@@ -5,13 +5,14 @@
 <head>
   <meta charset="UTF-8">
   <title>DevERP Inventory</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
   <link href="{% static 'inventory/index.css' %}" rel="stylesheet">
 
   <!-- <link href="{% static 'inventory/responsive.css' %}" rel="stylesheet"> -->
-  
+
 </head>
 
 <body>
@@ -171,11 +172,10 @@
               data-bs-toggle="modal" data-bs-target="#imageModal-{{ forloop.counter0 }}">
 
             <!-- Wishlist Button overlay on image -->
-            <button class="wishlist-btn position-absolute top-0 end-0 m-2"
-        data-design-no="{{ prod.design_no }}"
-        onclick="toggleWishlist(this)">
-  <i class="bi bi-heart fs-5"></i>
-</button>
+            <button class="wishlist-btn position-absolute top-0 end-0 m-2" data-design-no="{{ prod.design_no }}"
+              onclick="toggleWishlist(this)">
+              <i class="bi bi-heart fs-5"></i>
+            </button>
           </div>
 
           <div class="card-body text-center p-3">
@@ -236,7 +236,7 @@
       <h4>No products found</h4>
       <p class="text-muted">Try adjusting your search or filter criteria</p>
       <button class="btn btn-outline-primary mt-2" id="clearAllFiltersBtn" style="height: 20%;">
-        <i class="bi bi-arrow-repeat"> Clear All Filters</i> 
+        <i class="bi bi-arrow-repeat"> Clear All Filters</i>
       </button>
     </div>
 
@@ -317,11 +317,10 @@
               <!-- Actions Column with Wishlist -->
               <td>
                 <div class="d-flex justify-content-center gap-2">
-                  <button class="wishlist-btn position-absolute top-0 end-0 m-2"
-        data-design-no="{{ prod.design_no }}"
-        onclick="toggleWishlist(this)">
-  <i class="bi bi-heart fs-5"></i>
-</button>
+                  <button class="wishlist-btn position-absolute top-0 end-0 m-2" data-design-no="{{ prod.design_no }}"
+                    onclick="toggleWishlist(this)">
+                    <i class="bi bi-heart fs-5"></i>
+                  </button>
                   <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
                     data-bs-target="#modal-{{ forloop.counter0 }}">
                     <i class="bi bi-cart-plus"></i>
@@ -628,19 +627,32 @@
     <i class="bi bi-arrow-up"></i>
   </button>
 
-  <script src="{% static 'inventory/responsive.js' %}"></script>
-  <!-- Scripts -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Complete JavaScript for Inventory Page -->
+<script src="{% static 'inventory/responsive.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-  <!-- Main JavaScript for Inventory Functionality -->
-  <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      // Global variables
-      let activeStatusFilter = 'instock'; // default filter
-      const PRODUCTS_PER_PAGE = 20;
-      let currentPage = 1;
-      let isLoading = false;
-      let allProductsLoaded = {% if not has_more %}true{% else %}false{% endif %};
+<!-- Initialize Django context data -->
+<script>
+  // Set the static URL for JavaScript use
+  window.STATIC_URL = "{% static '' %}";
+  
+  // Initialize wishlist data from Django context
+  const INITIAL_WISHLIST = {{ wishlist_design_nos|default:"[]"|safe }};
+  const USER_AUTHENTICATED = {{ user_authenticated|default:"false"|lower }};
+  
+  // Initialize wishlist state
+  let currentWishlist = new Set(INITIAL_WISHLIST);
+</script>
+
+<!-- Main JavaScript for Inventory Functionality -->
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    // Global variables
+    let activeStatusFilter = 'instock'; // default filter
+    const PRODUCTS_PER_PAGE = 20;
+    let currentPage = 1;
+    let isLoading = false;
+    let allProductsLoaded = {% if not has_more %}true{% else %}false{% endif %};
     let productsCache = {};
 
     // DOM Elements
@@ -679,9 +691,8 @@
     // Load filter options when page loads
     loadFilterOptions();
 
-    // Initialize
-    updateWishlistButtons();
-    updateWishlistCount();
+    // Initialize wishlist on page load
+    initializeWishlistButtons();
     updateCartCounter();
 
     // Toggle view between cards and table
@@ -703,7 +714,8 @@
         toggleViewBtn.querySelector('i').classList.remove('bi-table');
         toggleViewBtn.querySelector('i').classList.add('bi-grid');
       }
-      });
+    });
+
     // Toggle advanced filters panel
     advancedFiltersBtn.addEventListener('click', function () {
       advancedFiltersPanel.style.display = advancedFiltersPanel.style.display === 'none' ? 'block' : 'none';
@@ -719,8 +731,6 @@
         const existingMsg = document.getElementById('search-status-message');
         if (existingMsg) existingMsg.remove();
 
-        
-
         // Delay a bit more for job number searches
         setTimeout(() => {
           resetPagination();
@@ -728,7 +738,6 @@
         }, 300);
       }, 500));
     }
-
 
     // Add event listeners to filter dropdowns
     [categoryFilter, genderFilter, collectionFilter, subcategoryFilter, producttypeFilter].forEach(filter => {
@@ -1028,9 +1037,9 @@
             const tag = document.createElement('span');
             tag.className = 'filter-tag';
             tag.innerHTML = `
-                ${filter.label} 
-                <i class="bi bi-x remove-filter" data-filter="${filter.name}" data-value="${filter.value}"></i>
-              `;
+              ${filter.label} 
+              <i class="bi bi-x remove-filter" data-filter="${filter.name}" data-value="${filter.value}"></i>
+            `;
             activeFilterTags.appendChild(tag);
           });
 
@@ -1140,26 +1149,14 @@
           console.log('AJAX Response:', data); // Debug log
 
           if (data.success) {
+            // Update wishlist state from server response
+            if (data.wishlist_design_nos) {
+              currentWishlist = new Set(data.wishlist_design_nos);
+            }
+
             if (data.products && data.products.length > 0) {
-              // Clean the design numbers to ensure consistency
-              const cleanedProducts = data.products.map(product => {
-                // Ensure design_no is a clean string without any transformations
-                const cleanProduct = { ...product };
-
-                // Log the original design_no for debugging
-                console.log("Original design_no:", product.design_no);
-
-                // Ensure it's treated as a string
-                cleanProduct.design_no = String(product.design_no).trim();
-
-                // Log the cleaned design_no
-                console.log("Cleaned design_no:", cleanProduct.design_no);
-
-                return cleanProduct;
-              });
-
               // Append products to DOM
-              appendProductsToDOM(cleanedProducts, resetPage);
+              appendProductsToDOM(data.products, resetPage);
 
               // Update pagination state
               allProductsLoaded = !data.has_more;
@@ -1191,11 +1188,8 @@
     }
 
     /**
-     * Append products to the DOM
+     * Append products to the DOM with proper wishlist state
      */
-    /**
-* Append products to the DOM with strict consistency for design numbers
-*/
     function appendProductsToDOM(products, resetExisting = false) {
       if (!cardView) return;
 
@@ -1204,7 +1198,6 @@
         cardView.innerHTML = '';
 
         // Also remove any existing modals for these products
-        // This ensures we don't have duplicate modals with different design numbers
         const existingModals = document.querySelectorAll('[id^="modal-"], [id^="imageModal-"]');
         existingModals.forEach(modal => {
           if (modal.parentNode) {
@@ -1260,421 +1253,7 @@
     }
 
     /**
-     * Create a product card element
-     */
-    // application/vnd.ant.code language="javascript"
-    /**
-     * Create a product card element - with fixed design number handling
-     */
-    function createProductCard(product, index) {
-      const card = document.createElement('div');
-      card.className = 'col-6 col-md-4 col-lg-3';
-      card.dataset.type = (product.category || '').toLowerCase();
-      card.dataset.status = (product.status || '').toLowerCase();
-
-      // Store exact design_no for consistency
-      const designNo = product.design_no;
-
-      // Set jobs data attributes
-      card.dataset.jobs = (product.in_stock_jobs || []).map(job => job.job_no).join(' ');
-      card.dataset.memojobs = (product.memo_jobs || []).map(job => job.job_no).join(' ');
-
-      // Collect all job numbers for data attributes and debugging
-      const inStockJobs = (product.in_stock_jobs || []).map(job => job.job_no);
-      const memoJobs = (product.memo_jobs || []).map(job => job.job_no);
-
-      // Set jobs data attributes
-      card.dataset.jobs = inStockJobs.join(' ');
-      card.dataset.memojobs = memoJobs.join(' ');
-
-
-      // Create status indicators
-      let statusCircles = '';
-      let statusBadges = '';
-      let actionButton = '';
-
-      const hasInStock = product.in_stock_jobs && product.in_stock_jobs.length > 0;
-      const hasMemo = product.memo_jobs && product.memo_jobs.length > 0;
-
-      // Status circles
-      if (hasInStock) {
-        statusCircles += `
-        <div class="status-circle in-stock" title="In Stock">
-            ${product.in_stock_jobs.length}
-        </div>
-        `;
-      }
-
-      if (hasMemo) {
-        statusCircles += `
-        <div class="status-circle on-memo" title="On Memo">
-            ${product.memo_jobs.length}
-        </div>
-        `;
-      }
-
-      if (!hasInStock && !hasMemo) {
-        statusCircles += `
-        <div class="status-circle out-of-stock" title="Not In Stock">0</div>
-        `;
-      }
-
-      // Status badges
-      if (hasInStock && hasMemo) {
-        statusBadges = `
-        <div class="status-icon in-stock me-2"><i class="bi bi-check-circle-fill"></i> In Stock</div>
-        <div class="status-icon on-memo"><i class="bi bi-bookmark-fill"></i> On Memo</div>
-        `;
-      } else if (hasInStock) {
-        statusBadges = `
-        <div class="status-icon in-stock"><i class="bi bi-check-circle-fill"></i> In Stock</div>
-        `;
-      } else if (hasMemo) {
-        statusBadges = `
-        <div class="status-icon on-memo"><i class="bi bi-bookmark-fill"></i> On Memo</div>
-        `;
-      } else {
-        statusBadges = `
-        <div class="status-icon out-of-stock"><i class="bi bi-x-circle-fill"></i> Not In Stock</div>
-        `;
-      }
-
-      // Action button
-      if (!hasInStock && !hasMemo) {
-        actionButton = `
-        <button class="btn btn-sm btn-outline-secondary w-100" data-bs-toggle="modal" data-bs-target="#modal-${index}">
-            <i class="bi bi-tools"></i> Request Custom Order
-        </button>
-        `;
-      } else {
-        actionButton = `
-        <button class="btn btn-sm btn-primary w-100 order-btn" data-bs-toggle="modal" data-bs-target="#modal-${index}">
-            <i class="bi bi-cart-plus"></i> Order Now
-        </button>
-        `;
-      }
-
-      // First job number for wishlist
-      const firstJobNo = hasInStock ? product.in_stock_jobs[0].job_no || '' : '';
-
-      // Build the card HTML - using exact design_no everywhere
-      card.innerHTML = `
-    <div class="card h-100">
-        <div class="card-img-container">
-        <img class="lazy" 
-            src="{% static 'inventory/placeholder.jpg' %}"
-            data-src="${product.image_base_path || 'https://dev-jewels.s3.us-east-2.amazonaws.com/products/' + designNo}/White/D_${designNo}-1.jpg"
-            alt="${designNo}" 
-            data-bs-toggle="modal" 
-            data-bs-target="#imageModal-${index}">
-        <button class="wishlist-btn position-absolute top-0 end-0 m-2"
-        data-design-no="{{ prod.design_no }}"
-        onclick="toggleWishlist(this)">
-  <i class="bi bi-heart fs-5"></i>
-</button>
-        </div>
-        <div class="card-body text-center p-3">
-        <h5 class="card-title mb-1">${designNo}</h5>
-        <p class="text-muted small mb-2">${product.category || ''}</p>
-        <div class="status-circles-container">
-            ${statusCircles}
-        </div>
-        <div class="d-flex justify-content-center mb-3">
-            ${statusBadges}
-        </div>
-        ${actionButton}
-        </div>
-    </div>
-    `;
-
-      return card;
-    }
-
-    /**
-     * Create order modal for a product - with fixed design number handling
-     */
-    function createOrderModal(product, index) {
-      const modalDiv = document.createElement('div');
-      modalDiv.className = 'modal fade';
-      modalDiv.id = `modal-${index}`;
-      modalDiv.setAttribute('tabindex', '-1');
-      modalDiv.setAttribute('aria-hidden', 'true');
-
-      // Store exact design_no for consistency
-      const designNo = product.design_no;
-
-      // First job number for wishlist button
-      const firstJobNo = product.in_stock_jobs && product.in_stock_jobs.length > 0
-        ? product.in_stock_jobs[0].job_no || ''
-        : '';
-
-      // Prepare in-stock table rows
-      let inStockRows = '';
-      if (product.in_stock_jobs && product.in_stock_jobs.length > 0) {
-        product.in_stock_jobs.forEach(job => {
-          inStockRows += `
-            <tr class="text-center">
-            <td class="text-center">
-                <input type="checkbox" class="form-check-input job-checkbox" 
-                data-design="${designNo}"
-                data-job_no="${job.job_no}" 
-                data-price="${job.discounted_price}">
-            </td>
-            <td>${job.job_no}</td>
-            <td>${job.metal_type || ''}</td>
-            <td>${job.metal_quality || ''}</td>
-            <td>${job.metal_color || '-'}</td>
-            <td>${job.diamond_quality || 'VVS-VS'}</td>
-            <td>${job.diamond_color || 'D-E-F'}</td>
-            <td>${job.gwt || ''}</td>
-            <td>${job.size || ''}</td>
-            <td>$${job.discounted_price}</td>
-            </tr>
-        `;
-        });
-      } else {
-        inStockRows = `
-        <tr>
-            <td colspan="10" class="text-center py-3">No items in stock</td>
-        </tr>
-        `;
-      }
-
-      // Prepare memo table rows
-      let memoRows = '';
-      if (product.memo_jobs && product.memo_jobs.length > 0) {
-        product.memo_jobs.forEach(job => {
-          memoRows += `
-            <tr class="text-center">
-            <td class="text-center">
-                <input type="checkbox" class="form-check-input memo-checkbox" 
-                data-design="${designNo}"
-                data-job_no="${job.job_no}">
-            </td>
-            <td>${job.job_no}</td>
-            <td>${job.metal_type || ''}</td>
-            <td>${job.metal_quality || ''}</td>
-            <td>${job.metal_color || '-'}</td>
-            <td>${job.diamond_quality || 'VVS-VS'}</td>
-            <td>${job.diamond_color || 'D-E-F'}</td>
-            <td>${job.gwt || ''}</td>
-            <td>${job.size || ''}</td>
-            <td>$${job.discounted_price}</td>
-            </tr>
-        `;
-        });
-      }
-
-      // Build modal HTML
-      const hasInStock = product.in_stock_jobs && product.in_stock_jobs.length > 0;
-      const hasMemo = product.memo_jobs && product.memo_jobs.length > 0;
-
-      modalDiv.innerHTML = `
-        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-        <div class="modal-content">
-            <!-- Header -->
-            <div class="modal-header">
-            <h5 class="modal-title">Order: ${designNo}</h5>
-            <div class="ms-auto">
-                <!-- Add to Wishlist button in modal header -->
-                <button class="btn btn-outline-danger me-2"
-                onclick="toggleWishlist('${designNo}', '${firstJobNo}')">
-                <i class="bi bi-heart"></i> Wishlist
-                </button>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            </div>
-
-            <div class="modal-body">
-            ${hasInStock ? `
-                <!-- In Stock Section -->
-                <h6 class="text-center mb-4">
-                <i class="bi bi-check-circle-fill text-success me-2"></i>In Stock
-                </h6>
-                <div class="table-responsive mb-5">
-                <table class="table table-bordered">
-                    <thead class="table-light">
-                    <tr class="text-center">
-                        <th class="text-center">SELECT</th>
-                        <th>JOB NO</th>
-                        <th>METAL</th>
-                        <th>QUALITY</th>
-                        <th>COLOR</th>
-                        <th>DIAMOND QUALITY</th>
-                        <th>DIAMOND COLOR</th>
-                        <th>GWT</th>
-                        <th>SIZE</th>
-                        <th>PRICE</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    ${inStockRows}
-                    </tbody>
-                </table>
-                </div>
-            ` : ''}
-
-            ${hasMemo ? `
-                <!-- Memo Section -->
-                <h6 class="text-center mb-4">
-                <i class="bi bi-bookmark-fill text-warning me-2"></i>On Memo with Others
-                </h6>
-                <div class="table-responsive mb-5">
-                <table class="table table-bordered">
-                    <thead class="table-light">
-                    <tr class="text-center">
-                        <th class="text-center">REQUEST</th>
-                        <th>JOB NO</th>
-                        <th>METAL</th>
-                        <th>QUALITY</th>
-                        <th>COLOR</th>
-                        <th>DIAMOND QUALITY</th>
-                        <th>DIAMOND COLOR</th>
-                        <th>GWT</th>
-                        <th>SIZE</th>
-                        <th>PRICE</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    ${memoRows}
-                    </tbody>
-                </table>
-                <div class="text-end mt-3">
-                    <button class="btn btn-warning request-selected-memo-btn">
-                    <i class="bi bi-bookmark-plus me-1"></i> Request Selected Items
-                    </button>
-                </div>
-                </div>
-            ` : ''}
-
-            ${!hasInStock && !hasMemo ? `
-                <div class="alert alert-secondary mb-4 d-flex">
-                <i class="bi bi-exclamation-circle-fill me-2 fs-4"></i>
-                <div>
-                    <p class="mb-2 fw-bold">Sorry, we are out of stock.</p>
-                    <p class="mb-0">
-                    Contact us at <a href="mailto:abc@gmail.com">abc@gmail.com</a> or
-                    <a href="tel:+12011234567">+1 (201) 123 4567</a>
-                    </p>
-                </div>
-                </div>
-            ` : ''}
-
-            <!-- Custom Order Section -->
-            <h6 class="text-center mb-4">
-                <i class="bi bi-tools me-2"></i>Custom Order
-            </h6>
-            <div class="table-responsive mb-3">
-                <table class="table table-bordered" id="customOrderTable-${index}">
-                <thead class="table-light">
-                    <tr class="text-center">
-                    <th>SERIAL NO.</th>
-                    <th>METAL TYPE</th>
-                    <th>QUALITY</th>
-                    <th>COLOR</th>
-                    <th>DIAMOND QUALITY</th>
-                    <th>DIAMOND COLOR</th>
-                    <th>SIZE (IN)</th>
-                    <th>NUMBER OF PCS</th>
-                    <th>REMARKS</th>
-                    <th>REMOVE</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Custom rows inserted via JS -->
-                </tbody>
-                </table>
-            </div>
-
-            <button class="btn btn-outline-primary btn-sm"
-                onclick="addCustomRow('${index}', '${designNo}')">
-                <i class="bi bi-plus-lg"></i> Add Row
-            </button>
-            </div>
-
-            <div class="modal-footer justify-content-between">
-            <button class="btn btn-outline-secondary" data-bs-dismiss="modal">
-                <i class="bi bi-x-lg"></i> Cancel
-            </button>
-            <button class="btn btn-dark" onclick="addToCart('${designNo}', '${index}')">
-                <i class="bi bi-cart-plus"></i> Add to Cart
-            </button>
-            </div>
-        </div>
-        </div>
-    `;
-
-      return modalDiv;
-    }
-
-    /**
-     * Create image modal for a product - with fixed design number handling
-     */
-    function createImageModal(product, index) {
-      const modalDiv = document.createElement('div');
-      modalDiv.className = 'modal fade';
-      modalDiv.id = `imageModal-${index}`;
-      modalDiv.setAttribute('tabindex', '-1');
-
-      // Store exact design_no for consistency
-      const designNo = product.design_no;
-
-      // First job number for wishlist button
-      const firstJobNo = product.in_stock_jobs && product.in_stock_jobs.length > 0
-        ? product.in_stock_jobs[0].job_no || ''
-        : '';
-
-      modalDiv.innerHTML = `
-        <div class="modal-dialog modal-dialog-centered modal-xl">
-        <div class="modal-content">
-            <div class="modal-header">
-            <h5 class="modal-title">Images - ${designNo}</h5>
-            <div class="ms-auto">
-                <!-- Add to Wishlist button in image modal header -->
-                <button class="btn btn-outline-danger me-2"
-                onclick="toggleWishlist('${designNo}', '${firstJobNo}')">
-                <i class="bi bi-heart"></i> Add to Wishlist
-                </button>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            </div>
-            <div class="modal-body">
-            <div class="mb-3 text-center">
-                <button class="btn btn-outline-secondary mx-1 color-btn active" data-color="White"
-                data-design="${designNo}" data-modal="${index}">W</button>
-                <button class="btn btn-outline-secondary mx-1 color-btn" data-color="Yellow"
-                data-design="${designNo}" data-modal="${index}">Y</button>
-                <button class="btn btn-outline-secondary mx-1 color-btn" data-color="Rose"
-                data-design="${designNo}" data-modal="${index}">R</button>
-            </div>
-            <div id="carousel-${index}" class="carousel slide" data-bs-ride="false">
-                <div class="carousel-inner text-center" id="carousel-inner-${index}">
-                <div class="carousel-item active">
-                    <img
-                    src="${product.image_base_path || 'https://dev-jewels.s3.us-east-2.amazonaws.com/products/' + designNo}/White/D_${designNo}-1.jpg"
-                    class="modal-carousel-img d-inline-block" alt="${designNo}">
-                </div>
-                </div>
-                <button class="carousel-control-prev" type="button" data-bs-target="#carousel-${index}"
-                data-bs-slide="prev">
-                <span class="carousel-control-prev-icon"></span>
-                </button>
-                <button class="carousel-control-next" type="button" data-bs-target="#carousel-${index}"
-                data-bs-slide="next">
-                <span class="carousel-control-next-icon"></span>
-                </button>
-            </div>
-            </div>
-        </div>
-        </div>
-    `;
-
-      return modalDiv;
-    }
-
-    // application/vnd.ant.code language="javascript"
-    /**
-     * Create a product card element - with fixed design number handling
+     * Create a product card element with proper wishlist state
      */
     function createProductCard(product, index) {
       const card = document.createElement('div');
@@ -1700,99 +1279,101 @@
       // Status circles
       if (hasInStock) {
         statusCircles += `
-        <div class="status-circle in-stock" title="In Stock">
+          <div class="status-circle in-stock" title="In Stock">
             ${product.in_stock_jobs.length}
-        </div>
+          </div>
         `;
       }
 
       if (hasMemo) {
         statusCircles += `
-        <div class="status-circle on-memo" title="On Memo">
+          <div class="status-circle on-memo" title="On Memo">
             ${product.memo_jobs.length}
-        </div>
+          </div>
         `;
       }
 
       if (!hasInStock && !hasMemo) {
         statusCircles += `
-        <div class="status-circle out-of-stock" title="Not In Stock">0</div>
+          <div class="status-circle out-of-stock" title="Not In Stock">0</div>
         `;
       }
 
       // Status badges
       if (hasInStock && hasMemo) {
         statusBadges = `
-        <div class="status-icon in-stock me-2"><i class="bi bi-check-circle-fill"></i> In Stock</div>
-        <div class="status-icon on-memo"><i class="bi bi-bookmark-fill"></i> On Memo</div>
+          <div class="status-icon in-stock me-2"><i class="bi bi-check-circle-fill"></i> In Stock</div>
+          <div class="status-icon on-memo"><i class="bi bi-bookmark-fill"></i> On Memo</div>
         `;
       } else if (hasInStock) {
         statusBadges = `
-        <div class="status-icon in-stock"><i class="bi bi-check-circle-fill"></i> In Stock</div>
+          <div class="status-icon in-stock"><i class="bi bi-check-circle-fill"></i> In Stock</div>
         `;
       } else if (hasMemo) {
         statusBadges = `
-        <div class="status-icon on-memo"><i class="bi bi-bookmark-fill"></i> On Memo</div>
+          <div class="status-icon on-memo"><i class="bi bi-bookmark-fill"></i> On Memo</div>
         `;
       } else {
         statusBadges = `
-        <div class="status-icon out-of-stock"><i class="bi bi-x-circle-fill"></i> Not In Stock</div>
+          <div class="status-icon out-of-stock"><i class="bi bi-x-circle-fill"></i> Not In Stock</div>
         `;
       }
 
       // Action button
       if (!hasInStock && !hasMemo) {
         actionButton = `
-        <button class="btn btn-sm btn-outline-secondary w-100" data-bs-toggle="modal" data-bs-target="#modal-${index}">
+          <button class="btn btn-sm btn-outline-secondary w-100" data-bs-toggle="modal" data-bs-target="#modal-${index}">
             <i class="bi bi-tools"></i> Request Custom Order
-        </button>
+          </button>
         `;
       } else {
         actionButton = `
-        <button class="btn btn-sm btn-primary w-100 order-btn" data-bs-toggle="modal" data-bs-target="#modal-${index}">
+          <button class="btn btn-sm btn-primary w-100 order-btn" data-bs-toggle="modal" data-bs-target="#modal-${index}">
             <i class="bi bi-cart-plus"></i> Order Now
-        </button>
+          </button>
         `;
       }
 
-      // First job number for wishlist
-      const firstJobNo = hasInStock ? product.in_stock_jobs[0].job_no || '' : '';
+      // Check if this product is wishlisted
+      const isWishlisted = product.is_wishlisted || currentWishlist.has(designNo);
+      const heartIcon = isWishlisted ? 'bi-heart-fill' : 'bi-heart';
+      const activeClass = isWishlisted ? 'active' : '';
 
-      // Build the card HTML - using exact design_no everywhere
+      // Build the card HTML
       card.innerHTML = `
-    <div class="card h-100">
-        <div class="card-img-container">
-        <img class="lazy" 
-            src="{% static 'inventory/placeholder.jpg' %}"
-            data-src="${product.image_base_path || 'https://dev-jewels.s3.us-east-2.amazonaws.com/products/' + designNo}/White/D_${designNo}-1.jpg"
-            alt="${designNo}" 
-            data-bs-toggle="modal" 
-            data-bs-target="#imageModal-${index}">
-        <button class="wishlist-btn position-absolute top-0 end-0 m-2"
-        data-design-no="{{ prod.design_no }}"
-        onclick="toggleWishlist(this)">
-  <i class="bi bi-heart fs-5"></i>
-</button>
+        <div class="card h-100">
+          <div class="card-img-container">
+            <img class="lazy" 
+              src="${window.STATIC_URL}inventory/placeholder.jpg"
+              data-src="${product.image_base_path || 'https://dev-jewels.s3.us-east-2.amazonaws.com/products/' + designNo}/White/D_${designNo}-1.jpg"
+              alt="${designNo}" 
+              data-bs-toggle="modal" 
+              data-bs-target="#imageModal-${index}">
+            <button class="wishlist-btn position-absolute top-0 end-0 m-2 ${activeClass}"
+              data-design-no="${designNo}"
+              onclick="toggleWishlist(this)">
+              <i class="bi ${heartIcon} fs-5"></i>
+            </button>
+          </div>
+          <div class="card-body text-center p-3">
+            <h5 class="card-title mb-1">${designNo}</h5>
+            <p class="text-muted small mb-2">${product.category || ''}</p>
+            <div class="status-circles-container">
+              ${statusCircles}
+            </div>
+            <div class="d-flex justify-content-center mb-3">
+              ${statusBadges}
+            </div>
+            ${actionButton}
+          </div>
         </div>
-        <div class="card-body text-center p-3">
-        <h5 class="card-title mb-1">${designNo}</h5>
-        <p class="text-muted small mb-2">${product.category || ''}</p>
-        <div class="status-circles-container">
-            ${statusCircles}
-        </div>
-        <div class="d-flex justify-content-center mb-3">
-            ${statusBadges}
-        </div>
-        ${actionButton}
-        </div>
-    </div>
-    `;
+      `;
 
       return card;
     }
 
     /**
-     * Create order modal for a product - with fixed design number handling
+     * Create order modal for a product
      */
     function createOrderModal(product, index) {
       const modalDiv = document.createElement('div');
@@ -1815,29 +1396,29 @@
         product.in_stock_jobs.forEach(job => {
           inStockRows += `
             <tr class="text-center">
-            <td class="text-center">
+              <td class="text-center">
                 <input type="checkbox" class="form-check-input job-checkbox" 
-                data-design="${designNo}"
-                data-job_no="${job.job_no}" 
-                data-price="${job.discounted_price}">
-            </td>
-            <td>${job.job_no}</td>
-            <td>${job.metal_type || ''}</td>
-            <td>${job.metal_quality || ''}</td>
-            <td>${job.metal_color || '-'}</td>
-            <td>${job.diamond_quality || 'VVS-VS'}</td>
-            <td>${job.diamond_color || 'D-E-F'}</td>
-            <td>${job.gwt || ''}</td>
-            <td>${job.size || ''}</td>
-            <td>$${job.discounted_price}</td>
+                  data-design="${designNo}"
+                  data-job_no="${job.job_no}" 
+                  data-price="${job.discounted_price}">
+              </td>
+              <td>${job.job_no}</td>
+              <td>${job.metal_type || ''}</td>
+              <td>${job.metal_quality || ''}</td>
+              <td>${job.metal_color || '-'}</td>
+              <td>${job.diamond_quality || 'VVS-VS'}</td>
+              <td>${job.diamond_color || 'D-E-F'}</td>
+              <td>${job.gwt || ''}</td>
+              <td>${job.size || ''}</td>
+              <td>$${job.discounted_price}</td>
             </tr>
-        `;
+          `;
         });
       } else {
         inStockRows = `
-        <tr>
+          <tr>
             <td colspan="10" class="text-center py-3">No items in stock</td>
-        </tr>
+          </tr>
         `;
       }
 
@@ -1847,22 +1428,22 @@
         product.memo_jobs.forEach(job => {
           memoRows += `
             <tr class="text-center">
-            <td class="text-center">
+              <td class="text-center">
                 <input type="checkbox" class="form-check-input memo-checkbox" 
-                data-design="${designNo}"
-                data-job_no="${job.job_no}">
-            </td>
-            <td>${job.job_no}</td>
-            <td>${job.metal_type || ''}</td>
-            <td>${job.metal_quality || ''}</td>
-            <td>${job.metal_color || '-'}</td>
-            <td>${job.diamond_quality || 'VVS-VS'}</td>
-            <td>${job.diamond_color || 'D-E-F'}</td>
-            <td>${job.gwt || ''}</td>
-            <td>${job.size || ''}</td>
-            <td>$${job.discounted_price}</td>
+                  data-design="${designNo}"
+                  data-job_no="${job.job_no}">
+              </td>
+              <td>${job.job_no}</td>
+              <td>${job.metal_type || ''}</td>
+              <td>${job.metal_quality || ''}</td>
+              <td>${job.metal_color || '-'}</td>
+              <td>${job.diamond_quality || 'VVS-VS'}</td>
+              <td>${job.diamond_color || 'D-E-F'}</td>
+              <td>${job.gwt || ''}</td>
+              <td>${job.size || ''}</td>
+              <td>$${job.discounted_price}</td>
             </tr>
-        `;
+          `;
         });
       }
 
@@ -1872,30 +1453,31 @@
 
       modalDiv.innerHTML = `
         <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-        <div class="modal-content">
+          <div class="modal-content">
             <!-- Header -->
             <div class="modal-header">
-            <h5 class="modal-title">Order: ${designNo}</h5>
-            <div class="ms-auto">
+              <h5 class="modal-title">Order: ${designNo}</h5>
+              <div class="ms-auto">
                 <!-- Add to Wishlist button in modal header -->
                 <button class="btn btn-outline-danger me-2"
-                onclick="toggleWishlist('${designNo}', '${firstJobNo}')">
-                <i class="bi bi-heart"></i> Wishlist
+                  onclick="toggleWishlist(this)"
+                  data-design-no="${designNo}">
+                  <i class="bi bi-heart"></i> Wishlist
                 </button>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
+              </div>
             </div>
 
             <div class="modal-body">
-            ${hasInStock ? `
+              ${hasInStock ? `
                 <!-- In Stock Section -->
                 <h6 class="text-center mb-4">
-                <i class="bi bi-check-circle-fill text-success me-2"></i>In Stock
+                  <i class="bi bi-check-circle-fill text-success me-2"></i>In Stock
                 </h6>
                 <div class="table-responsive mb-5">
-                <table class="table table-bordered">
+                  <table class="table table-bordered">
                     <thead class="table-light">
-                    <tr class="text-center">
+                      <tr class="text-center">
                         <th class="text-center">SELECT</th>
                         <th>JOB NO</th>
                         <th>METAL</th>
@@ -1906,24 +1488,24 @@
                         <th>GWT</th>
                         <th>SIZE</th>
                         <th>PRICE</th>
-                    </tr>
+                      </tr>
                     </thead>
                     <tbody>
-                    ${inStockRows}
+                      ${inStockRows}
                     </tbody>
-                </table>
+                  </table>
                 </div>
-            ` : ''}
+              ` : ''}
 
-            ${hasMemo ? `
+              ${hasMemo ? `
                 <!-- Memo Section -->
                 <h6 class="text-center mb-4">
-                <i class="bi bi-bookmark-fill text-warning me-2"></i>On Memo with Others
+                  <i class="bi bi-bookmark-fill text-warning me-2"></i>On Memo with Others
                 </h6>
                 <div class="table-responsive mb-5">
-                <table class="table table-bordered">
+                  <table class="table table-bordered">
                     <thead class="table-light">
-                    <tr class="text-center">
+                      <tr class="text-center">
                         <th class="text-center">REQUEST</th>
                         <th>JOB NO</th>
                         <th>METAL</th>
@@ -1934,82 +1516,82 @@
                         <th>GWT</th>
                         <th>SIZE</th>
                         <th>PRICE</th>
-                    </tr>
+                      </tr>
                     </thead>
                     <tbody>
-                    ${memoRows}
+                      ${memoRows}
                     </tbody>
-                </table>
-                <div class="text-end mt-3">
+                  </table>
+                  <div class="text-end mt-3">
                     <button class="btn btn-warning request-selected-memo-btn">
-                    <i class="bi bi-bookmark-plus me-1"></i> Request Selected Items
+                      <i class="bi bi-bookmark-plus me-1"></i> Request Selected Items
                     </button>
+                  </div>
                 </div>
-                </div>
-            ` : ''}
+              ` : ''}
 
-            ${!hasInStock && !hasMemo ? `
+              ${!hasInStock && !hasMemo ? `
                 <div class="alert alert-secondary mb-4 d-flex">
-                <i class="bi bi-exclamation-circle-fill me-2 fs-4"></i>
-                <div>
+                  <i class="bi bi-exclamation-circle-fill me-2 fs-4"></i>
+                  <div>
                     <p class="mb-2 fw-bold">Sorry, we are out of stock.</p>
                     <p class="mb-0">
-                    Contact us at <a href="mailto:abc@gmail.com">abc@gmail.com</a> or
-                    <a href="tel:+12011234567">+1 (201) 123 4567</a>
+                      Contact us at <a href="mailto:abc@gmail.com">abc@gmail.com</a> or
+                      <a href="tel:+12011234567">+1 (201) 123 4567</a>
                     </p>
+                  </div>
                 </div>
-                </div>
-            ` : ''}
+              ` : ''}
 
-            <!-- Custom Order Section -->
-            <h6 class="text-center mb-4">
+              <!-- Custom Order Section -->
+              <h6 class="text-center mb-4">
                 <i class="bi bi-tools me-2"></i>Custom Order
-            </h6>
-            <div class="table-responsive mb-3">
+              </h6>
+              <div class="table-responsive mb-3">
                 <table class="table table-bordered" id="customOrderTable-${index}">
-                <thead class="table-light">
+                  <thead class="table-light">
                     <tr class="text-center">
-                    <th>SERIAL NO.</th>
-                    <th>METAL TYPE</th>
-                    <th>QUALITY</th>
-                    <th>COLOR</th>
-                    <th>DIAMOND QUALITY</th>
-                    <th>DIAMOND COLOR</th>
-                    <th>SIZE (IN)</th>
-                    <th>NUMBER OF PCS</th>
-                    <th>REMARKS</th>
-                    <th>REMOVE</th>
+                      <th>SERIAL NO.</th>
+                      <th>METAL TYPE</th>
+                      <th>QUALITY</th>
+                      <th>COLOR</th>
+                      <th>DIAMOND QUALITY</th>
+                      <th>DIAMOND COLOR</th>
+                      <th>SIZE (IN)</th>
+                      <th>NUMBER OF PCS</th>
+                      <th>REMARKS</th>
+                      <th>REMOVE</th>
                     </tr>
-                </thead>
-                <tbody>
+                  </thead>
+                  <tbody>
                     <!-- Custom rows inserted via JS -->
-                </tbody>
+                  </tbody>
                 </table>
-            </div>
+              </div>
 
-            <button class="btn btn-outline-primary btn-sm"
+              <button class="btn btn-outline-primary btn-sm"
                 onclick="addCustomRow('${index}', '${designNo}')">
                 <i class="bi bi-plus-lg"></i> Add Row
-            </button>
+              </button>
             </div>
 
             <div class="modal-footer justify-content-between">
-            <button class="btn btn-outline-secondary" data-bs-dismiss="modal">
+              <button class="btn btn-outline-secondary" data-bs-dismiss="modal">
                 <i class="bi bi-x-lg"></i> Cancel
-            </button>
-            <button class="btn btn-dark" onclick="addToCart('${designNo}', '${index}')">
+              </button>
+              <button class="btn btn-dark" onclick="addToCart('${designNo}', '${index}')">
                 <i class="bi bi-cart-plus"></i> Add to Cart
-            </button>
+              </button>
             </div>
+          </div>
         </div>
-        </div>
-    `;
+      `;
 
       return modalDiv;
     }
 
     /**
-     * Create image modal for a product - with fixed design number handling
+     * Create image modal for a product
      */
     function createImageModal(product, index) {
       const modalDiv = document.createElement('div');
@@ -2027,48 +1609,49 @@
 
       modalDiv.innerHTML = `
         <div class="modal-dialog modal-dialog-centered modal-xl">
-        <div class="modal-content">
+          <div class="modal-content">
             <div class="modal-header">
-            <h5 class="modal-title">Images - ${designNo}</h5>
-            <div class="ms-auto">
+              <h5 class="modal-title">Images - ${designNo}</h5>
+              <div class="ms-auto">
                 <!-- Add to Wishlist button in image modal header -->
                 <button class="btn btn-outline-danger me-2"
-                onclick="toggleWishlist('${designNo}', '${firstJobNo}')">
-                <i class="bi bi-heart"></i> Add to Wishlist
+                  onclick="toggleWishlist(this)"
+                  data-design-no="${designNo}">
+                  <i class="bi bi-heart"></i> Add to Wishlist
                 </button>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
+              </div>
             </div>
             <div class="modal-body">
-            <div class="mb-3 text-center">
+              <div class="mb-3 text-center">
                 <button class="btn btn-outline-secondary mx-1 color-btn active" data-color="White"
-                data-design="${designNo}" data-modal="${index}">W</button>
+                  data-design="${designNo}" data-modal="${index}">W</button>
                 <button class="btn btn-outline-secondary mx-1 color-btn" data-color="Yellow"
-                data-design="${designNo}" data-modal="${index}">Y</button>
+                  data-design="${designNo}" data-modal="${index}">Y</button>
                 <button class="btn btn-outline-secondary mx-1 color-btn" data-color="Rose"
-                data-design="${designNo}" data-modal="${index}">R</button>
-            </div>
-            <div id="carousel-${index}" class="carousel slide" data-bs-ride="false">
+                  data-design="${designNo}" data-modal="${index}">R</button>
+              </div>
+              <div id="carousel-${index}" class="carousel slide" data-bs-ride="false">
                 <div class="carousel-inner text-center" id="carousel-inner-${index}">
-                <div class="carousel-item active">
+                  <div class="carousel-item active">
                     <img
-                    src="${product.image_base_path || 'https://dev-jewels.s3.us-east-2.amazonaws.com/products/' + designNo}/White/D_${designNo}-1.jpg"
-                    class="modal-carousel-img d-inline-block" alt="${designNo}">
-                </div>
+                      src="${product.image_base_path || 'https://dev-jewels.s3.us-east-2.amazonaws.com/products/' + designNo}/White/D_${designNo}-1.jpg"
+                      class="modal-carousel-img d-inline-block" alt="${designNo}">
+                  </div>
                 </div>
                 <button class="carousel-control-prev" type="button" data-bs-target="#carousel-${index}"
-                data-bs-slide="prev">
-                <span class="carousel-control-prev-icon"></span>
+                  data-bs-slide="prev">
+                  <span class="carousel-control-prev-icon"></span>
                 </button>
                 <button class="carousel-control-next" type="button" data-bs-target="#carousel-${index}"
-                data-bs-slide="next">
-                <span class="carousel-control-next-icon"></span>
+                  data-bs-slide="next">
+                  <span class="carousel-control-next-icon"></span>
                 </button>
+              </div>
             </div>
-            </div>
+          </div>
         </div>
-        </div>
-    `;
+      `;
 
       return modalDiv;
     }
@@ -2123,15 +1706,15 @@
       toast.className = 'position-fixed bottom-0 end-0 p-3';
       toast.style.zIndex = '9999';
       toast.innerHTML = `
-          <div class="toast align-items-center text-bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true">
-            <div class="d-flex">
-              <div class="toast-body">
-                <i class="bi bi-exclamation-triangle-fill me-2"></i>${message}
-              </div>
-              <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        <div class="toast align-items-center text-bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true">
+          <div class="d-flex">
+            <div class="toast-body">
+              <i class="bi bi-exclamation-triangle-fill me-2"></i>${message}
             </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
           </div>
-        `;
+        </div>
+      `;
 
       document.body.appendChild(toast);
       const bsToast = new bootstrap.Toast(toast.querySelector('.toast'), {
@@ -2250,373 +1833,25 @@
           let html = '';
           patterns.forEach((pattern, idx) => {
             html += `
-                <div class="carousel-item ${idx === 0 ? 'active' : ''}">
-                  <img src="${baseUrl}${pattern.prefix}${designNo}${pattern.suffix}" 
-                    class="modal-carousel-img d-inline-block" 
-                    alt="${designNo} ${color} ${idx + 1}"
-                    onerror="this.onerror=null;this.src='{% static 'inventory/placeholder.jpg' %}';">
-                </div>
-              `;
+              <div class="carousel-item ${idx === 0 ? 'active' : ''}">
+                <img src="${baseUrl}${pattern.prefix}${designNo}${pattern.suffix}" 
+                  class="modal-carousel-img d-inline-block" 
+                  alt="${designNo} ${color} ${idx + 1}"
+                  onerror="this.onerror=null;this.src='${window.STATIC_URL}inventory/placeholder.jpg';">
+              </div>
+            `;
           });
 
           carouselInner.innerHTML = html;
         }
       }
     });
-    });
-  </script>
+  });
+</script>
 
-  <!-- Custom Order Functions with Diamond Fields -->
-  <script>
-    // Generate a unique order ID
-    function generateOrderId() {
-      return 'order-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
-    }
-
-    // Add custom order row with diamond fields
-    function addCustomRow(modalId, designNo) {
-      const table = document.querySelector(`#customOrderTable-${modalId || ''} tbody`);
-      const rowIndex = table.rows.length + 1;
-      const rowId = `custom-row-${modalId || 'main'}-${rowIndex}`;
-
-      const row = document.createElement('tr');
-      row.setAttribute("id", rowId);
-      row.innerHTML = `
-  <td>${rowIndex}</td>
-  <td>
-    <select class="form-select form-select-sm" name="metal_type" required>
-      <option value="Gold" selected>Gold</option>
-      <option value="Platinum">Platinum</option>
-      <option value="Silver">Silver</option>
-    </select>
-  </td>
-  <td>
-    <select class="form-select form-select-sm" name="metal_quality" required>
-      <option value="14k" selected>14k</option>
-      <option value="18k">18k</option>
-      <option value="22k">22k</option>
-    </select>
-  </td>
-  <td>
-    <select class="form-select form-select-sm" name="metal_color" required>
-      <option value="W" selected>White</option>
-      <option value="Y">Yellow</option>
-      <option value="R">Rose</option>
-    </select>
-  </td>
-  <td>
-    <select class="form-select form-select-sm" name="diamond_quality" required>
-      <option value="VVS" selected>VVS</option>
-      <option value="VS">VS</option>
-      <option value="SI">SI</option>
-    </select>
-  </td>
-  <td>
-    <select class="form-select form-select-sm" name="diamond_color" required>
-      <option value="D" selected>D</option>
-      <option value="E">E</option>
-      <option value="F">F</option>
-      <option value="G">G</option>
-      <option value="H">H</option>
-      <option value="I">I</option>
-      <option value="J">J</option>
-    </select>
-  </td>
-  <td>
-    <input type="number" min="1" max="100" step="0.1" class="form-control form-select-sm" 
-      name="size" placeholder="e.g. 6.5" required
-      oninput="this.classList.remove('is-invalid')">
-    <div class="invalid-feedback">Please enter a valid size</div>
-  </td>
-  <td>
-    <input type="number" min="1" max="100" class="form-control form-select-sm" 
-      name="qty" value="1" required
-      oninput="this.classList.remove('is-invalid')">
-    <div class="invalid-feedback">Please enter a quantity</div>
-  </td>
-  <td>
-    <input type="text" class="form-control form-select-sm" name="remarks" 
-      placeholder="Special instructions">
-  </td>
-  <td>
-    <button class="btn btn-sm btn-danger" onclick="removeCustomRow('${rowId}')">
-      <i class="bi bi-trash"></i>
-    </button>
-  </td>
-  `;
-
-      // Add event listeners for validation
-      const requiredFields = row.querySelectorAll('[required]');
-      requiredFields.forEach(field => {
-        field.addEventListener('blur', function () {
-          if (!this.value.trim()) {
-            this.classList.add('is-invalid');
-          } else {
-            this.classList.remove('is-invalid');
-          }
-        });
-      });
-
-      table.appendChild(row);
-
-      // Focus the first field for better UX
-      setTimeout(() => {
-        const firstField = row.querySelector('select, input');
-        if (firstField) firstField.focus();
-      }, 10);
-    }
-
-    function removeCustomRow(rowId) {
-      const row = document.getElementById(rowId);
-      if (row) {
-        row.remove();
-
-        // Renumber remaining rows
-        const modalId = rowId.split('-')[2];
-        const table = document.querySelector(`#customOrderTable-${modalId} tbody`);
-
-        Array.from(table.rows).forEach((row, idx) => {
-          row.cells[0].textContent = idx + 1;
-        });
-      }
-    }
-
-    // Enhanced Cart Management with Diamond Fields
-    function addToCart(designNo, modalId) {
-      const modal = document.getElementById(`modal-${modalId}`);
-      const checkboxes = modal.querySelectorAll(".job-checkbox:checked");
-      const memoCheckboxes = modal.querySelectorAll(".memo-checkbox:checked");
-      const customRows = modal.querySelectorAll(`#customOrderTable-${modalId} tbody tr`);
-
-      let hasStockItems = false;
-      let hasMemoItems = false;
-      let hasCustomItems = false;
-      let stockCartItems = [];
-      let memoCartItems = [];
-      let customOrderItems = [];
-
-      // Process selected in-stock items
-      if (checkboxes.length > 0) {
-        hasStockItems = true;
-
-        stockCartItems = Array.from(checkboxes).map(chk => {
-          // Get parent row to extract all details
-          const row = chk.closest('tr');
-
-          // Extract all data from the row cells
-          const jobNo = chk.dataset.job_no;
-          const metal = row.cells[2].textContent.trim();
-          const quality = row.cells[3].textContent.trim();
-          const color = row.cells[4].textContent.trim();
-          const diamondQuality = row.cells[5].textContent.trim();
-          const diamondColor = row.cells[6].textContent.trim();
-          const gwt = row.cells[7].textContent.trim();
-          const size = row.cells[8].textContent.trim();
-          const price = parseFloat(chk.dataset.price || 0);
-
-          // Store all details
-          return {
-            design_no: chk.dataset.design,
-            job_no: jobNo,
-            metal_type: metal,
-            metal_quality: quality,
-            metal_color: color,
-            diamond_quality: diamondQuality,
-            diamond_color: diamondColor,
-            gwt: gwt,
-            size: size,
-            qty: 1,
-            price: price,
-            type: "stock",
-            added_at: new Date().toISOString()
-          };
-        });
-      }
-
-      // Process selected memo items
-      if (memoCheckboxes.length > 0) {
-        hasMemoItems = true;
-
-        memoCartItems = Array.from(memoCheckboxes).map(chk => {
-          // Get parent row to extract all details
-          const row = chk.closest('tr');
-
-          // Extract all data from the row cells
-          const jobNo = chk.dataset.job_no;
-          const metal = row.cells[2].textContent.trim();
-          const quality = row.cells[3].textContent.trim();
-          const color = row.cells[4].textContent.trim();
-          const diamondQuality = row.cells[5].textContent.trim();
-          const diamondColor = row.cells[6].textContent.trim();
-          const gwt = row.cells[7].textContent.trim();
-          const size = row.cells[8].textContent.trim();
-          const price = parseFloat(row.cells[9].textContent.replace('$', '') || 0);
-
-          return {
-            design_no: chk.dataset.design,
-            job_no: jobNo,
-            metal_type: metal,
-            metal_quality: quality,
-            metal_color: color,
-            diamond_quality: diamondQuality,
-            diamond_color: diamondColor,
-            gwt: gwt,
-            size: size,
-            requested_at: new Date().toISOString(),
-            price: price,
-            type: "memo"
-          };
-        });
-      }
-
-      // Process custom order items
-      if (customRows.length > 0) {
-        // Validate required fields before processing
-        const validRows = [];
-        let hasInvalidRows = false;
-
-        customRows.forEach(row => {
-          const size = row.querySelector("[name='size']")?.value;
-          const qty = row.querySelector("[name='qty']")?.value;
-
-          if (!size || !qty) {
-            hasInvalidRows = true;
-            // Highlight invalid fields
-            if (!size) row.querySelector("[name='size']").classList.add('is-invalid');
-            if (!qty) row.querySelector("[name='qty']").classList.add('is-invalid');
-          } else {
-            // Clear any previous validation errors
-            row.querySelectorAll('.is-invalid').forEach(field => field.classList.remove('is-invalid'));
-            validRows.push(row);
-          }
-        });
-
-        if (hasInvalidRows) {
-          showToast("<i class='bi bi-exclamation-triangle'></i> Please fill in all required fields (Size and Quantity).", "warning");
-          return;
-        }
-
-        // Process valid rows
-        if (validRows.length > 0) {
-          hasCustomItems = true;
-
-          customOrderItems = validRows.map(row => ({
-            order_id: generateOrderId(),
-            design_no: designNo,
-            metal_type: row.querySelector("[name='metal_type']")?.value || "Gold",
-            metal_quality: row.querySelector("[name='metal_quality']")?.value || "14k",
-            metal_color: row.querySelector("[name='metal_color']")?.value || "W",
-            diamond_quality: row.querySelector("[name='diamond_quality']")?.value || "VVS",
-            diamond_color: row.querySelector("[name='diamond_color']")?.value || "D",
-            size: row.querySelector("[name='size']")?.value,
-            qty: parseInt(row.querySelector("[name='qty']")?.value || 1, 10),
-            remarks: row.querySelector("[name='remarks']")?.value || "",
-            price: 0, // To be calculated by server
-            added_at: new Date().toISOString(),
-            status: "pending" // Initial status for custom orders
-          }));
-        }
-      }
-
-      if (!hasStockItems && !hasMemoItems && !hasCustomItems) {
-        showToast("<i class='bi bi-exclamation-triangle'></i> Please select at least one item or add a custom order.", "warning");
-        return;
-      }
-
-      // Handle regular stock items in cart
-      if (hasStockItems) {
-        const cartKey = "cart_customer";
-        let existing = [];
-        try {
-          existing = JSON.parse(localStorage.getItem(cartKey) || "[]");
-        } catch (e) {
-          console.error("Error parsing cart:", e);
-        }
-
-        // Merge cart items, avoiding duplicates
-        stockCartItems.forEach(item => {
-          if (!existing.some(e => e.job_no === item.job_no && e.design_no === item.design_no)) {
-            existing.push(item);
-          }
-        });
-
-        localStorage.setItem(cartKey, JSON.stringify(existing));
-      }
-
-      // Handle memo items
-      if (hasMemoItems) {
-        let memoRequests = [];
-        try {
-          memoRequests = JSON.parse(localStorage.getItem("memoRequests") || "[]");
-        } catch (e) {
-          console.error("Error parsing memo requests:", e);
-        }
-
-        // Add to memo requests, avoiding duplicates
-        memoCartItems.forEach(item => {
-          if (!memoRequests.some(r => r.job_no === item.job_no && r.design_no === item.design_no)) {
-            memoRequests.push(item);
-          }
-        });
-
-        localStorage.setItem("memoRequests", JSON.stringify(memoRequests));
-      }
-
-      // Handle custom order items
-      if (hasCustomItems) {
-        const customOrdersKey = "custom_orders";
-        let existingOrders = [];
-        try {
-          existingOrders = JSON.parse(localStorage.getItem(customOrdersKey) || "[]");
-        } catch (e) {
-          console.error("Error parsing custom orders:", e);
-        }
-
-        // Add all custom orders (they all have unique IDs)
-        existingOrders.push(...customOrderItems);
-
-        localStorage.setItem(customOrdersKey, JSON.stringify(existingOrders));
-      }
-
-      // Calculate totals for the toast message
-      const stockItemsQty = stockCartItems.reduce((sum, item) => sum + (parseInt(item.qty) || 1), 0);
-      const memoItemsQty = memoCartItems.length;
-      const customItemsQty = customOrderItems.reduce((sum, item) => sum + (parseInt(item.qty) || 1), 0);
-      const totalItems = stockItemsQty + memoItemsQty + customItemsQty;
-
-      // Prepare a more detailed toast message
-      let toastMessage = '';
-      if (totalItems > 0) {
-        toastMessage = `<i class='bi bi-check-circle-fill'></i> ${totalItems} item(s) added to cart. <a href="{% url 'inventory:cart' %}" class="alert-link text-white">View Cart</a>`;
-      }
-
-      showToast(toastMessage, "success");
-
-      // Close the modal after adding to cart
-      const modalInstance = bootstrap.Modal.getInstance(modal);
-      if (modalInstance) modalInstance.hide();
-
-      // Update cart counter in the header
-      updateCartCounter();
-    }
-
-    // Show toast message
-    function showToast(message, type = "success") {
-      const toastEl = document.getElementById("cartToast");
-      const toastBody = toastEl.querySelector(".toast-body");
-
-      // Update toast content and styling
-      toastBody.innerHTML = message;
-
-      // Update Bootstrap classes for different toast types
-      toastEl.className = `toast align-items-center border-0 text-bg-${type}`;
-
-      const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
-      toast.show();
-    }
-
-
-     // 1) CSRF helper
+<!-- Wishlist Functions -->
+<script>
+  // CSRF helper
   function getCookie(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== '') {
@@ -2628,9 +1863,23 @@
     return cookieValue;
   }
 
-    // Toggle item in wishlist
-    function toggleWishlist(btn) {
+  // Toggle item in wishlist
+  function toggleWishlist(btn) {
+    // Check if user is authenticated
+    if (!USER_AUTHENTICATED) {
+      // Redirect to login or show message
+      window.location.href = "{% url 'accounts:login' %}?next=" + window.location.pathname;
+      return;
+    }
+    
     const designNo = btn.dataset.designNo;
+    
+    // Add loading state
+    btn.disabled = true;
+    const icon = btn.querySelector('.bi');
+    const originalClass = icon.className;
+    icon.className = 'bi bi-hourglass-split fs-5';
+    
     fetch("{% url 'inventory:toggle_wishlist' %}", {
       method: 'POST',
       headers: {
@@ -2641,312 +1890,635 @@
     })
     .then(res => res.json())
     .then(data => {
-      const icon = btn.querySelector('.bi');
       if (data.action === 'added') {
+        icon.classList.replace('bi-hourglass-split', 'bi-heart-fill');
+        btn.classList.add('active');
+        currentWishlist.add(designNo);
+        showToast('<i class="bi bi-check-circle"></i> Added to wishlist', 'success');
+      } else {
+        icon.classList.replace('bi-hourglass-split', 'bi-heart');
+        btn.classList.remove('active');
+        currentWishlist.delete(designNo);
+        showToast('<i class="bi bi-check-circle"></i> Removed from wishlist', 'info');
+      }
+      
+      // Update all wishlist buttons for this design
+      updateWishlistButtonsForDesign(designNo);
+      
+      // Update the badge/count in your nav
+      updateWishlistCountBadge(data.count || currentWishlist.size);
+    })
+    .catch(err => {
+      console.error('Wishlist error:', err);
+      icon.className = originalClass;
+      showToast('<i class="bi bi-exclamation-triangle"></i> Failed to update wishlist', 'danger');
+    })
+    .finally(() => {
+      btn.disabled = false;
+    });
+  }
+  
+  // Update all wishlist buttons for a specific design
+  function updateWishlistButtonsForDesign(designNo) {
+    document.querySelectorAll(`.wishlist-btn[data-design-no="${designNo}"]`).forEach(btn => {
+      const icon = btn.querySelector('.bi');
+      if (currentWishlist.has(designNo)) {
         icon.classList.replace('bi-heart', 'bi-heart-fill');
         btn.classList.add('active');
       } else {
         icon.classList.replace('bi-heart-fill', 'bi-heart');
         btn.classList.remove('active');
       }
-      // update the badge/count in your nav if you have one:
-      const badge = document.querySelector('.wishlist-count');
-      if (badge) {
-        badge.textContent = data.count || '';
-        badge.style.display = data.count > 0 ? 'inline-block' : 'none';
+    });
+  }
+  
+  // Update wishlist count badge
+  function updateWishlistCountBadge(count) {
+    const badges = document.querySelectorAll('.wishlist-count');
+    badges.forEach(badge => {
+      badge.textContent = count > 0 ? count : '';
+      badge.style.display = count > 0 ? 'inline-block' : 'none';
+    });
+  }
+  
+  // Initialize wishlist buttons on page load
+  function initializeWishlistButtons() {
+    document.querySelectorAll('.wishlist-btn').forEach(btn => {
+      const designNo = btn.dataset.designNo;
+      const icon = btn.querySelector('.bi');
+      
+      if (currentWishlist.has(designNo)) {
+        icon.classList.replace('bi-heart', 'bi-heart-fill');
+        btn.classList.add('active');
+      } else {
+        icon.classList.replace('bi-heart-fill', 'bi-heart');
+        btn.classList.remove('active');
       }
-    })
-    .catch(err => console.error('Wishlist error:', err));
+    });
+    
+    // Update count badge
+    updateWishlistCountBadge(currentWishlist.size);
+  }
+  
+  // Update wishlist buttons (called after new products are loaded)
+  function updateWishlistButtons() {
+    if (!USER_AUTHENTICATED) return;
+    
+    document.querySelectorAll('.wishlist-btn').forEach(btn => {
+      const designNo = btn.dataset.designNo;
+      const icon = btn.querySelector('.bi');
+      
+      if (currentWishlist.has(designNo)) {
+        icon.classList.replace('bi-heart', 'bi-heart-fill');
+        btn.classList.add('active');
+      } else {
+        icon.classList.replace('bi-heart-fill', 'bi-heart');
+        btn.classList.remove('active');
+      }
+    });
+  }
+</script>
+
+<!-- Custom Order Functions -->
+<script>
+  // Generate a unique order ID
+  function generateOrderId() {
+    return 'order-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
   }
 
-  document.addEventListener('DOMContentLoaded', () => {
-    // Fetch the user’s current wishlist from the server once
-    fetch("{% url 'inventory:wishlist' %}?format=json")
-      .then(res => res.json())
-      .then(json => {
-        const existing = new Set(json.items.map(i => i.design_no));
-        document.querySelectorAll('.wishlist-btn').forEach(btn => {
-          const d = btn.dataset.designNo;
-          const icon = btn.querySelector('.bi');
-          if (existing.has(d)) {
-            icon.classList.replace('bi-heart', 'bi-heart-fill');
-            btn.classList.add('active');
-          }
-        });
-        // also update count badge
-        const badge = document.querySelector('.wishlist-count');
-        if (badge) {
-          badge.textContent = json.items.length || '';
-          badge.style.display = json.items.length > 0 ? 'inline-block' : 'none';
-        }
-      })
-      .catch(() => {/* ignore if endpoint not JSON */});
-  });
+  // Add custom order row with diamond fields
+  function addCustomRow(modalId, designNo) {
+    const table = document.querySelector(`#customOrderTable-${modalId || ''} tbody`);
+    const rowIndex = table.rows.length + 1;
+    const rowId = `custom-row-${modalId || 'main'}-${rowIndex}`;
 
-    // Update all wishlist button icons based on current wishlist
-    function updateWishlistButtons() {
-      try {
-        const wishlist = JSON.parse(localStorage.getItem("user_wishlist") || "[]");
+    const row = document.createElement('tr');
+    row.setAttribute("id", rowId);
+    row.innerHTML = `
+      <td>${rowIndex}</td>
+      <td>
+        <select class="form-select form-select-sm" name="metal_type" required>
+          <option value="Gold" selected>Gold</option>
+          <option value="Platinum">Platinum</option>
+          <option value="Silver">Silver</option>
+        </select>
+      </td>
+      <td>
+        <select class="form-select form-select-sm" name="metal_quality" required>
+          <option value="14k" selected>14k</option>
+          <option value="18k">18k</option>
+          <option value="22k">22k</option>
+        </select>
+      </td>
+      <td>
+        <select class="form-select form-select-sm" name="metal_color" required>
+          <option value="W" selected>White</option>
+          <option value="Y">Yellow</option>
+          <option value="R">Rose</option>
+        </select>
+      </td>
+      <td>
+        <select class="form-select form-select-sm" name="diamond_quality" required>
+          <option value="VVS" selected>VVS</option>
+          <option value="VS">VS</option>
+          <option value="SI">SI</option>
+        </select>
+      </td>
+      <td>
+        <select class="form-select form-select-sm" name="diamond_color" required>
+          <option value="D" selected>D</option>
+          <option value="E">E</option>
+          <option value="F">F</option>
+          <option value="G">G</option>
+          <option value="H">H</option>
+          <option value="I">I</option>
+          <option value="J">J</option>
+        </select>
+      </td>
+      <td>
+        <input type="number" min="1" max="100" step="0.1" class="form-control form-select-sm" 
+          name="size" placeholder="e.g. 6.5" required
+          oninput="this.classList.remove('is-invalid')">
+        <div class="invalid-feedback">Please enter a valid size</div>
+      </td>
+      <td>
+        <input type="number" min="1" max="100" class="form-control form-select-sm" 
+          name="qty" value="1" required
+          oninput="this.classList.remove('is-invalid')">
+        <div class="invalid-feedback">Please enter a quantity</div>
+      </td>
+      <td>
+        <input type="text" class="form-control form-select-sm" name="remarks" 
+          placeholder="Special instructions">
+      </td>
+      <td>
+        <button class="btn btn-sm btn-danger" onclick="removeCustomRow('${rowId}')">
+          <i class="bi bi-trash"></i>
+        </button>
+      </td>
+    `;
 
-        // Get all wishlist buttons
-        document.querySelectorAll('.wishlist-btn').forEach(btn => {
-          // Find parent row or card to get design number
-          const row = btn.closest('tr');
-          const card = btn.closest('.card');
-
-          let designNo, jobNo;
-
-          if (row) {
-            designNo = row.querySelector('td:nth-child(3)')?.textContent.trim();
-            jobNo = btn.getAttribute('data-job_no') || '';
-          } else if (card) {
-            designNo = card.querySelector('.card-title')?.textContent.trim();
-            jobNo = '';
-          } else {
-            // Button is in a modal
-            const modal = btn.closest('.modal');
-            if (modal) {
-              const title = modal.querySelector('.modal-title')?.textContent || '';
-              designNo = title.replace('Images -', '').replace('Order:', '').trim();
-              jobNo = btn.getAttribute('data-job_no') || '';
-            }
-          }
-
-          // Skip if we couldn't determine the design number
-          if (!designNo) return;
-
-          // Check if this item is in the wishlist
-          const isInWishlist = wishlist.some(item =>
-            item.design_no === designNo && (jobNo ? item.job_no === jobNo : true)
-          );
-
-          // Update button icon
-          const icon = btn.querySelector('.bi');
-          if (icon) {
-            if (isInWishlist) {
-              icon.classList.remove('bi-heart');
-              icon.classList.add('bi-heart-fill');
-              btn.classList.add('active');
-            } else {
-              icon.classList.remove('bi-heart-fill');
-              icon.classList.add('bi-heart');
-              btn.classList.remove('active');
-            }
-          }
-        });
-
-      } catch (error) {
-        console.error("Error updating wishlist buttons:", error);
-      }
-    }
-
-    // Update wishlist count in navbar
-    function updateWishlistCount() {
-      try {
-        const wishlist = JSON.parse(localStorage.getItem("user_wishlist") || "[]");
-        const count = wishlist.length;
-
-        const countBadge = document.querySelector('.wishlist-count');
-        if (countBadge) {
-          countBadge.textContent = count > 0 ? count : '';
-          countBadge.style.display = count > 0 ? 'inline-block' : 'none';
-        }
-      } catch (error) {
-        console.error("Error updating wishlist count:", error);
-      }
-    }
-
-    // Update cart counter in navbar
-    function updateCartCounter() {
-      const cartCounter = document.querySelector(".cart-counter");
-      if (!cartCounter) return;
-
-      try {
-        // Count all types of items in the cart
-        const stockItems = JSON.parse(localStorage.getItem("cart_customer") || "[]");
-        const memoItems = JSON.parse(localStorage.getItem("memoRequests") || "[]");
-        const customItems = JSON.parse(localStorage.getItem("custom_orders") || "[]");
-
-        const count = stockItems.length + memoItems.length + customItems.length;
-
-        cartCounter.textContent = count > 0 ? count : '';
-        cartCounter.style.display = count > 0 ? 'inline-block' : 'none';
-      } catch (e) {
-        console.error("Error reading cart:", e);
-      }
-    }
-
-    // Memo Request Handler
-    document.addEventListener("DOMContentLoaded", function () {
-      let selectedMemoJobs = [];
-
-      // Handle memo request button
-      document.querySelectorAll(".request-selected-memo-btn").forEach(button => {
-        button.addEventListener("click", () => {
-          const modal = button.closest(".modal");
-          const checkboxes = modal.querySelectorAll(".memo-checkbox:checked");
-
-          if (checkboxes.length === 0) {
-            showToast("<i class='bi bi-exclamation-triangle'></i> Please select at least one memo item.", "warning");
-            return;
-          }
-
-          // Collect selected jobs
-          selectedMemoJobs = Array.from(checkboxes).map(chk => ({
-            design_no: chk.dataset.design,
-            job_no: chk.dataset.job_no
-          }));
-
-          // Render job list in confirmation modal
-          const jobList = document.getElementById("memoJobList");
-          jobList.innerHTML = selectedMemoJobs.map(j =>
-            `<li class="list-group-item">${j.design_no} – Job ${j.job_no}</li>`
-          ).join("");
-
-          // Show the modal
-          const confirmModal = new bootstrap.Modal(document.getElementById("memoConfirmModal"));
-          confirmModal.show();
-        });
-      });
-
-      // Proceed button saves to localStorage
-      document.getElementById("proceedMemoItemsBtn")?.addEventListener("click", () => {
-        let memoRequests = [];
-        try {
-          memoRequests = JSON.parse(localStorage.getItem("memoRequests") || "[]");
-        } catch (e) {
-          console.error("Error parsing memo requests:", e);
-        }
-
-        selectedMemoJobs.forEach(job => {
-          if (!memoRequests.some(j => j.job_no === job.job_no && j.design_no === job.design_no)) {
-            memoRequests.push({
-              ...job,
-              requested_at: new Date().toISOString()
-            });
-          }
-        });
-
-        try {
-          localStorage.setItem("memoRequests", JSON.stringify(memoRequests));
-          showToast("<i class='bi bi-check-circle-fill'></i> Memo requests saved successfully.", "success");
-          // Update the cart counter
-          updateCartCounter();
-        } catch (e) {
-          console.error("Error saving memo requests:", e);
-          showToast("<i class='bi bi-exclamation-triangle'></i> Could not save memo requests. Please try again.", "warning");
+    // Add event listeners for validation
+    const requiredFields = row.querySelectorAll('[required]');
+    requiredFields.forEach(field => {
+      field.addEventListener('blur', function () {
+        if (!this.value.trim()) {
+          this.classList.add('is-invalid');
+        } else {
+          this.classList.remove('is-invalid');
         }
       });
-
-      // Initialize cart counter if present
-      updateCartCounter();
-      updateWishlistCount();
     });
-  </script>
 
-  <!-- Scroll to Top Button Functionality -->
-  <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      const scrollToTopBtn = document.getElementById('scrollToTopBtn');
+    table.appendChild(row);
 
-      if (!scrollToTopBtn) {
-        console.error('Scroll to top button not found');
+    // Focus the first field for better UX
+    setTimeout(() => {
+      const firstField = row.querySelector('select, input');
+      if (firstField) firstField.focus();
+    }, 10);
+  }
+
+  function removeCustomRow(rowId) {
+    const row = document.getElementById(rowId);
+    if (row) {
+      row.remove();
+
+      // Renumber remaining rows
+      const modalId = rowId.split('-')[2];
+      const table = document.querySelector(`#customOrderTable-${modalId} tbody`);
+
+      Array.from(table.rows).forEach((row, idx) => {
+        row.cells[0].textContent = idx + 1;
+      });
+    }
+  }
+
+  // Enhanced Cart Management with Diamond Fields
+  function addToCart(designNo, modalId) {
+    const modal = document.getElementById(`modal-${modalId}`);
+    const checkboxes = modal.querySelectorAll(".job-checkbox:checked");
+    const memoCheckboxes = modal.querySelectorAll(".memo-checkbox:checked");
+    const customRows = modal.querySelectorAll(`#customOrderTable-${modalId} tbody tr`);
+
+    let hasStockItems = false;
+    let hasMemoItems = false;
+    let hasCustomItems = false;
+    let stockCartItems = [];
+    let memoCartItems = [];
+    let customOrderItems = [];
+
+    // Process selected in-stock items
+    if (checkboxes.length > 0) {
+      hasStockItems = true;
+
+      stockCartItems = Array.from(checkboxes).map(chk => {
+        // Get parent row to extract all details
+        const row = chk.closest('tr');
+
+        // Extract all data from the row cells
+        const jobNo = chk.dataset.job_no;
+        const metal = row.cells[2].textContent.trim();
+        const quality = row.cells[3].textContent.trim();
+        const color = row.cells[4].textContent.trim();
+        const diamondQuality = row.cells[5].textContent.trim();
+        const diamondColor = row.cells[6].textContent.trim();
+        const gwt = row.cells[7].textContent.trim();
+        const size = row.cells[8].textContent.trim();
+        const price = parseFloat(chk.dataset.price || 0);
+
+        // Store all details
+        return {
+          design_no: chk.dataset.design,
+          job_no: jobNo,
+          metal_type: metal,
+          metal_quality: quality,
+          metal_color: color,
+          diamond_quality: diamondQuality,
+          diamond_color: diamondColor,
+          gwt: gwt,
+          size: size,
+          qty: 1,
+          price: price,
+          type: "stock",
+          added_at: new Date().toISOString()
+        };
+      });
+    }
+
+    // Process selected memo items
+    if (memoCheckboxes.length > 0) {
+      hasMemoItems = true;
+
+      memoCartItems = Array.from(memoCheckboxes).map(chk => {
+        // Get parent row to extract all details
+        const row = chk.closest('tr');
+
+        // Extract all data from the row cells
+        const jobNo = chk.dataset.job_no;
+        const metal = row.cells[2].textContent.trim();
+        const quality = row.cells[3].textContent.trim();
+        const color = row.cells[4].textContent.trim();
+        const diamondQuality = row.cells[5].textContent.trim();
+        const diamondColor = row.cells[6].textContent.trim();
+        const gwt = row.cells[7].textContent.trim();
+        const size = row.cells[8].textContent.trim();
+        const price = parseFloat(row.cells[9].textContent.replace('$', '') || 0);
+
+        return {
+          design_no: chk.dataset.design,
+          job_no: jobNo,
+          metal_type: metal,
+          metal_quality: quality,
+          metal_color: color,
+          diamond_quality: diamondQuality,
+          diamond_color: diamondColor,
+          gwt: gwt,
+          size: size,
+          requested_at: new Date().toISOString(),
+          price: price,
+          type: "memo"
+        };
+      });
+    }
+
+    // Process custom order items
+    if (customRows.length > 0) {
+      // Validate required fields before processing
+      const validRows = [];
+      let hasInvalidRows = false;
+
+      customRows.forEach(row => {
+        const size = row.querySelector("[name='size']")?.value;
+        const qty = row.querySelector("[name='qty']")?.value;
+
+        if (!size || !qty) {
+          hasInvalidRows = true;
+          // Highlight invalid fields
+          if (!size) row.querySelector("[name='size']").classList.add('is-invalid');
+          if (!qty) row.querySelector("[name='qty']").classList.add('is-invalid');
+        } else {
+          // Clear any previous validation errors
+          row.querySelectorAll('.is-invalid').forEach(field => field.classList.remove('is-invalid'));
+          validRows.push(row);
+        }
+      });
+
+      if (hasInvalidRows) {
+        showToast("<i class='bi bi-exclamation-triangle'></i> Please fill in all required fields (Size and Quantity).", "warning");
         return;
       }
 
-      // Create progress ring (optional enhancement)
-      const progressRing = document.createElement('svg');
-      progressRing.innerHTML = `
-        <circle cx="25" cy="25" r="20" 
-                stroke="#ffffff" 
-                stroke-width="3" 
-                fill="none" 
-                stroke-dasharray="126" 
-                stroke-dashoffset="126"
-                style="transform: rotate(-90deg); transform-origin: center;">
-        </circle>
-      `;
-      progressRing.style.cssText = 'position: absolute; width: 50px; height: 50px; pointer-events: none;';
-      scrollToTopBtn.appendChild(progressRing);
+      // Process valid rows
+      if (validRows.length > 0) {
+        hasCustomItems = true;
 
-      const circle = progressRing.querySelector('circle');
-      const circumference = 2 * Math.PI * 20;
+        customOrderItems = validRows.map(row => ({
+          order_id: generateOrderId(),
+          design_no: designNo,
+          metal_type: row.querySelector("[name='metal_type']")?.value || "Gold",
+          metal_quality: row.querySelector("[name='metal_quality']")?.value || "14k",
+          metal_color: row.querySelector("[name='metal_color']")?.value || "W",
+          diamond_quality: row.querySelector("[name='diamond_quality']")?.value || "VVS",
+          diamond_color: row.querySelector("[name='diamond_color']")?.value || "D",
+          size: row.querySelector("[name='size']")?.value,
+          qty: parseInt(row.querySelector("[name='qty']")?.value || 1, 10),
+          remarks: row.querySelector("[name='remarks']")?.value || "",
+          price: 0, // To be calculated by server
+          added_at: new Date().toISOString(),
+          status: "pending" // Initial status for custom orders
+        }));
+      }
+    }
 
-      // Calculate scroll progress and update button
-      function updateScrollProgress() {
-        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-        const docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-        const scrollPercent = (scrollTop / docHeight) * 100;
+    if (!hasStockItems && !hasMemoItems && !hasCustomItems) {
+      showToast("<i class='bi bi-exclamation-triangle'></i> Please select at least one item or add a custom order.", "warning");
+      return;
+    }
 
-        // Show/hide button
-        if (scrollTop > 300) {
-          scrollToTopBtn.classList.add('show');
-        } else {
-          scrollToTopBtn.classList.remove('show');
-        }
-
-        // Update progress ring
-        if (circle) {
-          const offset = circumference - (scrollPercent / 100 * circumference);
-          circle.style.strokeDashoffset = offset;
-        }
+    // Handle regular stock items in cart
+    if (hasStockItems) {
+      const cartKey = "cart_customer";
+      let existing = [];
+      try {
+        existing = JSON.parse(localStorage.getItem(cartKey) || "[]");
+      } catch (e) {
+        console.error("Error parsing cart:", e);
       }
 
-      // Smooth scroll to top with easing
-      function scrollToTop() {
-        const startPosition = window.pageYOffset;
-        const duration = 600; // milliseconds
-        let startTime = null;
-
-        function easeInOutCubic(t) {
-          return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-        }
-
-        function animation(currentTime) {
-          if (startTime === null) startTime = currentTime;
-          const timeElapsed = currentTime - startTime;
-          const progress = Math.min(timeElapsed / duration, 1);
-
-          window.scrollTo(0, startPosition * (1 - easeInOutCubic(progress)));
-
-          if (timeElapsed < duration) {
-            requestAnimationFrame(animation);
-          }
-        }
-
-        requestAnimationFrame(animation);
-      }
-
-      // Throttle for better performance
-      function throttle(func, limit) {
-        let inThrottle;
-        return function () {
-          const args = arguments;
-          const context = this;
-          if (!inThrottle) {
-            func.apply(context, args);
-            inThrottle = true;
-            setTimeout(() => inThrottle = false, limit);
-          }
-        }
-      }
-
-      // Event listeners
-      window.addEventListener('scroll', throttle(updateScrollProgress, 50));
-      scrollToTopBtn.addEventListener('click', scrollToTop);
-
-      // Keyboard accessibility
-      scrollToTopBtn.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          scrollToTop();
+      // Merge cart items, avoiding duplicates
+      stockCartItems.forEach(item => {
+        if (!existing.some(e => e.job_no === item.job_no && e.design_no === item.design_no)) {
+          existing.push(item);
         }
       });
 
-      // Initial check
-      updateScrollProgress();
+      localStorage.setItem(cartKey, JSON.stringify(existing));
+    }
+
+    // Handle memo items
+    if (hasMemoItems) {
+      let memoRequests = [];
+      try {
+        memoRequests = JSON.parse(localStorage.getItem("memoRequests") || "[]");
+      } catch (e) {
+        console.error("Error parsing memo requests:", e);
+      }
+
+      // Add to memo requests, avoiding duplicates
+      memoCartItems.forEach(item => {
+        if (!memoRequests.some(r => r.job_no === item.job_no && r.design_no === item.design_no)) {
+          memoRequests.push(item);
+        }
+      });
+
+      localStorage.setItem("memoRequests", JSON.stringify(memoRequests));
+    }
+
+    // Handle custom order items
+    if (hasCustomItems) {
+      const customOrdersKey = "custom_orders";
+      let existingOrders = [];
+      try {
+        existingOrders = JSON.parse(localStorage.getItem(customOrdersKey) || "[]");
+      } catch (e) {
+        console.error("Error parsing custom orders:", e);
+      }
+
+      // Add all custom orders (they all have unique IDs)
+      existingOrders.push(...customOrderItems);
+
+      localStorage.setItem(customOrdersKey, JSON.stringify(existingOrders));
+    }
+
+    // Calculate totals for the toast message
+    const stockItemsQty = stockCartItems.reduce((sum, item) => sum + (parseInt(item.qty) || 1), 0);
+    const memoItemsQty = memoCartItems.length;
+    const customItemsQty = customOrderItems.reduce((sum, item) => sum + (parseInt(item.qty) || 1), 0);
+    const totalItems = stockItemsQty + memoItemsQty + customItemsQty;
+
+    // Prepare a more detailed toast message
+    let toastMessage = '';
+    if (totalItems > 0) {
+      toastMessage = `<i class='bi bi-check-circle-fill'></i> ${totalItems} item(s) added to cart. <a href="{% url 'inventory:cart' %}" class="alert-link text-white">View Cart</a>`;
+    }
+
+    showToast(toastMessage, "success");
+
+    // Close the modal after adding to cart
+    const modalInstance = bootstrap.Modal.getInstance(modal);
+    if (modalInstance) modalInstance.hide();
+
+    // Update cart counter in the header
+    updateCartCounter();
+  }
+
+  // Show toast message
+  function showToast(message, type = "success") {
+    const toastEl = document.getElementById("cartToast");
+    const toastBody = toastEl.querySelector(".toast-body");
+
+    // Update toast content and styling
+    toastBody.innerHTML = message;
+
+    // Update Bootstrap classes for different toast types
+    toastEl.className = `toast align-items-center border-0 text-bg-${type}`;
+
+    const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
+    toast.show();
+  }
+
+  // Update cart counter in navbar
+  function updateCartCounter() {
+    const cartCounter = document.querySelector(".cart-counter");
+    if (!cartCounter) return;
+
+    try {
+      // Count all types of items in the cart
+      const stockItems = JSON.parse(localStorage.getItem("cart_customer") || "[]");
+      const memoItems = JSON.parse(localStorage.getItem("memoRequests") || "[]");
+      const customItems = JSON.parse(localStorage.getItem("custom_orders") || "[]");
+
+      const count = stockItems.length + memoItems.length + customItems.length;
+
+      cartCounter.textContent = count > 0 ? count : '';
+      cartCounter.style.display = count > 0 ? 'inline-block' : 'none';
+    } catch (e) {
+      console.error("Error reading cart:", e);
+    }
+  }
+
+  // Memo Request Handler
+  document.addEventListener("DOMContentLoaded", function () {
+    let selectedMemoJobs = [];
+
+    // Handle memo request button
+    document.querySelectorAll(".request-selected-memo-btn").forEach(button => {
+      button.addEventListener("click", () => {
+        const modal = button.closest(".modal");
+        const checkboxes = modal.querySelectorAll(".memo-checkbox:checked");
+
+        if (checkboxes.length === 0) {
+          showToast("<i class='bi bi-exclamation-triangle'></i> Please select at least one memo item.", "warning");
+          return;
+        }
+
+        // Collect selected jobs
+        selectedMemoJobs = Array.from(checkboxes).map(chk => ({
+          design_no: chk.dataset.design,
+          job_no: chk.dataset.job_no
+        }));
+
+        // Render job list in confirmation modal
+        const jobList = document.getElementById("memoJobList");
+        jobList.innerHTML = selectedMemoJobs.map(j =>
+          `<li class="list-group-item">${j.design_no} – Job ${j.job_no}</li>`
+        ).join("");
+
+        // Show the modal
+        const confirmModal = new bootstrap.Modal(document.getElementById("memoConfirmModal"));
+        confirmModal.show();
+      });
     });
-  </script>
+
+    // Proceed button saves to localStorage
+    document.getElementById("proceedMemoItemsBtn")?.addEventListener("click", () => {
+      let memoRequests = [];
+      try {
+        memoRequests = JSON.parse(localStorage.getItem("memoRequests") || "[]");
+      } catch (e) {
+        console.error("Error parsing memo requests:", e);
+      }
+
+      selectedMemoJobs.forEach(job => {
+        if (!memoRequests.some(j => j.job_no === job.job_no && j.design_no === job.design_no)) {
+          memoRequests.push({
+            ...job,
+            requested_at: new Date().toISOString()
+          });
+        }
+      });
+
+      try {
+        localStorage.setItem("memoRequests", JSON.stringify(memoRequests));
+        showToast("<i class='bi bi-check-circle-fill'></i> Memo requests saved successfully.", "success");
+        // Update the cart counter
+        updateCartCounter();
+      } catch (e) {
+        console.error("Error saving memo requests:", e);
+        showToast("<i class='bi bi-exclamation-triangle'></i> Could not save memo requests. Please try again.", "warning");
+      }
+    });
+
+    // Initialize cart counter if present
+    updateCartCounter();
+    initializeWishlistButtons();
+  });
+</script>
+
+<!-- Scroll to Top Button Functionality -->
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const scrollToTopBtn = document.getElementById('scrollToTopBtn');
+
+    if (!scrollToTopBtn) {
+      console.error('Scroll to top button not found');
+      return;
+    }
+
+    // Create progress ring (optional enhancement)
+    const progressRing = document.createElement('svg');
+    progressRing.innerHTML = `
+      <circle cx="25" cy="25" r="20" 
+              stroke="#ffffff" 
+              stroke-width="3" 
+              fill="none" 
+              stroke-dasharray="126" 
+              stroke-dashoffset="126"
+              style="transform: rotate(-90deg); transform-origin: center;">
+      </circle>
+    `;
+    progressRing.style.cssText = 'position: absolute; width: 50px; height: 50px; pointer-events: none;';
+    scrollToTopBtn.appendChild(progressRing);
+
+    const circle = progressRing.querySelector('circle');
+    const circumference = 2 * Math.PI * 20;
+
+    // Calculate scroll progress and update button
+    function updateScrollProgress() {
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      const docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      const scrollPercent = (scrollTop / docHeight) * 100;
+
+      // Show/hide button
+      if (scrollTop > 300) {
+        scrollToTopBtn.classList.add('show');
+      } else {
+        scrollToTopBtn.classList.remove('show');
+      }
+
+      // Update progress ring
+      if (circle) {
+        const offset = circumference - (scrollPercent / 100 * circumference);
+        circle.style.strokeDashoffset = offset;
+      }
+    }
+
+    // Smooth scroll to top with easing
+    function scrollToTop() {
+      const startPosition = window.pageYOffset;
+      const duration = 600; // milliseconds
+      let startTime = null;
+
+      function easeInOutCubic(t) {
+        return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+      }
+
+      function animation(currentTime) {
+        if (startTime === null) startTime = currentTime;
+        const timeElapsed = currentTime - startTime;
+        const progress = Math.min(timeElapsed / duration, 1);
+
+        window.scrollTo(0, startPosition * (1 - easeInOutCubic(progress)));
+
+        if (timeElapsed < duration) {
+          requestAnimationFrame(animation);
+        }
+      }
+
+      requestAnimationFrame(animation);
+    }
+
+    // Throttle for better performance
+    function throttle(func, limit) {
+      let inThrottle;
+      return function () {
+        const args = arguments;
+        const context = this;
+        if (!inThrottle) {
+          func.apply(context, args);
+          inThrottle = true;
+          setTimeout(() => inThrottle = false, limit);
+        }
+      }
+    }
+
+    // Event listeners
+    window.addEventListener('scroll', throttle(updateScrollProgress, 50));
+    scrollToTopBtn.addEventListener('click', scrollToTop);
+
+    // Keyboard accessibility
+    scrollToTopBtn.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        scrollToTop();
+      }
+    });
+
+    // Initial check
+    updateScrollProgress();
+  });
+</script>
 </body>
 
 </html>

@@ -286,7 +286,7 @@ def inventory_dashboard(request):
 def inventory_list_ajax(request):
     """
     AJAX endpoint for loading products with advanced filters
-    including job number search capability
+    including job number search capability and wishlist data
     """
     try:
         # Parse query parameters
@@ -307,12 +307,19 @@ def inventory_list_ajax(request):
         # Get all products from cache/API
         all_products = fetch_products()
         
+        # Get user's wishlist items if authenticated
+        wishlist_design_nos = []
+        if request.user.is_authenticated:
+            wishlist_design_nos = list(
+                Wishlist.objects.filter(user=request.user)
+                .values_list('design_no', flat=True)
+            )
+        
         # Log the search query for debugging
         if search_query:
             logger.info(f"Searching for: '{search_query}'")
             
         # First check if the search query exactly matches any job number
-        # This is a more direct approach to find job numbers
         if search_query:
             # Check if search query could be a job number
             job_matches = []
@@ -404,6 +411,10 @@ def inventory_list_ajax(request):
         elif sort_by == 'newest':
             filtered_products.sort(key=lambda p: p.get('created_at', ''), reverse=True)
         
+        # Add wishlist flag to each product
+        for product in filtered_products:
+            product['is_wishlisted'] = product.get('design_no') in wishlist_design_nos
+        
         # Paginate the results
         total_count = len(filtered_products)
         start_idx = (page - 1) * limit
@@ -417,7 +428,9 @@ def inventory_list_ajax(request):
             'products': paginated_products,
             'has_more': end_idx < total_count,
             'total_count': total_count,
-            'current_page': page
+            'current_page': page,
+            'wishlist_design_nos': wishlist_design_nos,
+            'user_authenticated': request.user.is_authenticated,
         })
         
     except Exception as e:
@@ -449,12 +462,23 @@ def inventory_list(request):
         total_count = Design.objects.filter(is_active=True).count()
         has_more = len(designs) < total_count
         
+        # Get user's wishlist items if authenticated
+        wishlist_design_nos = []
+        if request.user.is_authenticated:
+            wishlist_design_nos = list(
+                Wishlist.objects.filter(user=request.user)
+                .values_list('design_no', flat=True)
+            )
+        
         logger.info(f"Initial products: {len(filtered_products)}, has_more: {has_more}")
+        logger.info(f"User wishlist items: {len(wishlist_design_nos)}")
         
         return render(request, 'inventory/inventory.html', {
             'products': filtered_products,
             'has_more': has_more,
-            'total_count': total_count
+            'total_count': total_count,
+            'wishlist_design_nos': wishlist_design_nos,  # Pass wishlist data
+            'user_authenticated': request.user.is_authenticated,  # Pass auth status
         })
     except Exception as e:
         logger.error(f"Error rendering inventory: {str(e)}", exc_info=True)
