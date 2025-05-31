@@ -295,34 +295,27 @@
   <!-- SCRIPT -->
   <script>
     document.addEventListener("DOMContentLoaded", async () => {
-      const cartItems = document.getElementById("cartItems");
-      const emptyCart = document.getElementById("emptyCart");
-      const totalItemsEl = document.getElementById("totalItems");
-      const subtotalAmountEl = document.getElementById("subtotalAmount");
-      const shippingCostEl = document.getElementById("shippingCost");
-      const taxAmountEl = document.getElementById("taxAmount");
-      const discountAmountEl = document.getElementById("discountAmount");
-      const totalAmountEl = document.getElementById("totalAmount");
-      const orderSummaryCard = document.getElementById("orderSummaryCard");
-      const checkoutBtn = document.getElementById("checkoutBtn");
-      const summaryDetails = document.getElementById("summaryDetails");
-      const standardShipping = document.getElementById("standardShipping");
-      const expressShipping = document.getElementById("expressShipping");
-      const promoCodeInput = document.getElementById("promoCode");
-      const applyPromoBtn = document.getElementById("applyPromoBtn");
+  // UI element refs
+  const cartItemsDiv = document.getElementById("cartItems");
+  const emptyCart = document.getElementById("emptyCart");
+  const totalItemsEl = document.getElementById("totalItems");
+  const subtotalAmountEl = document.getElementById("subtotalAmount");
+  const shippingCostEl = document.getElementById("shippingCost");
+  const taxAmountEl = document.getElementById("taxAmount");
+  const discountAmountEl = document.getElementById("discountAmount");
+  const totalAmountEl = document.getElementById("totalAmount");
+  const checkoutBtn = document.getElementById("checkoutBtn");
+  const summaryDetails = document.getElementById("summaryDetails");
+  const standardShipping = document.getElementById("standardShipping");
+  const expressShipping = document.getElementById("expressShipping");
+  const promoCodeInput = document.getElementById("promoCode");
+  const applyPromoBtn = document.getElementById("applyPromoBtn");
 
-      // Shipping rates
-      const SHIPPING_RATES = {
-        standard: 9.99,
-        express: 19.99
-      };
-
-      // Tax rate
-      const TAX_RATE = 0.08;
-
-      // Discount amounts (will be populated when promo code is applied)
-      let discountRate = 0;
-      let promoApplied = false;
+       // Constants
+  const SHIPPING_RATES = { standard: 9.99, express: 19.99 };
+  const TAX_RATE = 0.08;
+  let discountRate = 0;
+  let promoApplied = false;
 
       // Order types
       const ORDER_TYPES = {
@@ -337,13 +330,30 @@
 
       // Load inventory data from backend
       let inventoryData = {};
-      try {
-        // Get inventory data that was passed from the backend
-        inventoryData = JSON.parse('{{ inventory_data|safe }}' || '{}');
-      } catch (e) {
-        console.error("Error parsing inventory data:", e);
-        inventoryData = {};
-      }
+try {
+  inventoryData = JSON.parse('{{ inventory_data|safe }}' || '{}');
+} catch (e) {
+  console.error("Error parsing inventory data:", e);
+  inventoryData = {};
+}
+
+      async function fetchCartFromDB() {
+  try {
+    const response = await fetch('/api/cart/get/');
+    const data = await response.json();
+    if (data.success) {
+      return data.items;
+    } else {
+      console.error("Error fetching cart data:", data.error);
+      return [];
+    }
+  } catch (err) {
+    console.error("Error fetching cart data:", err);
+    return [];
+  }
+}
+
+
 
       // Load all items from localStorage
       function loadAllItems() {
@@ -382,20 +392,26 @@
       }
 
       // Load and normalize dates for all items
-      const items = loadAllItems();
+      const localItems = loadAllItems();
+
+      
+      // Get all cart items from DB
+      const dbItems = await fetchCartFromDB();
+const items = dbItems.length ? dbItems : loadAllItems();
 
       // Save all items back to localStorage with normalized dates (we'll update each storage separately)
       const stockItems = items.filter(item => item.itemType === ORDER_TYPES.STOCK);
       localStorage.setItem("cart_customer", JSON.stringify(stockItems));
 
-      // Check if cart is empty
-      if (items.length === 0) {
-        // Show empty cart message
-        emptyCart.classList.remove("d-none");
-        cartItems.classList.add("d-none");
-        document.getElementById("discountRow").style.display = "none";
-        return; // Exit early
-      }
+
+
+      
+  if (items.length === 0) {
+    emptyCart.classList.remove("d-none");
+    cartItemsDiv.classList.add("d-none");
+    document.getElementById("discountRow").style.display = "none";
+    return;
+  }
 
       // Cart has items - hide empty message and show items
       emptyCart.classList.add("d-none");
@@ -1202,20 +1218,34 @@
     });
 
     function getCookie(name) {
-      let cookieValue = null;
-      if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0;i < cookies.length;i++) {
-          const cookie = cookies[i].trim();
-          if (cookie.substring(0, name.length + 1) === (name + '=')) {
-            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-            break;
-          }
-        }
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0;i < cookies.length;i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
       }
-      return cookieValue;
     }
+  }
+  return cookieValue;
+}
 
+// Fetch cart items from server
+
+
+// Save cart items to server
+async function saveCartToDB(cartItems) {
+  await fetch('/api/cart/save/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': getCookie('csrftoken')
+    },
+    body: JSON.stringify({ items: cartItems })
+  });
+}
 
     // Show toast message
     function showToast(message, type = "success") {

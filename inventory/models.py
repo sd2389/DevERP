@@ -341,3 +341,27 @@ class Wishlist(models.Model):
         db_table = 'inventory_wishlist'
         unique_together = ('user', 'design_no')
         managed = False     # tells Django “the table already exists—don’t try to create or delete it”
+
+class Cart(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='carts')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+class CartItem(models.Model):
+    cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='items')
+    design_no = models.CharField(max_length=50)
+    job_no = models.CharField(max_length=50)
+    metal_type = models.CharField(max_length=30)
+    metal_quality = models.CharField(max_length=30)
+    metal_color = models.CharField(max_length=30, blank=True, null=True)
+    diamond_quality = models.CharField(max_length=30, blank=True, null=True)
+    diamond_color = models.CharField(max_length=30, blank=True, null=True)
+    gwt = models.DecimalField(max_digits=10, decimal_places=3)
+    nwt = models.DecimalField(max_digits=10, decimal_places=3)
+    dwt = models.DecimalField(max_digits=10, decimal_places=3)
+    pcs = models.IntegerField(default=1)
+    size = models.CharField(max_length=20)
+    totamt = models.DecimalField(max_digits=12, decimal_places=2)
+    item_type = models.CharField(max_length=10, choices=[('stock', 'Stock'), ('memo', 'Memo'), ('custom', 'Custom')])
+    custom_remark = models.TextField(blank=True, null=True)
+    added_at = models.DateTimeField(auto_now_add=True)

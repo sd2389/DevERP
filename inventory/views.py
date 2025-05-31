@@ -22,7 +22,7 @@ import io
 from datetime import datetime
 import uuid
 from django.core.cache import cache
-from .models import Wishlist, Design, InventoryItem, Category, UserProfile
+from .models import Wishlist, Design, InventoryItem, Category, UserProfile, Cart, CartItem
 from orders.models import Order, OrderItem, Customer
 from orders.utils import get_next_order_number
 order_number = get_next_order_number()
@@ -1299,6 +1299,82 @@ def remove_from_cart(request):
             'success': False,
             'error': str(e)
         }, status=500)
+        
+        
+@require_POST
+@login_required
+def save_cart(request):
+    try:
+        data = json.loads(request.body)
+        cart, created = Cart.objects.get_or_create(user=request.user)
+        cart.items.all().delete()  # Clear existing items
+        
+        for item in data.get('items', []):
+            CartItem.objects.create(
+                cart=cart,
+                design_no=item.get('design_no'),
+                item_type=item.get('item_type', 'stock'),
+                job_no=item.get('job_no'),
+                price=item.get('price', 0),
+                quantity=item.get('quantity', 1),
+                subtotal=item.get('subtotal', 0),
+                custom_remarks=item.get('custom_remark', ''),
+                gwt=item.get('gwt', ''),
+                nwt=item.get('nwt', ''),
+                dwt=item.get('dwt', ''),
+                dpcs=item.get('dpcs', ''),
+                metal=item.get('metal', ''),
+                clarity=item.get('diamond_quality', ''),
+                color=item.get('diamond_color', ''),
+                in_stock=item.get('in_stock', 1),
+                on_memo=item.get('on_memo', 0),
+                custom_order=item.get('custom_order', 0)
+            )
+        return JsonResponse({'success': True, 'message': 'Cart saved successfully!'})
+    except Exception as e:
+        logger.error(f"Error saving cart: {str(e)}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+# views.py
+
+@require_GET
+@login_required
+def get_cart(request):
+    """
+    API endpoint to get all items in the user's cart.
+    """
+    try:
+        cart = Cart.objects.get(user=request.user)
+        items = cart.items.all()
+        data = []
+        for item in items:
+            data.append({
+                'design_no': item.design_no,
+                'job_no': item.job_no,
+                'metal_type': item.metal_type,
+                'metal_quality': item.metal_quality,
+                'metal_color': item.metal_color,
+                'diamond_quality': item.diamond_quality,
+                'diamond_color': item.diamond_color,
+                'gwt': float(item.gwt),
+                'nwt': float(item.nwt),
+                'dwt': float(item.dwt),
+                'pcs': item.pcs,
+                'size': item.size,
+                'totamt': float(item.totamt),
+                'item_type': item.item_type,
+                'custom_remark': item.custom_remark or "",
+                'added_at': item.added_at.isoformat()
+            })
+        return JsonResponse({'success': True, 'items': data})
+    except Cart.DoesNotExist:
+        return JsonResponse({'success': True, 'items': []})
+    except Exception as e:
+        logger.error(f"Error fetching cart: {str(e)}", exc_info=True)
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+   
+
 
 @login_required
 def admin_orders_view(request):
