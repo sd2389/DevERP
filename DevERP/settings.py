@@ -178,9 +178,9 @@ AUTHENTICATION_BACKENDS = [
 AUTH_USER_MODEL = 'accounts.User'
 
 # Login URLs
-LOGIN_URL = '/login/'
+LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = 'inventory:inventory'  # Default redirect after login
-LOGOUT_REDIRECT_URL = '/login/'
+LOGOUT_REDIRECT_URL = '/accounts/login/'
 
 # Session settings
 SESSION_COOKIE_AGE = 6 * 60 * 60  # 6 hours (in seconds)

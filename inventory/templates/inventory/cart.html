@@ -87,6 +87,95 @@
       border-radius: 0.5rem;
       font-weight: 500;
     }
+
+    /* Enhanced table styles */
+    .table> :not(caption)>*>* {
+      padding: 1rem;
+    }
+
+    .table tbody tr {
+      transition: all 0.2s ease;
+    }
+
+    .table tbody tr:hover {
+      background-color: #f8f9fa;
+    }
+
+    /* Enhanced badge styles */
+    .badge {
+      font-weight: 500;
+      letter-spacing: 0.3px;
+    }
+
+    .badge.bg-info {
+      background-color: #0dcaf0 !important;
+    }
+
+    .badge.bg-secondary {
+      background-color: #6c757d !important;
+    }
+
+    /* Enhanced button styles */
+    .btn-outline-danger {
+      border-width: 2px;
+    }
+
+    .btn-outline-danger:hover {
+      transform: scale(1.05);
+    }
+
+    /* Enhanced card styles */
+    .card {
+      border: none;
+      box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+      transition: all 0.2s ease;
+    }
+
+    .card:hover {
+      box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+
+    /* Enhanced image styles */
+    .img-thumbnail {
+      border: none;
+      padding: 0.25rem;
+      transition: all 0.2s ease;
+    }
+
+    .img-thumbnail:hover {
+      transform: scale(1.05);
+    }
+
+    /* Enhanced price display */
+    .price-display {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #198754;
+    }
+
+    /* Enhanced weight display */
+    .weight-display {
+      font-size: 0.85rem;
+      color: #6c757d;
+    }
+
+    /* Enhanced empty cart styles */
+    .empty-cart {
+      padding: 3rem 0;
+    }
+
+    .empty-cart img {
+      max-width: 200px;
+      opacity: 0.5;
+      margin-bottom: 2rem;
+    }
+
+    /* Enhanced toast styles */
+    .toast {
+      background-color: white;
+      border: none;
+      box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
   </style>
 </head>
 
@@ -115,7 +204,7 @@
           <li class="nav-item">
             <a class="nav-link active" href="{% url 'inventory:cart' %}">
               <i class="bi bi-cart"></i> Cart
-              <span class="badge rounded-pill bg-primary cart-counter"></span>
+              <span class="badge rounded-pill bg-primary cart-counter">{{ cart_items|length }}</span>
             </a>
           </li>
           <li class="nav-item">
@@ -137,6 +226,7 @@
       <!-- LEFT: CART ITEMS -->
       <div class="col-lg-8">
         <div id="cartContent">
+          {% if not cart_items %}
           <div class="text-center py-5" id="emptyCart">
             <img src="{% static 'inventory/empty-cart.svg' %}" alt="Empty Cart" class="mb-4"
               style="max-width: 200px; opacity: 0.5;">
@@ -146,9 +236,290 @@
               <i class="bi bi-grid me-2"></i>Browse Inventory
             </a>
           </div>
-          <div id="cartItems" class="d-none">
-            <!-- Date groups will be added here -->
+          {% else %}
+          <div id="cartItems">
+            {% for date, items in grouped_items.items %}
+            <div class="card shadow-sm border-0 rounded-4 mb-4">
+              <div class="card-header bg-white py-3 border-0">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div class="form-check">
+                    <input class="form-check-input date-selector" type="checkbox" value="{{ date }}"
+                      id="date-{{ date }}" checked>
+                    <label class="form-check-label h5 mb-0" for="date-{{ date }}">
+                      {{ date|date:"l, F j, Y" }}
+                      {% if date == today %}
+                      <span class="badge bg-primary ms-2">Today</span>
+                      {% endif %}
+                    </label>
+                  </div>
+                  <button class="btn btn-link text-decoration-none collapse-toggle" type="button"
+                    data-bs-toggle="collapse" data-bs-target="#collapse-{{ date }}" aria-expanded="true"
+                    aria-controls="collapse-{{ date }}">
+                    <i class="bi bi-chevron-up"></i>
+                  </button>
+                </div>
+                <div class="text-muted small mt-1">
+                  {% widthratio items.stock|length 1 1 as stock_count %}
+                  {% widthratio items.memo|length 1 1 as memo_count %}
+                  {% widthratio items.custom|length 1 1 as custom_count %}
+                  {% with total=stock_count|add:memo_count|add:custom_count %}
+                  {{ total }} item(s) added
+                  {% endwith %}
+                  {% if items.stock %}
+                  <span class="badge bg-success ms-1">{{ items.stock|length }} in stock</span>
+                  {% endif %}
+                  {% if items.memo %}
+                  <span class="badge bg-warning text-dark ms-1">{{ items.memo|length }} memo</span>
+                  {% endif %}
+                  {% if items.custom %}
+                  <span class="badge bg-info ms-1">{{ items.custom|length }} custom</span>
+                  {% endif %}
+                </div>
+              </div>
+              <div class="collapse show" id="collapse-{{ date }}">
+                <div class="card-body p-0">
+                  {% if items.stock %}
+                  <div class="order-type-separator mb-2">
+                    <i class="bi bi-check-circle-fill text-success me-2"></i>In Stock Items
+                  </div>
+                  {% for item in items.stock %}
+                  <div class="border-bottom" id="item-{{ date }}-stock-{{ forloop.counter0 }}">
+                    <div class="row g-0 p-3">
+                      <div class="col-md-3 d-flex align-items-center justify-content-center">
+                        <img
+                          src="https://dev-jewels.s3.us-east-2.amazonaws.com/products/{{ item.design_no }}/White/D_{{ item.design_no }}-1.jpg"
+                          class="img-fluid rounded-3" style="max-height: 120px; object-fit: contain;"
+                          alt="{{ item.design_no }}" onerror="this.src='{% static 'inventory/placeholder.jpg' %}'">
+                      </div>
+                      <div class="col-md-9">
+                        <div class="ps-md-3">
+                          <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div class="form-check">
+                              <input class="form-check-input item-selector" type="checkbox" value="{{ item.id }}"
+                                data-type="{{ item.item_type }}" checked>
+                              <label class="form-check-label" for="item-check-stock-{{ item.job_no }}">
+                                <span class="item-type-badge item-stock">In Stock</span>
+                                <h5 class="fw-bold mb-0 text-primary">{{ item.design_no }}</h5>
+                                <p class="mb-0 text-muted small">{{ item.category|default:"Jewelry" }}</p>
+                              </label>
+                            </div>
+                            <button type="button" class="btn-close" onclick="removeFromCart('{{ item.id }}')"></button>
+                          </div>
+
+                          <div class="row mb-2">
+                            <div class="col-6 col-md-3">
+                              <p class="mb-1 small text-muted">Job No:</p>
+                              <p class="mb-0 fw-medium">{{ item.job_no }}</p>
+                            </div>
+                            <div class="col-6 col-md-3">
+                              <p class="mb-1 small text-muted">Metal:</p>
+                              <p class="mb-0 fw-medium">{{ item.metal_type|default:"N/A" }}</p>
+                            </div>
+                            <div class="col-6 col-md-3">
+                              <p class="mb-1 small text-muted">Quality:</p>
+                              <p class="mb-0 fw-medium">{{ item.metal_quality|default:"N/A" }}</p>
+                            </div>
+                            <div class="col-6 col-md-3">
+                              <p class="mb-1 small text-muted">Color:</p>
+                              <p class="mb-0 fw-medium">{{ item.metal_color|default:"N/A" }}</p>
+                            </div>
+                            <div class="col-6 col-md-3">
+                              <p class="mb-1 small text-muted">Size:</p>
+                              <p class="mb-0 fw-medium">{{ item.size|default:"N/A" }}</p>
+                            </div>
+                            <div class="col-6 col-md-3">
+                              <p class="mb-1 small text-muted">GWT:</p>
+                              <p class="mb-0 fw-medium">{{ item.gwt|default:"N/A" }} g</p>
+                            </div>
+                            <div class="col-6 col-md-3">
+                              <p class="mb-1 small text-muted">DWT:</p>
+                              <p class="mb-0 fw-medium">{{ item.dwt|default:"N/A" }} ct</p>
+                            </div>
+                          </div>
+
+                          <div class="d-flex justify-content-between align-items-center mt-3">
+                            <div>
+                              <div class="badge bg-success">
+                                <i class="bi bi-check-circle me-1"></i> In stock
+                              </div>
+                            </div>
+                            <div class="text-end">
+                              <p class="mb-0 h5 text-success fw-bold">${{ item.totamt }}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  {% endfor %}
+                  {% endif %}
+
+                  {% if items.memo %}
+                  <div class="order-type-separator mb-2">
+                    <i class="bi bi-bookmark-fill text-warning me-2"></i>Requested Items (On Memo)
+                  </div>
+                  {% for item in items.memo %}
+                  <div class="border-bottom" id="item-{{ date }}-memo-{{ forloop.counter0 }}">
+                    <div class="row g-0 p-3">
+                      <div class="col-md-3 d-flex align-items-center justify-content-center">
+                        <img
+                          src="https://dev-jewels.s3.us-east-2.amazonaws.com/products/{{ item.design_no }}/White/D_{{ item.design_no }}-1.jpg"
+                          class="img-fluid rounded-3" style="max-height: 120px; object-fit: contain;"
+                          alt="{{ item.design_no }}" onerror="this.src='{% static 'inventory/placeholder.jpg' %}'">
+                      </div>
+                      <div class="col-md-9">
+                        <div class="ps-md-3">
+                          <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div class="form-check">
+                              <input class="form-check-input item-selector" type="checkbox" value="{{ item.id }}"
+                                data-type="{{ item.item_type }}" checked>
+
+                              <label class="form-check-label" for="item-check-memo-{{ item.job_no }}">
+                                <span class="item-type-badge item-memo">On Memo</span>
+                                <h5 class="fw-bold mb-0 text-primary">{{ item.design_no }}</h5>
+                                <p class="mb-0 text-muted small">{{ item.category|default:"Jewelry" }}</p>
+                              </label>
+                            </div>
+                            <button type="button" class="btn-close" onclick="removeFromCart('{{ item.id }}')"></button>
+                          </div>
+
+                          <div class="row mb-2">
+                            <div class="col-6 col-md-3">
+                              <p class="mb-1 small text-muted">Job No:</p>
+                              <p class="mb-0 fw-medium">{{ item.job_no }}</p>
+                            </div>
+                            <div class="col-6 col-md-3">
+                              <p class="mb-1 small text-muted">Metal:</p>
+                              <p class="mb-0 fw-medium">{{ item.metal_type|default:"N/A" }}</p>
+                            </div>
+                            <div class="col-6 col-md-3">
+                              <p class="mb-1 small text-muted">Quality:</p>
+                              <p class="mb-0 fw-medium">{{ item.metal_quality|default:"N/A" }}</p>
+                            </div>
+                            <div class="col-6 col-md-3">
+                              <p class="mb-1 small text-muted">Color:</p>
+                              <p class="mb-0 fw-medium">{{ item.metal_color|default:"N/A" }}</p>
+                            </div>
+                            <div class="col-6 col-md-3">
+                              <p class="mb-1 small text-muted">Size:</p>
+                              <p class="mb-0 fw-medium">{{ item.size|default:"N/A" }}</p>
+                            </div>
+                            <div class="col-6 col-md-3">
+                              <p class="mb-1 small text-muted">GWT:</p>
+                              <p class="mb-0 fw-medium">{{ item.gwt|default:"N/A" }} g</p>
+                            </div>
+                            <div class="col-6 col-md-3">
+                              <p class="mb-1 small text-muted">DWT:</p>
+                              <p class="mb-0 fw-medium">{{ item.dwt|default:"N/A" }} ct</p>
+                            </div>
+                          </div>
+
+                          <div class="d-flex justify-content-between align-items-center mt-3">
+                            <div>
+                              <div class="badge bg-warning text-dark">
+                                <i class="bi bi-bookmark me-1"></i> On memo
+                              </div>
+                            </div>
+                            <div class="text-end">
+                              <p class="mb-0 h5 text-warning">Pending</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  {% endfor %}
+                  {% endif %}
+
+                  {% if items.custom %}
+                  <div class="order-type-separator mb-2">
+                    <i class="bi bi-tools text-info me-2"></i>Custom Orders
+                  </div>
+                  {% for item in items.custom %}
+                  <div class="border-bottom" id="item-{{ date }}-custom-{{ forloop.counter0 }}">
+                    <div class="row g-0 p-3">
+                      <div class="col-md-3 d-flex align-items-center justify-content-center">
+                        <img
+                          src="https://dev-jewels.s3.us-east-2.amazonaws.com/products/{{ item.design_no }}/White/D_{{ item.design_no }}-1.jpg"
+                          class="img-fluid rounded-3" style="max-height: 120px; object-fit: contain;"
+                          alt="{{ item.design_no }}" onerror="this.src='{% static 'inventory/placeholder.jpg' %}'">
+                      </div>
+                      <div class="col-md-9">
+                        <div class="ps-md-3">
+                          <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div class="form-check">
+                              <input class="form-check-input item-selector" type="checkbox" value="{{ item.id }}"
+                                data-type="{{ item.item_type }}" checked>
+
+                              <label class="form-check-label" for="item-check-custom-{{ item.id }}">
+                                <span class="item-type-badge item-custom">Custom</span>
+                                <h5 class="fw-bold mb-0 text-primary">{{ item.design_no }}</h5>
+                                <p class="mb-0 text-muted small">{{ item.category|default:"Jewelry" }}</p>
+                              </label>
+                            </div>
+                            <button type="button" class="btn-close" onclick="removeFromCart('{{ item.id }}')"></button>
+                          </div>
+
+                          <div class="row mb-2">
+                            <div class="col-6 col-md-3">
+                              <p class="mb-1 small text-muted">Job No:</p>
+                              <p class="mb-0 fw-medium">{{ item.job_no }}</p>
+                            </div>
+                            <div class="col-6 col-md-3">
+                              <p class="mb-1 small text-muted">Metal:</p>
+                              <p class="mb-0 fw-medium">{{ item.metal_type|default:"N/A" }}</p>
+                            </div>
+                            <div class="col-6 col-md-3">
+                              <p class="mb-1 small text-muted">Quality:</p>
+                              <p class="mb-0 fw-medium">{{ item.metal_quality|default:"N/A" }}</p>
+                            </div>
+                            <div class="col-6 col-md-3">
+                              <p class="mb-1 small text-muted">Color:</p>
+                              <p class="mb-0 fw-medium">{{ item.metal_color|default:"N/A" }}</p>
+                            </div>
+                            <div class="col-6 col-md-3">
+                              <p class="mb-1 small text-muted">Size:</p>
+                              <p class="mb-0 fw-medium">{{ item.size|default:"N/A" }}</p>
+                            </div>
+                            <div class="col-6 col-md-3">
+                              <p class="mb-1 small text-muted">GWT:</p>
+                              <p class="mb-0 fw-medium">{{ item.gwt|default:"N/A" }} g</p>
+                            </div>
+                            <div class="col-6 col-md-3">
+                              <p class="mb-1 small text-muted">DWT:</p>
+                              <p class="mb-0 fw-medium">{{ item.dwt|default:"N/A" }} ct</p>
+                            </div>
+                          </div>
+
+                          {% if item.custom_remark %}
+                          <div class="alert alert-info small mb-3">
+                            <i class="bi bi-info-circle me-1"></i>
+                            {{ item.custom_remark }}
+                          </div>
+                          {% endif %}
+
+                          <div class="d-flex justify-content-between align-items-center mt-3">
+                            <div>
+                              <div class="badge bg-info">
+                                <i class="bi bi-tools me-1"></i> Custom order
+                              </div>
+                            </div>
+                            <div class="text-end">
+                              <p class="mb-0 h5 text-info">Custom</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  {% endfor %}
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+            {% endfor %}
           </div>
+          {% endif %}
         </div>
       </div>
 
@@ -161,37 +532,66 @@
             </div>
             <div class="card-body bg-white border-0 p-4">
               <div id="summaryDetails">
-                <!-- This will be populated by JavaScript -->
+                {% for date, items in grouped_items.items %}
+                <div class="mb-3">
+                  <div class="d-flex justify-content-between fw-bold mb-2">
+                    <span>{{ date|date:"M d" }} ({{ items.stock|length|add:items.memo|length|add:items.custom|length }}
+                      items)</span>
+                    <span>${{ items.stock_total|floatformat:2 }}</span>
+                  </div>
+                  <ul class="list-unstyled ps-3 mb-0 small">
+                    {% for item in items.stock %}
+                    <li class="d-flex justify-content-between mb-1">
+                      <span><i class="bi bi-check-circle-fill text-success me-1"></i>{{ item.design_no }}</span>
+                      <span>${{ item.totamt }}</span>
+                    </li>
+                    {% endfor %}
+                    {% for item in items.memo %}
+                    <li class="d-flex justify-content-between mb-1">
+                      <span><i class="bi bi-bookmark-fill text-warning me-1"></i>{{ item.design_no }}</span>
+                      <span class="text-warning">Pending</span>
+                    </li>
+                    {% endfor %}
+                    {% for item in items.custom %}
+                    <li class="d-flex justify-content-between mb-1">
+                      <span><i class="bi bi-tools text-info me-1"></i>{{ item.design_no }}</span>
+                      <span class="text-info">Custom</span>
+                    </li>
+                    {% endfor %}
+                  </ul>
+                </div>
+                {% endfor %}
               </div>
             </div>
             <div class="card-footer bg-white border-0 rounded-bottom-4 p-4">
               <hr class="my-2">
               <div class="d-flex justify-content-between align-items-center mb-2">
                 <span class="text-muted">Subtotal:</span>
-                <span id="subtotalAmount">$0.00</span>
+                <span id="subtotalAmount">${{ subtotal|floatformat:2 }}</span>
               </div>
               <div class="d-flex justify-content-between align-items-center mb-2" id="shippingRow">
                 <span class="text-muted">Shipping:</span>
-                <span id="shippingCost">$0.00</span>
+                <span id="shippingCost">$9.99</span>
               </div>
               <div class="d-flex justify-content-between align-items-center mb-2" id="taxRow">
-                <span class="text-muted">Tax (8%):</span>
-                <span id="taxAmount">$0.00</span>
+                <span class="text-muted">Tax ({{ tax_rate }}%):</span>
+                <span id="taxAmount">${{ tax_amount|floatformat:2 }}</span>
               </div>
-              <div class="d-flex justify-content-between align-items-center mb-2" id="discountRow">
+              <div class="d-flex justify-content-between align-items-center mb-2" id="discountRow"
+                style="display: none;">
                 <span class="text-muted">Discount:</span>
                 <span class="text-success" id="discountAmount">-$0.00</span>
               </div>
               <hr class="my-2">
               <div class="d-flex justify-content-between align-items-center h5 mt-3">
                 <span>Total:</span>
-                <span class="text-primary" id="totalAmount">$0.00</span>
+                <span class="text-primary" id="totalAmount">${{ total|floatformat:2 }}</span>
               </div>
               <div class="d-flex justify-content-between align-items-center text-muted small mb-3">
                 <span>Selected Items:</span>
-                <span id="totalItems">0</span>
+                <span id="totalItems">{{ cart_items|length }}</span>
               </div>
-              <button type="button" class="btn btn-primary w-100 py-3" id="checkoutBtn">
+              <button type="button" class="btn btn-primary w-100 py-3" id="checkoutBtn" {% if not cart_items %}disabled{% endif %}>
                 <i class="bi bi-lock-fill me-2"></i>Proceed to Checkout
               </button>
 
@@ -292,967 +692,29 @@
     </div>
   </div>
 
-  <!-- SCRIPT -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    document.addEventListener("DOMContentLoaded", async () => {
-  // UI element refs
-  const cartItemsDiv = document.getElementById("cartItems");
-  const emptyCart = document.getElementById("emptyCart");
-  const totalItemsEl = document.getElementById("totalItems");
-  const subtotalAmountEl = document.getElementById("subtotalAmount");
-  const shippingCostEl = document.getElementById("shippingCost");
-  const taxAmountEl = document.getElementById("taxAmount");
-  const discountAmountEl = document.getElementById("discountAmount");
-  const totalAmountEl = document.getElementById("totalAmount");
-  const checkoutBtn = document.getElementById("checkoutBtn");
-  const summaryDetails = document.getElementById("summaryDetails");
-  const standardShipping = document.getElementById("standardShipping");
-  const expressShipping = document.getElementById("expressShipping");
-  const promoCodeInput = document.getElementById("promoCode");
-  const applyPromoBtn = document.getElementById("applyPromoBtn");
-
-       // Constants
-  const SHIPPING_RATES = { standard: 9.99, express: 19.99 };
-  const TAX_RATE = 0.08;
-  let discountRate = 0;
-  let promoApplied = false;
-
-      // Order types
-      const ORDER_TYPES = {
-        STOCK: 'stock',
-        MEMO: 'memo',
-        CUSTOM: 'custom'
-      };
-
-      // Maps for prices of memo and custom items
-      const memoItemPrices = {};
-      const customItemPrices = {};
-
-      // Load inventory data from backend
-      let inventoryData = {};
-try {
-  inventoryData = JSON.parse('{{ inventory_data|safe }}' || '{}');
-} catch (e) {
-  console.error("Error parsing inventory data:", e);
-  inventoryData = {};
-}
-
-      async function fetchCartFromDB() {
-  try {
-    const response = await fetch('/api/cart/get/');
-    const data = await response.json();
-    if (data.success) {
-      return data.items;
-    } else {
-      console.error("Error fetching cart data:", data.error);
-      return [];
-    }
-  } catch (err) {
-    console.error("Error fetching cart data:", err);
-    return [];
-  }
-}
-
-
-
-      // Load all items from localStorage
-      function loadAllItems() {
-        // Load regular cart items (in-stock items)
-        const stockItems = JSON.parse(localStorage.getItem("cart_customer") || "[]");
-
-        // Load memo requests 
-        const memoItems = JSON.parse(localStorage.getItem("memoRequests") || "[]").map(item => ({
-          ...item,
-          itemType: ORDER_TYPES.MEMO,
-          requested_at: item.requested_at || new Date().toISOString(),
-          added_at: item.requested_at || new Date().toISOString(), // Use requested_at as added_at for consistency
-          dateAdded: new Date(item.requested_at || new Date()).toISOString().split('T')[0],
-          price: memoItemPrices[item.job_no] || "0.00" // Use price from mapping or default
-        }));
-
-        // Load custom orders
-        const customItems = JSON.parse(localStorage.getItem("custom_orders") || "[]").map(item => ({
-          ...item,
-          itemType: ORDER_TYPES.CUSTOM,
-          added_at: item.added_at || new Date().toISOString(),
-          dateAdded: new Date(item.added_at || new Date()).toISOString().split('T')[0],
-          job_no: item.order_id, // Use order_id as job_no for custom orders
-          price: customItemPrices[item.order_id] || "0.00" // Use price from mapping or default
-        }));
-
-        // Add itemType to stock items
-        const stockItemsWithType = stockItems.map(item => ({
-          ...item,
-          itemType: ORDER_TYPES.STOCK,
-          dateAdded: new Date(item.added_at || item.dateAdded || new Date()).toISOString().split('T')[0]
-        }));
-
-        // Combine all items
-        return [...stockItemsWithType, ...memoItems, ...customItems];
-      }
-
-      // Load and normalize dates for all items
-      const localItems = loadAllItems();
-
-      
-      // Get all cart items from DB
-      const dbItems = await fetchCartFromDB();
-const items = dbItems.length ? dbItems : loadAllItems();
-
-      // Save all items back to localStorage with normalized dates (we'll update each storage separately)
-      const stockItems = items.filter(item => item.itemType === ORDER_TYPES.STOCK);
-      localStorage.setItem("cart_customer", JSON.stringify(stockItems));
-
-
-
-      
-  if (items.length === 0) {
-    emptyCart.classList.remove("d-none");
-    cartItemsDiv.classList.add("d-none");
-    document.getElementById("discountRow").style.display = "none";
-    return;
-  }
-
-      // Cart has items - hide empty message and show items
-      emptyCart.classList.add("d-none");
-      cartItems.classList.remove("d-none");
-
-      // Get today's date in YYYY-MM-DD format
-      const today = new Date().toISOString().split('T')[0];
-
-      // Group items by date and type within each date
-      const groupedByDate = {};
-      items.forEach(item => {
-        // Use the normalized dateAdded field
-        const dateAdded = item.dateAdded;
-
-        if (!groupedByDate[dateAdded]) {
-          groupedByDate[dateAdded] = {
-            stock: [],
-            memo: [],
-            custom: []
-          };
-        }
-
-        const itemType = item.itemType;
-        if (itemType === ORDER_TYPES.STOCK) {
-          groupedByDate[dateAdded].stock.push(item);
-        } else if (itemType === ORDER_TYPES.MEMO) {
-          groupedByDate[dateAdded].memo.push(item);
-        } else if (itemType === ORDER_TYPES.CUSTOM) {
-          groupedByDate[dateAdded].custom.push(item);
-        }
-      });
-
-      // Sort dates (newest first)
-      const sortedDates = Object.keys(groupedByDate).sort((a, b) => {
-        // Convert string dates to date objects for comparison
-        return new Date(b) - new Date(a);
-      });
-
-      // Track selected items and dates
-      const selectedItems = {};
-      const selectedDates = {};
-
-      // Initialize selection for today's items
-      sortedDates.forEach(date => {
-        // Default select today's date items
-        const isToday = date === today;
-        selectedDates[date] = isToday;
-
-        // Select items from today
-        if (isToday) {
-          const dateGroup = groupedByDate[date];
-
-          // Select stock items
-          dateGroup.stock.forEach(item => {
-            selectedItems[getItemId(item)] = true;
-          });
-
-          // Select memo items
-          dateGroup.memo.forEach(item => {
-            selectedItems[getItemId(item)] = true;
-          });
-
-          // Select custom items
-          dateGroup.custom.forEach(item => {
-            selectedItems[getItemId(item)] = true;
-          });
-        }
-      });
-
-      // Helper function to generate a unique ID for an item based on its type
-      function getItemId(item) {
-        if (item.itemType === ORDER_TYPES.STOCK) {
-          return `stock-${item.job_no}`;
-        } else if (item.itemType === ORDER_TYPES.MEMO) {
-          return `memo-${item.job_no}`;
-        } else if (item.itemType === ORDER_TYPES.CUSTOM) {
-          return `custom-${item.order_id}`;
-        }
-        return `unknown-${Date.now()}-${Math.random()}`;
-      }
-
-      // Render cart items grouped by date and type
-      let dateGroupsHTML = '';
-      sortedDates.forEach(date => {
-        const dateItems = groupedByDate[date];
-        const formattedDate = new Date(date).toLocaleDateString('en-US', {
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
-        });
-        const isToday = date === today;
-        const isOpen = isToday; // Only keep today's items expanded by default
-
-        // Get total items for this date group
-        const stockCount = dateItems.stock.length;
-        const memoCount = dateItems.memo.length;
-        const customCount = dateItems.custom.length;
-        const totalCount = stockCount + memoCount + customCount;
-
-        // Create date group
-        dateGroupsHTML += `
-          <div class="card shadow-sm border-0 rounded-4 mb-4">
-            <div class="card-header bg-white py-3 border-0">
-              <div class="d-flex justify-content-between align-items-center">
-                <div class="form-check">
-                  <input class="form-check-input date-selector" type="checkbox" value="${date}" 
-                    id="date-${date}" ${isToday ? 'checked' : ''}>
-                  <label class="form-check-label h5 mb-0" for="date-${date}">
-                    ${formattedDate} ${isToday ? '<span class="badge bg-primary ms-2">Today</span>' : ''}
-                  </label>
-                </div>
-                <button class="btn btn-link text-decoration-none collapse-toggle" type="button" 
-                  data-bs-toggle="collapse" data-bs-target="#collapse-${date}" 
-                  aria-expanded="${isOpen ? 'true' : 'false'}" aria-controls="collapse-${date}">
-                  <i class="bi bi-chevron-${isOpen ? 'up' : 'down'}"></i>
-                </button>
-              </div>
-              <div class="text-muted small mt-1">
-                ${totalCount} item${totalCount !== 1 ? 's' : ''} added
-                ${stockCount > 0 ? `<span class="badge bg-success ms-1">${stockCount} in stock</span>` : ''}
-                ${memoCount > 0 ? `<span class="badge bg-warning text-dark ms-1">${memoCount} memo</span>` : ''}
-                ${customCount > 0 ? `<span class="badge bg-info ms-1">${customCount} custom</span>` : ''}
-              </div>
-            </div>
-            <div class="collapse ${isOpen ? 'show' : ''}" id="collapse-${date}">
-              <div class="card-body p-0">
-        `;
-
-        // Render stock items first
-        if (dateItems.stock.length > 0) {
-          dateGroupsHTML += `<div class="order-type-separator mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>In Stock Items</div>`;
-
-          dateItems.stock.forEach((item, index) => {
-            const itemId = getItemId(item);
-            const isAvailable = inventoryData[item.job_no]?.available !== false;
-
-            dateGroupsHTML += `
-              <div class="border-bottom ${!isAvailable ? 'unavailable' : ''}" id="item-${date}-stock-${index}">
-                <div class="row g-0 p-3">
-                  <div class="col-md-3 d-flex align-items-center justify-content-center">
-                    <img src="https://dev-jewels.s3.us-east-2.amazonaws.com/products/${item.design_no}/White/D_${item.design_no}-1.jpg"
-                        class="img-fluid rounded-3" style="max-height: 120px; object-fit: contain;" alt="${item.design_no}"
-                        onerror="this.src='{% static 'inventory/placeholder.jpg' %}'">
-                  </div>
-                  <div class="col-md-9">
-                    <div class="ps-md-3">
-                      <div class="d-flex justify-content-between align-items-start mb-2">
-                        <div class="form-check">
-                          <input class="form-check-input item-selector" type="checkbox" 
-                            value="${itemId}" data-date="${date}" data-type="${ORDER_TYPES.STOCK}"
-                            id="item-check-${itemId}" ${isToday ? 'checked' : ''} ${!isAvailable ? 'disabled' : ''}>
-                          <label class="form-check-label" for="item-check-${itemId}">
-                            <span class="item-type-badge item-stock">In Stock</span>
-                            <h5 class="fw-bold mb-0 text-primary">${item.design_no}</h5>
-                            <p class="mb-0 text-muted small">${item.category || 'Jewelry'}</p>
-                          </label>
-                        </div>
-                        <button type="button" class="btn-close" onclick="removeFromCart('${itemId}')"></button>
-                      </div>
-                      
-                      <div class="row mb-2">
-                        <div class="col-6 col-md-3">
-                          <p class="mb-1 small text-muted">Job No:</p>
-                          <p class="mb-0 fw-medium">${item.job_no}</p>
-                        </div>
-                        <div class="col-6 col-md-3">
-                          <p class="mb-1 small text-muted">Metal:</p>
-                          <p class="mb-0 fw-medium">${item.metal_type || 'N/A'}</p>
-                        </div>
-                        <div class="col-6 col-md-3">
-                          <p class="mb-1 small text-muted">Quality:</p>
-                          <p class="mb-0 fw-medium">${item.metal_quality || 'N/A'}</p>
-                        </div>
-                        <div class="col-6 col-md-3">
-                          <p class="mb-1 small text-muted">Color:</p>
-                          <p class="mb-0 fw-medium">${item.metal_color || 'N/A'}</p>
-                        </div>
-                        <div class="col-6 col-md-3">
-                          <p class="mb-1 small text-muted">Size:</p>
-                          <p class="mb-0 fw-medium">${item.size || 'N/A'}</p>
-                        </div>
-                        <div class="col-6 col-md-3">
-                          <p class="mb-1 small text-muted">GWT:</p>
-                          <p class="mb-0 fw-medium">${item.gwt || 'N/A'} g</p>
-                        </div>
-                        <div class="col-6 col-md-3">
-                          <p class="mb-1 small text-muted">DWT:</p>
-                          <p class="mb-0 fw-medium">${item.dwt || 'N/A'} ct</p>
-                        </div>
-                      </div>
-                      
-                      <div class="d-flex justify-content-between align-items-center mt-3">
-                        <div>
-                          ${!isAvailable
-                ? '<div class="badge bg-danger"><i class="bi bi-exclamation-triangle me-1"></i> Currently unavailable</div>'
-                : '<div class="badge bg-success"><i class="bi bi-check-circle me-1"></i> In stock</div>'}
-                        </div>
-                        <div class="text-end">
-                          <p class="mb-0 h5 text-success fw-bold">$${parseFloat(item.price || 0).toFixed(2)}</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            `;
-          });
-        }
-
-        // Render memo request items
-        if (dateItems.memo.length > 0) {
-          dateGroupsHTML += `<div class="order-type-separator mb-2"><i class="bi bi-bookmark-fill text-warning me-2"></i>Requested Items (On Memo)</div>`;
-
-          dateItems.memo.forEach((item, index) => {
-            const itemId = getItemId(item);
-            // For memo items, always consider them "available" for selection
-            const isAvailable = true;
-
-            dateGroupsHTML += `
-              <div class="border-bottom" id="item-${date}-memo-${index}">
-                <div class="row g-0 p-3">
-                  <div class="col-md-3 d-flex align-items-center justify-content-center">
-                    <img src="https://dev-jewels.s3.us-east-2.amazonaws.com/products/${item.design_no}/White/D_${item.design_no}-1.jpg"
-                        class="img-fluid rounded-3" style="max-height: 120px; object-fit: contain;" alt="${item.design_no}"
-                        onerror="this.src='{% static 'inventory/placeholder.jpg' %}'">
-                  </div>
-                  <div class="col-md-9">
-                    <div class="ps-md-3">
-                      <div class="d-flex justify-content-between align-items-start mb-2">
-                        <div class="form-check">
-                          <input class="form-check-input item-selector" type="checkbox" 
-                            value="${itemId}" data-date="${date}" data-type="${ORDER_TYPES.MEMO}"
-                            id="item-check-${itemId}" ${isToday ? 'checked' : ''}>
-                          <label class="form-check-label" for="item-check-${itemId}">
-                            <span class="item-type-badge item-memo">Memo Request</span>
-                            <h5 class="fw-bold mb-0 text-primary">${item.design_no}</h5>
-                            <p class="mb-0 text-muted small">Requested Item</p>
-                          </label>
-                        </div>
-                        <button type="button" class="btn-close" onclick="removeFromCart('${itemId}')"></button>
-                      </div>
-                      
-                      <div class="row mb-2">
-                        <div class="col-6 col-md-4">
-                          <p class="mb-1 small text-muted">Job No:</p>
-                          <p class="mb-0 fw-medium">${item.job_no}</p>
-                        </div>
-                        <div class="col-6 col-md-4">
-                          <p class="mb-1 small text-muted">Request Date:</p>
-                          <p class="mb-0 fw-medium">${new Date(item.requested_at).toLocaleDateString()}</p>
-                        </div>
-                        <div class="col-6 col-md-4">
-                          <p class="mb-1 small text-muted">Status:</p>
-                          <p class="mb-0 fw-medium"><span class="badge bg-warning text-dark">Pending Confirmation</span></p>
-                        </div>
-                      </div>
-                      
-                      <div class="alert alert-warning small mb-2">
-                        <i class="bi bi-info-circle me-1"></i>
-                        This item is currently on memo with another customer. We will notify you when it becomes available.
-                      </div>
-                      
-                      <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                          <div class="badge bg-warning text-dark"><i class="bi bi-bookmark me-1"></i> On Memo</div>
-                        </div>
-                        <div class="text-end">
-                          <p class="mb-0 h5 text-warning fw-bold">Price upon availability</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            `;
-          });
-        }
-
-        // Render custom order items
-        if (dateItems.custom.length > 0) {
-          dateGroupsHTML += `<div class="order-type-separator mb-2"><i class="bi bi-tools text-info me-2"></i>Custom Orders</div>`;
-
-          dateItems.custom.forEach((item, index) => {
-            const itemId = getItemId(item);
-            // For custom orders, always consider them "available" for selection
-            const isAvailable = true;
-
-            dateGroupsHTML += `
-              <div class="border-bottom" id="item-${date}-custom-${index}">
-                <div class="row g-0 p-3">
-                  <div class="col-md-3 d-flex align-items-center justify-content-center">
-                    <img src="https://dev-jewels.s3.us-east-2.amazonaws.com/products/${item.design_no}/White/D_${item.design_no}-1.jpg"
-                        class="img-fluid rounded-3" style="max-height: 120px; object-fit: contain;" alt="${item.design_no}"
-                        onerror="this.src='{% static 'inventory/placeholder.jpg' %}'">
-                  </div>
-                  <div class="col-md-9">
-                    <div class="ps-md-3">
-                      <div class="d-flex justify-content-between align-items-start mb-2">
-                        <div class="form-check">
-                          <input class="form-check-input item-selector" type="checkbox" 
-                            value="${itemId}" data-date="${date}" data-type="${ORDER_TYPES.CUSTOM}"
-                            id="item-check-${itemId}" ${isToday ? 'checked' : ''}>
-                          <label class="form-check-label" for="item-check-${itemId}">
-                            <span class="item-type-badge item-custom">Custom Order</span>
-                            <h5 class="fw-bold mb-0 text-primary">${item.design_no}</h5>
-                            <p class="mb-0 text-muted small">Custom Specifications</p>
-                          </label>
-                        </div>
-                        <button type="button" class="btn-close" onclick="removeFromCart('${itemId}')"></button>
-                      </div>
-                      
-                      <div class="row mb-2">
-
-                        <div class="col-6 col-md-3">
-                          <p class="mb-1 small text-muted">Metal:</p>
-                          <p class="mb-0 fw-medium">${item.metal_type} ${item.metal_quality} ${item.metal_color}</p>
-                        </div>
-                        <div class="col-6 col-md-3">
-                          <p class="mb-1 small text-muted">Diamond:</p>
-                          <p class="mb-0 fw-medium">${item.diamond_quality}-${item.diamond_color}</p>
-                        </div>
-                        <div class="col-6 col-md-3">
-                          <p class="mb-1 small text-muted">Size:</p>
-                          <p class="mb-0 fw-medium">${item.size}</p>
-                        </div>
-                        <div class="col-12">
-                          <p class="mb-1 small text-muted">Quantity:</p>
-                          <p class="mb-0 fw-medium">${item.qty} piece(s)</p>
-                        </div>
-                        ${item.remarks ? `
-                        <div class="col-12 mt-2">
-                          <p class="mb-1 small text-muted">Special Instructions:</p>
-                          <p class="mb-0 small fst-italic">"${item.remarks}"</p>
-                        </div>
-                        ` : ''}
-                      </div>
-                      
-                      <div class="d-flex justify-content-between align-items-center mt-2">
-                        <div>
-                          <div class="badge bg-info"><i class="bi bi-tools me-1"></i> Custom Order</div>
-                        </div>
-                        <div class="text-end">
-                          <p class="mb-0 h5 text-info fw-bold">Price upon confirmation</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            `;
-          });
-        }
-
-        dateGroupsHTML += `
-              </div>
-            </div>
-          </div>
-        `;
-      });
-
-      // Add date groups to cart items
-      cartItems.innerHTML = dateGroupsHTML;
-
-      // Add event listeners for date selectors
-      document.querySelectorAll('.date-selector').forEach(checkbox => {
-        checkbox.addEventListener('change', function () {
-          const date = this.value;
-          const isChecked = this.checked;
-          selectedDates[date] = isChecked;
-
-          // Select/deselect all items for this date
-          document.querySelectorAll(`.item-selector[data-date="${date}"]:not(:disabled)`).forEach(itemCheckbox => {
-            itemCheckbox.checked = isChecked;
-            const itemId = itemCheckbox.value;
-
-            if (isChecked) {
-              selectedItems[itemId] = true;
-            } else {
-              delete selectedItems[itemId];
-            }
-          });
-
-          // Update the order summary
-          updateOrderSummary();
-        });
-      });
-
-      // Add event listeners for item selectors
-      document.querySelectorAll('.item-selector').forEach(checkbox => {
-        checkbox.addEventListener('change', function () {
-          const itemId = this.value;
-          const date = this.dataset.date;
-          const isChecked = this.checked;
-
-          if (isChecked) {
-            selectedItems[itemId] = true;
-          } else {
-            delete selectedItems[itemId];
-          }
-
-          // Check if all items for this date are selected
-          const dateItems = document.querySelectorAll(`.item-selector[data-date="${date}"]:not(:disabled)`);
-          const allSelected = Array.from(dateItems).every(item => item.checked);
-          const dateCheckbox = document.getElementById(`date-${date}`);
-
-          // Update date checkbox without triggering its change event
-          dateCheckbox.checked = allSelected;
-          selectedDates[date] = allSelected;
-
-          // Update the order summary
-          updateOrderSummary();
-        });
-      });
-
-      // Add event listeners for collapse toggles
-      document.querySelectorAll('.collapse-toggle').forEach(button => {
-        button.addEventListener('click', function () {
-          // Toggle the icon
-          const icon = this.querySelector('i');
-          if (icon.classList.contains('bi-chevron-down')) {
-            icon.classList.replace('bi-chevron-down', 'bi-chevron-up');
-          } else {
-            icon.classList.replace('bi-chevron-up', 'bi-chevron-down');
-          }
-        });
-      });
-
-      // Create order summary details
-      function renderSummaryDetails() {
-        let summaryHTML = '';
-
-        // Get all selected items from all sources
-        const selectedItemIds = Object.keys(selectedItems);
-
-        // First get all in-stock items
-        const stockItems = items.filter(item =>
-          item.itemType === ORDER_TYPES.STOCK &&
-          selectedItems[getItemId(item)]
-        );
-
-        // Then get all memo request items
-        const memoItems = items.filter(item =>
-          item.itemType === ORDER_TYPES.MEMO &&
-          selectedItems[getItemId(item)]
-        );
-
-        // Finally get all custom order items
-        const customItems = items.filter(item =>
-          item.itemType === ORDER_TYPES.CUSTOM &&
-          selectedItems[getItemId(item)]
-        );
-
-        // Group all these items by date
-        const selectedDatesMap = {};
-
-        // Process stock items
-        stockItems.forEach(item => {
-          const date = item.dateAdded;
-          if (!selectedDatesMap[date]) {
-            selectedDatesMap[date] = {
-              stock: [],
-              memo: [],
-              custom: []
-            };
-          }
-          selectedDatesMap[date].stock.push(item);
-        });
-
-        // Process memo items
-        memoItems.forEach(item => {
-          const date = item.dateAdded;
-          if (!selectedDatesMap[date]) {
-            selectedDatesMap[date] = {
-              stock: [],
-              memo: [],
-              custom: []
-            };
-          }
-          selectedDatesMap[date].memo.push(item);
-        });
-
-        // Process custom items
-        customItems.forEach(item => {
-          const date = item.dateAdded;
-          if (!selectedDatesMap[date]) {
-            selectedDatesMap[date] = {
-              stock: [],
-              memo: [],
-              custom: []
-            };
-          }
-          selectedDatesMap[date].custom.push(item);
-        });
-
-        // Sort dates (newest first)
-        const sortedSelectedDates = Object.keys(selectedDatesMap).sort().reverse();
-
-        // Add each date group to summary
-        for (const date of sortedSelectedDates) {
-          const dateGroup = selectedDatesMap[date];
-          const totalItemsInDay = dateGroup.stock.length + dateGroup.memo.length + dateGroup.custom.length;
-
-          if (totalItemsInDay === 0) continue;
-
-          const formattedDate = new Date(date).toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric'
-          });
-
-          // Calculate subtotal for stock items (only ones with actual prices)
-          const stockTotal = dateGroup.stock.reduce((sum, item) => {
-            return sum + (parseFloat(item.price) || 0);
-          }, 0);
-
-          summaryHTML += `
-            <div class="mb-3">
-              <div class="d-flex justify-content-between fw-bold mb-2">
-                <span>${formattedDate} (${totalItemsInDay} item${totalItemsInDay !== 1 ? 's' : ''})</span>
-                <span>$${stockTotal.toFixed(2)}</span>
-              </div>
-              <ul class="list-unstyled ps-3 mb-0 small">
-          `;
-
-          // Add stock items to summary
-          if (dateGroup.stock.length > 0) {
-            dateGroup.stock.forEach(item => {
-              summaryHTML += `
-                <li class="d-flex justify-content-between mb-1">
-                  <span><i class="bi bi-check-circle-fill text-success me-1"></i>${item.design_no}</span>
-                  <span>$${parseFloat(item.price || 0).toFixed(2)}</span>
-                </li>
-              `;
-            });
-          }
-
-          // Add memo items to summary
-          if (dateGroup.memo.length > 0) {
-            dateGroup.memo.forEach(item => {
-              summaryHTML += `
-                <li class="d-flex justify-content-between mb-1">
-                  <span><i class="bi bi-bookmark-fill text-warning me-1"></i>${item.design_no}</span>
-                  <span class="text-warning">Pending</span>
-                </li>
-              `;
-            });
-          }
-
-          // Add custom items to summary
-          if (dateGroup.custom.length > 0) {
-            dateGroup.custom.forEach(item => {
-              summaryHTML += `
-                <li class="d-flex justify-content-between mb-1">
-                  <span><i class="bi bi-tools text-info me-1"></i>${item.design_no} (${item.qty})</span>
-                  <span class="text-info">Custom</span>
-                </li>
-              `;
-            });
-          }
-
-          summaryHTML += `
-              </ul>
-            </div>
-          `;
-        }
-
-        // If no items selected
-        if (selectedItemIds.length === 0) {
-          summaryHTML = `
-            <div class="alert alert-info small p-3 mb-0">
-              <i class="bi bi-info-circle me-2"></i>
-              No items selected. Please select items to checkout.
-            </div>
-          `;
-        }
-
-        summaryDetails.innerHTML = summaryHTML;
-      }
-
-      // Update all summary calculations
-      function updateOrderSummary() {
-        // Get all selected items by type
-        const selectedStockItems = items.filter(item =>
-          item.itemType === ORDER_TYPES.STOCK &&
-          selectedItems[getItemId(item)]
-        );
-
-        const selectedMemoItems = items.filter(item =>
-          item.itemType === ORDER_TYPES.MEMO &&
-          selectedItems[getItemId(item)]
-        );
-
-        const selectedCustomItems = items.filter(item =>
-          item.itemType === ORDER_TYPES.CUSTOM &&
-          selectedItems[getItemId(item)]
-        );
-
-        // Total count of all selected items
-        const totalSelectedItems = selectedStockItems.length + selectedMemoItems.length + selectedCustomItems.length;
-
-        // Calculate subtotal (only based on stock items with actual prices)
-        const subtotal = selectedStockItems.reduce((sum, item) => {
-          return sum + (parseFloat(item.price) || 0);
-        }, 0);
-
-        // Calculate shipping based on selected option
-        const shippingMethod = standardShipping.checked ? 'standard' : 'express';
-        const shipping = totalSelectedItems > 0 ? SHIPPING_RATES[shippingMethod] : 0;
-
-        // Calculate tax
-        const tax = subtotal * TAX_RATE;
-
-        // Calculate discount
-        const discount = subtotal * discountRate;
-
-        // Calculate final total
-        const total = subtotal + shipping + tax - discount;
-
-        // Update UI elements
-        totalItemsEl.textContent = totalSelectedItems;
-        subtotalAmountEl.textContent = `$${subtotal.toFixed(2)}`;
-        shippingCostEl.textContent = `$${shipping.toFixed(2)}`;
-        taxAmountEl.textContent = `$${tax.toFixed(2)}`;
-        discountAmountEl.textContent = `-$${discount.toFixed(2)}`;
-        totalAmountEl.textContent = `$${total.toFixed(2)}`;
-
-        // Show/hide discount row based on whether there's a discount
-        document.getElementById("discountRow").style.display = discountRate > 0 ? "flex" : "none";
-
-        // Update summary details
-        renderSummaryDetails();
-
-        // Enable/disable checkout button
-        checkoutBtn.disabled = totalSelectedItems === 0;
-      }
-
-      // Initial render of summary
-      updateOrderSummary();
-
-      // Add event listeners for shipping options
-      standardShipping.addEventListener('change', updateOrderSummary);
-      expressShipping.addEventListener('change', updateOrderSummary);
-
-      // Add event listener for promo code
-      applyPromoBtn.addEventListener('click', () => {
-        const promoCode = promoCodeInput.value.trim().toUpperCase();
-
-        if (promoCode === "WELCOME15") {
-          discountRate = 0.15;
-          promoApplied = true;
-          showToast("Promo code WELCOME15 applied successfully! 15% discount added.");
-        } else if (promoCode === "SPRING25") {
-          discountRate = 0.25;
-          promoApplied = true;
-          showToast("Promo code SPRING25 applied successfully! 25% discount added.");
-        } else if (promoCode) {
-          showToast("Invalid promo code. Please try again.", "warning");
-        }
-
-        updateOrderSummary();
-      });
-
-
-      // Add event listener to checkout button
-      checkoutBtn.addEventListener('click', () => {
-        const selectedItemIds = Object.keys(selectedItems);
-
-        if (selectedItemIds.length === 0) {
-          showToast('Please select at least one item to checkout.', 'warning');
-          return;
-        }
-
-        try {
-          // Don't generate order number - server will do it
-          const orderDate = new Date().toISOString();
-
-          // Selected items by type
-          const selectedStockItems = items.filter(item =>
-            item.itemType === ORDER_TYPES.STOCK &&
-            selectedItems[getItemId(item)]
-          );
-          const selectedMemoItems = items.filter(item =>
-            item.itemType === ORDER_TYPES.MEMO &&
-            selectedItems[getItemId(item)]
-          );
-          const selectedCustomItems = items.filter(item =>
-            item.itemType === ORDER_TYPES.CUSTOM &&
-            selectedItems[getItemId(item)]
-          );
-
-          const shippingMethod = standardShipping.checked ? 'standard' : 'express';
-          const shippingCost = SHIPPING_RATES[shippingMethod];
-
-          const subtotal = selectedStockItems.reduce((sum, item) => sum + (parseFloat(item.price) || 0), 0);
-          const tax = subtotal * TAX_RATE;
-          const discount = subtotal * discountRate;
-          const total = subtotal + shippingCost + tax - discount;
-
-          // Build the order object to POST to Django
-          const order = {
-            // Remove order_id - server will generate it
-            date: orderDate,
-            status: "Pending",
-            order_items: {
-              stock: selectedStockItems.map(item => ({
-                ...item,
-                item_type: ORDER_TYPES.STOCK
-              })),
-              memo: selectedMemoItems.map(item => ({
-                ...item,
-                item_type: ORDER_TYPES.MEMO
-              })),
-              custom: selectedCustomItems.map(item => ({
-                ...item,
-                item_type: ORDER_TYPES.CUSTOM
-              }))
-            },
-            payment: {
-              subtotal,
-              shipping: shippingCost,
-              tax,
-              discount,
-              total,
-              shipping_method: shippingMethod,
-              method: "standard" // Add payment method
-            },
-            // Add customer info if available
-            customer: {
-              name: "Guest User", // Update this with actual customer data if available
-              email: "",
-              phone: ""
-            },
-            shipping_address: {
-              line1: "",
-              line2: "",
-              city: "",
-              state: "",
-              postal_code: "",
-              country: "USA"
-            },
-            notes: "" // Add any order notes if needed
-          };
-
-          // ---- SEND TO DJANGO ----
-          fetch("/create_order/", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "X-CSRFToken": getCookie("csrftoken")
-            },
-            body: JSON.stringify(order)
-          })
-            .then(res => res.json())
-            .then(data => {
-              if (data.success) {
-                // Use the server-generated order ID
-                document.getElementById('orderIdDisplay').textContent = data.order_id;
-                const successModal = new bootstrap.Modal(document.getElementById('orderSuccessModal'));
-                successModal.show();
-
-                // Remove items from localStorage as before
-                let cartItems = JSON.parse(localStorage.getItem("cart_customer") || "[]");
-                selectedStockItems.forEach(item => {
-                  cartItems = cartItems.filter(cartItem => cartItem.job_no !== item.job_no);
-                });
-                localStorage.setItem("cart_customer", JSON.stringify(cartItems));
-
-                let memoRequests = JSON.parse(localStorage.getItem("memoRequests") || "[]");
-                selectedMemoItems.forEach(item => {
-                  memoRequests = memoRequests.filter(request => !(request.job_no === item.job_no && request.design_no === item.design_no));
-                });
-                localStorage.setItem("memoRequests", JSON.stringify(memoRequests));
-
-                let customOrders = JSON.parse(localStorage.getItem("custom_orders") || "[]");
-                selectedCustomItems.forEach(item => {
-                  customOrders = customOrders.filter(order => order.order_id !== item.order_id);
-                });
-                localStorage.setItem("custom_orders", JSON.stringify(customOrders));
-
-                for (const id in selectedItems) { delete selectedItems[id]; }
-                document.getElementById('orderSuccessModal').addEventListener('hidden.bs.modal', function () {
-                  location.reload();
-                });
-              } else {
-                showToast("Order failed: " + (data.error || "Unknown error"), "danger");
-              }
-            })
-            .catch(err => {
-              console.error(err);
-              showToast("Error placing order. Please try again.", "danger");
-            });
-
-        } catch (error) {
-          console.error('Error processing order:', error);
-          showToast('An error occurred while processing your order. Please try again.', 'danger');
-        }
-      });
-
-      // Update wishlist count
-      updateWishlistCount();
-
-      // Update cart counter
-      updateCartCounter();
-    });
-
+    // Helper function to get CSRF token
     function getCookie(name) {
-  let cookieValue = null;
-  if (document.cookie && document.cookie !== '') {
-    const cookies = document.cookie.split(';');
-    for (let i = 0;i < cookies.length;i++) {
-      const cookie = cookies[i].trim();
-      if (cookie.substring(0, name.length + 1) === (name + '=')) {
-        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-        break;
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0;i < cookies.length;i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
       }
+      return cookieValue;
     }
-  }
-  return cookieValue;
-}
-
-// Fetch cart items from server
-
-
-// Save cart items to server
-async function saveCartToDB(cartItems) {
-  await fetch('/api/cart/save/', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-CSRFToken': getCookie('csrftoken')
-    },
-    body: JSON.stringify({ items: cartItems })
-  });
-}
 
     // Show toast message
     function showToast(message, type = "success") {
       const toastEl = document.getElementById("cartToast");
       const toastBody = toastEl.querySelector(".toast-body");
 
-      // Update toast content and styling
       if (type === "success") {
         toastBody.innerHTML = `<i class="bi bi-check-circle-fill me-2"></i>${message}`;
       } else if (type === "warning") {
@@ -1261,102 +723,228 @@ async function saveCartToDB(cartItems) {
         toastBody.innerHTML = `<i class="bi bi-info-circle-fill me-2"></i>${message}`;
       }
 
-      // Update Bootstrap classes for different toast types
       toastEl.className = `toast align-items-center border-0 text-bg-${type}`;
-
       const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
       toast.show();
     }
 
-    // Update wishlist count in navbar
-    function updateWishlistCount() {
-      const countBadge = document.querySelector('.wishlist-count');
-      if (!countBadge) return;
-
-      try {
-        const wishlist = JSON.parse(localStorage.getItem("user_wishlist") || "[]");
-        const count = wishlist.length;
-
-        countBadge.textContent = count > 0 ? count : '';
-        countBadge.style.display = count > 0 ? 'inline-block' : 'none';
-      } catch (error) {
-        console.error("Error updating wishlist count:", error);
-      }
-    }
-
-    // Update cart counter in navbar
-    function updateCartCounter() {
-      const cartCounter = document.querySelector(".cart-counter");
-      if (!cartCounter) return;
-
-      try {
-        // Count all types of items in the cart
-        const stockItems = JSON.parse(localStorage.getItem("cart_customer") || "[]");
-        const memoItems = JSON.parse(localStorage.getItem("memoRequests") || "[]");
-        const customItems = JSON.parse(localStorage.getItem("custom_orders") || "[]");
-
-        const count = stockItems.length + memoItems.length + customItems.length;
-
-        cartCounter.textContent = count > 0 ? count : '';
-        cartCounter.style.display = count > 0 ? 'inline-block' : 'none';
-      } catch (e) {
-        console.error("Error counting cart items:", e);
-      }
-    }
-
-    // Helper function to parse the item ID to get type and actual ID
-    function parseItemId(itemId) {
-      if (!itemId || typeof itemId !== 'string') return { type: null, id: null };
-
-      const parts = itemId.split('-');
-      if (parts.length < 2) return { type: null, id: null };
-
-      const type = parts[0];
-      // The ID is the rest of the string after the first dash
-      const id = parts.slice(1).join('-');
-
-      return { type, id };
-    }
-
-    // Remove item from cart based on its type
+    // Remove item from cart - defined in global scope
     function removeFromCart(itemId) {
-      if (confirm('Are you sure you want to remove this item?')) {
-        try {
-          const { type, id } = parseItemId(itemId);
-
-          if (type === 'stock') {
-            // Remove from regular cart
-            let cart = JSON.parse(localStorage.getItem("cart_customer") || "[]");
-            cart = cart.filter(item => item.job_no !== id);
-            localStorage.setItem("cart_customer", JSON.stringify(cart));
-            showToast("Item removed from cart", "warning");
+      if (!confirm('Remove this item from your cart?')) return;
+      fetch("{% url 'inventory:remove_from_cart' %}", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({ item_id: itemId })
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            location.reload();
+          } else {
+            alert('Could not remove item: ' + data.error);
           }
-          else if (type === 'memo') {
-            // Remove from memo requests
-            let memoRequests = JSON.parse(localStorage.getItem("memoRequests") || "[]");
-            memoRequests = memoRequests.filter(item => item.job_no !== id);
-            localStorage.setItem("memoRequests", JSON.stringify(memoRequests));
-            showToast("Memo request removed", "warning");
-          }
-          else if (type === 'custom') {
-            // Remove from custom orders
-            let customOrders = JSON.parse(localStorage.getItem("custom_orders") || "[]");
-            customOrders = customOrders.filter(item => item.order_id !== id);
-            localStorage.setItem("custom_orders", JSON.stringify(customOrders));
-            showToast("Custom order removed", "warning");
-          }
-
-          // Reload the page to reflect the changes
-          setTimeout(() => location.reload(), 1000);
-        } catch (error) {
-          console.error("Error removing item:", error);
-          showToast("Error removing item. Please try again.", "danger");
-        }
-      }
+        });
     }
-  </script>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    document.addEventListener("DOMContentLoaded", function () {
+      // Constants
+      const SHIPPING_RATES = { standard: 9.99, express: 19.99 };
+      const TAX_RATE = {{ tax_rate }};
+    let discountRate = 0;
+    let promoApplied = false;
+
+    // UI element refs
+    const cartItemsDiv = document.getElementById("cartItems");
+    const emptyCart = document.getElementById("emptyCart");
+    const totalItemsEl = document.getElementById("totalItems");
+    const subtotalAmountEl = document.getElementById("subtotalAmount");
+    const shippingCostEl = document.getElementById("shippingCost");
+    const taxAmountEl = document.getElementById("taxAmount");
+    const discountAmountEl = document.getElementById("discountAmount");
+    const totalAmountEl = document.getElementById("totalAmount");
+    const checkoutBtn = document.getElementById("checkoutBtn");
+    const summaryDetails = document.getElementById("summaryDetails");
+    const standardShipping = document.getElementById("standardShipping");
+    const expressShipping = document.getElementById("expressShipping");
+    const promoCodeInput = document.getElementById("promoCode");
+    const applyPromoBtn = document.getElementById("applyPromoBtn");
+
+    // Add event listeners for shipping options
+    standardShipping.addEventListener('change', updateOrderSummary);
+    expressShipping.addEventListener('change', updateOrderSummary);
+
+    // Add event listener for promo code
+    applyPromoBtn.addEventListener('click', () => {
+      const promoCode = promoCodeInput.value.trim().toUpperCase();
+
+      if (promoCode === "WELCOME15") {
+        discountRate = 0.15;
+        promoApplied = true;
+        showToast("Promo code WELCOME15 applied successfully! 15% discount added.");
+      } else if (promoCode === "SPRING25") {
+        discountRate = 0.25;
+        promoApplied = true;
+        showToast("Promo code SPRING25 applied successfully! 25% discount added.");
+      } else if (promoCode) {
+        showToast("Invalid promo code. Please try again.", "warning");
+      }
+
+      updateOrderSummary();
+    });
+
+    // Add event listener to checkout button
+    checkoutBtn.addEventListener('click', () => {
+      const selectedItems = document.querySelectorAll('.item-selector:checked');
+      if (selectedItems.length === 0) {
+        showToast('Please select at least one item to checkout.', 'warning');
+        return;
+      }
+
+      // Get selected items data
+      const selectedItemIds = Array.from(selectedItems).map(checkbox => ({
+        id: checkbox.value,
+        type: checkbox.dataset.type
+      }));
+
+      // Get shipping method
+      const shippingMethod = standardShipping.checked ? 'standard' : 'express';
+      const shippingCost = SHIPPING_RATES[shippingMethod];
+
+      // Calculate totals
+      const subtotal = parseFloat(subtotalAmountEl.textContent.replace('$', ''));
+      const tax = parseFloat(taxAmountEl.textContent.replace('$', ''));
+      const discount = parseFloat(discountAmountEl.textContent.replace('$', '').replace('-', ''));
+      const total = parseFloat(totalAmountEl.textContent.replace('$', ''));
+
+      // Create order via API
+      fetch("{% url 'inventory:create_order' %}", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+          selected_items: selectedItemIds,
+          payment: {
+            subtotal,
+            shipping: shippingCost,
+            tax,
+            discount,
+            total,
+            method: shippingMethod
+          }
+        })
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            showToast("Order created successfully!", "success");
+            // Redirect to orders page
+            window.location.href = "{% url 'inventory:orders' %}";
+          } else {
+            showToast(data.error || "Error creating order", "danger");
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          showToast("Error creating order. Please try again.", "danger");
+        });
+    });
+
+    // Update order summary
+    function updateOrderSummary() {
+      const selectedItems = document.querySelectorAll('.item-selector:checked');
+      const shippingMethod = standardShipping.checked ? 'standard' : 'express';
+      const shippingCost = SHIPPING_RATES[shippingMethod];
+
+      // Calculate subtotal from selected items
+      let subtotal = 0;
+      // Clear and rebuild the summary list
+      summaryDetails.innerHTML = '';
+      let summaryByDate = {};
+      selectedItems.forEach(item => {
+        const row = item.closest('.row');
+        const date = item.getAttribute('data-date') || 'Other';
+        const type = item.dataset.type;
+        const designNo = row.querySelector('.text-primary')?.textContent.trim() || '';
+        const priceElement = row.querySelector('.text-success.fw-bold');
+        const price = priceElement ? parseFloat(priceElement.textContent.replace('$', '')) : 0;
+        subtotal += price;
+        if (!summaryByDate[date]) summaryByDate[date] = [];
+        summaryByDate[date].push({ designNo, price, type });
+      });
+      // Build the summary HTML
+      Object.keys(summaryByDate).forEach(date => {
+        const items = summaryByDate[date];
+        let dateTotal = items.reduce((sum, i) => sum + i.price, 0);
+        let html = `<div class='mb-3'><div class='d-flex justify-content-between fw-bold mb-2'><span>${date}</span><span>$${dateTotal.toFixed(2)}</span></div><ul class='list-unstyled ps-3 mb-0 small'>`;
+        items.forEach(i => {
+          let icon = i.type === 'stock' ? 'bi-check-circle-fill text-success' : (i.type === 'memo' ? 'bi-bookmark-fill text-warning' : 'bi-tools text-info');
+          let priceText = i.type === 'stock' ? `$${i.price}` : (i.type === 'memo' ? '<span class="text-warning">Pending</span>' : '<span class="text-info">Custom</span>');
+          html += `<li class='d-flex justify-content-between mb-1'><span><i class='bi ${icon} me-1'></i>${i.designNo}</span><span>${priceText}</span></li>`;
+        });
+        html += '</ul></div>';
+        summaryDetails.innerHTML += html;
+      });
+
+      // Calculate tax and discount
+      const tax = subtotal * (TAX_RATE / 100);
+      const discount = subtotal * discountRate;
+
+      // Calculate total
+      const total = subtotal + shippingCost + tax - discount;
+
+      // Update UI
+      subtotalAmountEl.textContent = `$${subtotal.toFixed(2)}`;
+      shippingCostEl.textContent = `$${shippingCost.toFixed(2)}`;
+      taxAmountEl.textContent = `$${tax.toFixed(2)}`;
+      discountAmountEl.textContent = `-$${discount.toFixed(2)}`;
+      totalAmountEl.textContent = `$${total.toFixed(2)}`;
+      totalItemsEl.textContent = selectedItems.length;
+
+      // Show/hide discount row
+      document.getElementById("discountRow").style.display = discountRate > 0 ? "flex" : "none";
+
+      // Enable/disable checkout button
+      checkoutBtn.disabled = selectedItems.length === 0;
+    }
+
+    // Add event listeners for item selection
+    document.querySelectorAll('.item-selector').forEach(checkbox => {
+      checkbox.addEventListener('change', updateOrderSummary);
+    });
+
+    // Add event listeners for date selection
+    document.querySelectorAll('.date-selector').forEach(checkbox => {
+      checkbox.addEventListener('change', function () {
+        const date = this.value;
+        const items = document.querySelectorAll(`.item-selector[data-date="${date}"]`);
+        items.forEach(item => {
+          item.checked = this.checked;
+        });
+        updateOrderSummary();
+      });
+    });
+
+    // Add event listeners for collapse toggles
+    document.querySelectorAll('.collapse-toggle').forEach(button => {
+      button.addEventListener('click', function () {
+        const icon = this.querySelector('i');
+        if (icon.classList.contains('bi-chevron-down')) {
+          icon.classList.replace('bi-chevron-down', 'bi-chevron-up');
+        } else {
+          icon.classList.replace('bi-chevron-up', 'bi-chevron-down');
+        }
+      });
+    });
+
+    // Initial update of order summary
+    updateOrderSummary();
+    });
+  </script>
 </body>
 
 </html>

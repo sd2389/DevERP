@@ -1,4 +1,3 @@
-
 from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
@@ -31,8 +30,6 @@ urlpatterns = [
     path('', include('inventory.urls', namespace='inventory')),   
     path('adminside/', include('adminside.urls')),
     path('orders/', include('orders.urls')),   
-    path('create_order/', inventory_views.create_order, name='create_order'),
-
 ]
 
 if settings.DEBUG:

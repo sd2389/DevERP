@@ -954,6 +954,8 @@
                             <h6 class="mb-2">Shipping Address</h6>
                             <address class="mb-0">
                                 ${order.customer?.name || order.customer_name || 'N/A'}<br>
+                                ${order.customer?.email || order.customer_email || 'N/A'}<br>
+                                ${order.customer?.phone || order.customer_phone || 'N/A'}<br>
                                 ${order.shipping_address?.line1 || order.shipping_address_line1 || 'N/A'}<br>
                                 ${order.shipping_address?.line2 || order.shipping_address_line2 ? (order.shipping_address?.line2 || order.shipping_address_line2) + '<br>' : ''}
                                 ${order.shipping_address?.city || order.shipping_city || 'N/A'}, ${order.shipping_address?.state || order.shipping_state || 'N/A'} ${order.shipping_address?.postal_code || order.shipping_postal_code || 'N/A'}<br>

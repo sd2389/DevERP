@@ -10,9 +10,6 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
   <link href="{% static 'inventory/index.css' %}" rel="stylesheet">
-
-  <!-- <link href="{% static 'inventory/responsive.css' %}" rel="stylesheet"> -->
-
 </head>
 
 <body>
@@ -351,7 +348,7 @@
             <div class="ms-auto">
               <!-- Add to Wishlist button in modal header -->
               <button class="btn btn-outline-danger me-2"
-                onclick="toggleWishlist('{{ prod.design_no }}', '{{ prod.in_stock_jobs.0.job_no|default:"" }}')">
+                onclick="toggleWishlist('{{ prod.design_no|escapejs }}', '{% if prod.in_stock_jobs.0.job_no %}{{ prod.in_stock_jobs.0.job_no|escapejs }}{% else %}''{% endif %}')">
                 <i class="bi bi-heart"></i> Wishlist
               </button>
               <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -496,7 +493,7 @@
             </div>
 
             <button class="btn btn-outline-primary btn-sm"
-              onclick="addCustomRow('{{ forloop.counter0 }}', '{{ prod.design_no }}')">
+              onclick="addCustomRow({{ forloop.counter0 }}, '{{ prod.design_no|escapejs }}')">
               <i class="bi bi-plus-lg"></i> Add Row
             </button>
           </div>
@@ -526,7 +523,7 @@
             <div class="ms-auto">
               <!-- Add to Wishlist button in image modal header -->
               <button class="btn btn-outline-danger me-2"
-                onclick="toggleWishlist('{{ prod.design_no }}', '{{ prod.in_stock_jobs.0.job_no|default:"" }}')">
+                onclick="toggleWishlist('{{ prod.design_no }}', '{% if prod.in_stock_jobs.0.job_no %}{{ prod.in_stock_jobs.0.job_no }}{% else %}''{% endif %}')">
                 <i class="bi bi-heart"></i> Add to Wishlist
               </button>
               <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -627,32 +624,32 @@
     <i class="bi bi-arrow-up"></i>
   </button>
 
-<!-- Complete JavaScript for Inventory Page -->
-<script src="{% static 'inventory/responsive.js' %}"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Complete JavaScript for Inventory Page -->
+  <script src="{% static 'inventory/responsive.js' %}"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-<!-- Initialize Django context data -->
-<script>
-  // Set the static URL for JavaScript use
-  window.STATIC_URL = "{% static '' %}";
-  
-  // Initialize wishlist data from Django context
-  const INITIAL_WISHLIST = {{ wishlist_design_nos|default:"[]"|safe }};
-  const USER_AUTHENTICATED = {{ user_authenticated|default:"false"|lower }};
-  
-  // Initialize wishlist state
-  let currentWishlist = new Set(INITIAL_WISHLIST);
-</script>
+  <!-- Initialize Django context data -->
+  <script>
+    // Set the static URL for JavaScript use
+    window.STATIC_URL = "{% static '' %}";
 
-<!-- Main JavaScript for Inventory Functionality -->
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    // Global variables
-    let activeStatusFilter = 'instock'; // default filter
-    const PRODUCTS_PER_PAGE = 20;
-    let currentPage = 1;
-    let isLoading = false;
-    let allProductsLoaded = {% if not has_more %}true{% else %}false{% endif %};
+    // Initialize wishlist data from Django context
+    const INITIAL_WISHLIST = JSON.parse('{{ wishlist_design_nos|default:"[]"|safe }}');
+    const USER_AUTHENTICATED = {% if user_authenticated %}true{% else %} false{% endif %};
+
+    // Initialize wishlist state
+    let currentWishlist = new Set(INITIAL_WISHLIST);
+  </script>
+
+  <!-- Main JavaScript for Inventory Functionality -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // Global variables
+      let activeStatusFilter = 'instock'; // default filter
+      const PRODUCTS_PER_PAGE = 20;
+      let currentPage = 1;
+      let isLoading = false;
+      let allProductsLoaded = {% if not has_more %}true{% else %}false{% endif %};
     let productsCache = {};
 
     // DOM Elements
@@ -1847,154 +1844,155 @@
       }
     });
   });
-</script>
+  </script>
 
-<!-- Wishlist Functions -->
-<script>
-  // CSRF helper
-  function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-      document.cookie.split(';').forEach(c => {
-        const [k, v] = c.trim().split('=');
-        if (k === name) cookieValue = decodeURIComponent(v);
+  <!-- Wishlist Functions -->
+  <script>
+    // CSRF helper
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        document.cookie.split(';').forEach(c => {
+          const [k, v] = c.trim().split('=');
+          if (k === name) cookieValue = decodeURIComponent(v);
+        });
+      }
+      return cookieValue;
+    }
+
+
+    // Toggle item in wishlist
+    function toggleWishlist(btn) {
+      // Check if user is authenticated
+      if (!USER_AUTHENTICATED) {
+        // Redirect to login or show message
+        window.location.href = "{% url 'accounts:login' %}?next=" + window.location.pathname;
+        return;
+      }
+
+      const designNo = btn.dataset.designNo;
+
+      // Add loading state
+      btn.disabled = true;
+      const icon = btn.querySelector('.bi');
+      const originalClass = icon.className;
+      icon.className = 'bi bi-hourglass-split fs-5';
+
+      fetch("{% url 'inventory:toggle_wishlist' %}", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCookie('csrftoken'),
+        },
+        body: JSON.stringify({ design_no: designNo }),
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.action === 'added') {
+            icon.classList.replace('bi-hourglass-split', 'bi-heart-fill');
+            btn.classList.add('active');
+            currentWishlist.add(designNo);
+            showToast('<i class="bi bi-check-circle"></i> Added to wishlist', 'success');
+          } else {
+            icon.classList.replace('bi-hourglass-split', 'bi-heart');
+            btn.classList.remove('active');
+            currentWishlist.delete(designNo);
+            showToast('<i class="bi bi-check-circle"></i> Removed from wishlist', 'info');
+          }
+
+          // Update all wishlist buttons for this design
+          updateWishlistButtonsForDesign(designNo);
+
+          // Update the badge/count in your nav
+          updateWishlistCountBadge(data.count || currentWishlist.size);
+        })
+        .catch(err => {
+          console.error('Wishlist error:', err);
+          icon.className = originalClass;
+          showToast('<i class="bi bi-exclamation-triangle"></i> Failed to update wishlist', 'danger');
+        })
+        .finally(() => {
+          btn.disabled = false;
+        });
+    }
+
+    // Update all wishlist buttons for a specific design
+    function updateWishlistButtonsForDesign(designNo) {
+      document.querySelectorAll(`.wishlist-btn[data-design-no="${designNo}"]`).forEach(btn => {
+        const icon = btn.querySelector('.bi');
+        if (currentWishlist.has(designNo)) {
+          icon.classList.replace('bi-heart', 'bi-heart-fill');
+          btn.classList.add('active');
+        } else {
+          icon.classList.replace('bi-heart-fill', 'bi-heart');
+          btn.classList.remove('active');
+        }
       });
     }
-    return cookieValue;
-  }
 
-  // Toggle item in wishlist
-  function toggleWishlist(btn) {
-    // Check if user is authenticated
-    if (!USER_AUTHENTICATED) {
-      // Redirect to login or show message
-      window.location.href = "{% url 'accounts:login' %}?next=" + window.location.pathname;
-      return;
+    // Update wishlist count badge
+    function updateWishlistCountBadge(count) {
+      const badges = document.querySelectorAll('.wishlist-count');
+      badges.forEach(badge => {
+        badge.textContent = count > 0 ? count : '';
+        badge.style.display = count > 0 ? 'inline-block' : 'none';
+      });
     }
-    
-    const designNo = btn.dataset.designNo;
-    
-    // Add loading state
-    btn.disabled = true;
-    const icon = btn.querySelector('.bi');
-    const originalClass = icon.className;
-    icon.className = 'bi bi-hourglass-split fs-5';
-    
-    fetch("{% url 'inventory:toggle_wishlist' %}", {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRFToken': getCookie('csrftoken'),
-      },
-      body: JSON.stringify({ design_no: designNo }),
-    })
-    .then(res => res.json())
-    .then(data => {
-      if (data.action === 'added') {
-        icon.classList.replace('bi-hourglass-split', 'bi-heart-fill');
-        btn.classList.add('active');
-        currentWishlist.add(designNo);
-        showToast('<i class="bi bi-check-circle"></i> Added to wishlist', 'success');
-      } else {
-        icon.classList.replace('bi-hourglass-split', 'bi-heart');
-        btn.classList.remove('active');
-        currentWishlist.delete(designNo);
-        showToast('<i class="bi bi-check-circle"></i> Removed from wishlist', 'info');
-      }
-      
-      // Update all wishlist buttons for this design
-      updateWishlistButtonsForDesign(designNo);
-      
-      // Update the badge/count in your nav
-      updateWishlistCountBadge(data.count || currentWishlist.size);
-    })
-    .catch(err => {
-      console.error('Wishlist error:', err);
-      icon.className = originalClass;
-      showToast('<i class="bi bi-exclamation-triangle"></i> Failed to update wishlist', 'danger');
-    })
-    .finally(() => {
-      btn.disabled = false;
-    });
-  }
-  
-  // Update all wishlist buttons for a specific design
-  function updateWishlistButtonsForDesign(designNo) {
-    document.querySelectorAll(`.wishlist-btn[data-design-no="${designNo}"]`).forEach(btn => {
-      const icon = btn.querySelector('.bi');
-      if (currentWishlist.has(designNo)) {
-        icon.classList.replace('bi-heart', 'bi-heart-fill');
-        btn.classList.add('active');
-      } else {
-        icon.classList.replace('bi-heart-fill', 'bi-heart');
-        btn.classList.remove('active');
-      }
-    });
-  }
-  
-  // Update wishlist count badge
-  function updateWishlistCountBadge(count) {
-    const badges = document.querySelectorAll('.wishlist-count');
-    badges.forEach(badge => {
-      badge.textContent = count > 0 ? count : '';
-      badge.style.display = count > 0 ? 'inline-block' : 'none';
-    });
-  }
-  
-  // Initialize wishlist buttons on page load
-  function initializeWishlistButtons() {
-    document.querySelectorAll('.wishlist-btn').forEach(btn => {
-      const designNo = btn.dataset.designNo;
-      const icon = btn.querySelector('.bi');
-      
-      if (currentWishlist.has(designNo)) {
-        icon.classList.replace('bi-heart', 'bi-heart-fill');
-        btn.classList.add('active');
-      } else {
-        icon.classList.replace('bi-heart-fill', 'bi-heart');
-        btn.classList.remove('active');
-      }
-    });
-    
-    // Update count badge
-    updateWishlistCountBadge(currentWishlist.size);
-  }
-  
-  // Update wishlist buttons (called after new products are loaded)
-  function updateWishlistButtons() {
-    if (!USER_AUTHENTICATED) return;
-    
-    document.querySelectorAll('.wishlist-btn').forEach(btn => {
-      const designNo = btn.dataset.designNo;
-      const icon = btn.querySelector('.bi');
-      
-      if (currentWishlist.has(designNo)) {
-        icon.classList.replace('bi-heart', 'bi-heart-fill');
-        btn.classList.add('active');
-      } else {
-        icon.classList.replace('bi-heart-fill', 'bi-heart');
-        btn.classList.remove('active');
-      }
-    });
-  }
-</script>
 
-<!-- Custom Order Functions -->
-<script>
-  // Generate a unique order ID
-  function generateOrderId() {
-    return 'order-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
-  }
+    // Initialize wishlist buttons on page load
+    function initializeWishlistButtons() {
+      document.querySelectorAll('.wishlist-btn').forEach(btn => {
+        const designNo = btn.dataset.designNo;
+        const icon = btn.querySelector('.bi');
 
-  // Add custom order row with diamond fields
-  function addCustomRow(modalId, designNo) {
-    const table = document.querySelector(`#customOrderTable-${modalId || ''} tbody`);
-    const rowIndex = table.rows.length + 1;
-    const rowId = `custom-row-${modalId || 'main'}-${rowIndex}`;
+        if (currentWishlist.has(designNo)) {
+          icon.classList.replace('bi-heart', 'bi-heart-fill');
+          btn.classList.add('active');
+        } else {
+          icon.classList.replace('bi-heart-fill', 'bi-heart');
+          btn.classList.remove('active');
+        }
+      });
 
-    const row = document.createElement('tr');
-    row.setAttribute("id", rowId);
-    row.innerHTML = `
+      // Update count badge
+      updateWishlistCountBadge(currentWishlist.size);
+    }
+
+    // Update wishlist buttons (called after new products are loaded)
+    function updateWishlistButtons() {
+      if (!USER_AUTHENTICATED) return;
+
+      document.querySelectorAll('.wishlist-btn').forEach(btn => {
+        const designNo = btn.dataset.designNo;
+        const icon = btn.querySelector('.bi');
+
+        if (currentWishlist.has(designNo)) {
+          icon.classList.replace('bi-heart', 'bi-heart-fill');
+          btn.classList.add('active');
+        } else {
+          icon.classList.replace('bi-heart-fill', 'bi-heart');
+          btn.classList.remove('active');
+        }
+      });
+    }
+  </script>
+
+  <!-- Custom Order Functions -->
+  <script>
+    // Generate a unique order ID
+    function generateOrderId() {
+      return 'order-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+    }
+
+    // Add custom order row with diamond fields
+    function addCustomRow(modalId, designNo) {
+      const table = document.querySelector(`#customOrderTable-${modalId || ''} tbody`);
+      const rowIndex = table.rows.length + 1;
+      const rowId = `custom-row-${modalId || 'main'}-${rowIndex}`;
+
+      const row = document.createElement('tr');
+      row.setAttribute("id", rowId);
+      row.innerHTML = `
       <td>${rowIndex}</td>
       <td>
         <select class="form-select form-select-sm" name="metal_type" required>
@@ -2058,377 +2056,284 @@
       </td>
     `;
 
-    // Add event listeners for validation
-    const requiredFields = row.querySelectorAll('[required]');
-    requiredFields.forEach(field => {
-      field.addEventListener('blur', function () {
-        if (!this.value.trim()) {
-          this.classList.add('is-invalid');
-        } else {
-          this.classList.remove('is-invalid');
-        }
+      // Add event listeners for validation
+      const requiredFields = row.querySelectorAll('[required]');
+      requiredFields.forEach(field => {
+        field.addEventListener('blur', function () {
+          if (!this.value.trim()) {
+            this.classList.add('is-invalid');
+          } else {
+            this.classList.remove('is-invalid');
+          }
+        });
       });
-    });
 
-    table.appendChild(row);
+      table.appendChild(row);
 
-    // Focus the first field for better UX
-    setTimeout(() => {
-      const firstField = row.querySelector('select, input');
-      if (firstField) firstField.focus();
-    }, 10);
-  }
-
-  function removeCustomRow(rowId) {
-    const row = document.getElementById(rowId);
-    if (row) {
-      row.remove();
-
-      // Renumber remaining rows
-      const modalId = rowId.split('-')[2];
-      const table = document.querySelector(`#customOrderTable-${modalId} tbody`);
-
-      Array.from(table.rows).forEach((row, idx) => {
-        row.cells[0].textContent = idx + 1;
-      });
+      // Focus the first field for better UX
+      setTimeout(() => {
+        const firstField = row.querySelector('select, input');
+        if (firstField) firstField.focus();
+      }, 10);
     }
-  }
 
-  // Enhanced Cart Management with Diamond Fields
-  function addToCart(designNo, modalId) {
-    const modal = document.getElementById(`modal-${modalId}`);
-    const checkboxes = modal.querySelectorAll(".job-checkbox:checked");
-    const memoCheckboxes = modal.querySelectorAll(".memo-checkbox:checked");
-    const customRows = modal.querySelectorAll(`#customOrderTable-${modalId} tbody tr`);
+    function removeCustomRow(rowId) {
+      const row = document.getElementById(rowId);
+      if (row) {
+        row.remove();
 
-    let hasStockItems = false;
-    let hasMemoItems = false;
-    let hasCustomItems = false;
-    let stockCartItems = [];
-    let memoCartItems = [];
-    let customOrderItems = [];
+        // Renumber remaining rows
+        const modalId = rowId.split('-')[2];
+        const table = document.querySelector(`#customOrderTable-${modalId} tbody`);
 
-    // Process selected in-stock items
-    if (checkboxes.length > 0) {
-      hasStockItems = true;
+        Array.from(table.rows).forEach((row, idx) => {
+          row.cells[0].textContent = idx + 1;
+        });
+      }
+    }
 
-      stockCartItems = Array.from(checkboxes).map(chk => {
-        // Get parent row to extract all details
+    // Enhanced Cart Management with Diamond Fields
+    function addToCart(designNo, modalId) {
+      const modal = document.getElementById(`modal-${modalId}`);
+      if (!modal) return;
+
+      // Gather selected STOCK jobs
+      const stockCheckboxes = modal.querySelectorAll('.job-checkbox:checked');
+      let stockCartItems = [];
+      stockCheckboxes.forEach(chk => {
         const row = chk.closest('tr');
-
-        // Extract all data from the row cells
-        const jobNo = chk.dataset.job_no;
-        const metal = row.cells[2].textContent.trim();
-        const quality = row.cells[3].textContent.trim();
-        const color = row.cells[4].textContent.trim();
-        const diamondQuality = row.cells[5].textContent.trim();
-        const diamondColor = row.cells[6].textContent.trim();
-        const gwt = row.cells[7].textContent.trim();
-        const size = row.cells[8].textContent.trim();
-        const price = parseFloat(chk.dataset.price || 0);
-
-        // Store all details
-        return {
+        stockCartItems.push({
           design_no: chk.dataset.design,
-          job_no: jobNo,
-          metal_type: metal,
-          metal_quality: quality,
-          metal_color: color,
-          diamond_quality: diamondQuality,
-          diamond_color: diamondColor,
-          gwt: gwt,
-          size: size,
-          qty: 1,
-          price: price,
-          type: "stock",
-          added_at: new Date().toISOString()
-        };
+          job_no: chk.dataset.job_no,
+          metal_type: row.cells[2].textContent.trim(),
+          metal_quality: row.cells[3].textContent.trim(),
+          metal_color: row.cells[4].textContent.trim(),
+          diamond_quality: row.cells[5].textContent.trim(),
+          diamond_color: row.cells[6].textContent.trim(),
+          gwt: row.cells[7].textContent.trim(),
+          nwt: "", // Not available in the modal table
+          dwt: "", // Not available in the modal table
+          pcs: 1,
+          size: row.cells[8].textContent.trim(),
+          totamt: parseFloat(chk.dataset.price || row.cells[9].textContent.replace('$', '') || 0),
+          item_type: "stock",
+          custom_remark: ""
+        });
       });
-    }
 
-    // Process selected memo items
-    if (memoCheckboxes.length > 0) {
-      hasMemoItems = true;
-
-      memoCartItems = Array.from(memoCheckboxes).map(chk => {
-        // Get parent row to extract all details
+      // Gather selected MEMO jobs
+      const memoCheckboxes = modal.querySelectorAll('.memo-checkbox:checked');
+      let memoCartItems = [];
+      memoCheckboxes.forEach(chk => {
         const row = chk.closest('tr');
-
-        // Extract all data from the row cells
-        const jobNo = chk.dataset.job_no;
-        const metal = row.cells[2].textContent.trim();
-        const quality = row.cells[3].textContent.trim();
-        const color = row.cells[4].textContent.trim();
-        const diamondQuality = row.cells[5].textContent.trim();
-        const diamondColor = row.cells[6].textContent.trim();
-        const gwt = row.cells[7].textContent.trim();
-        const size = row.cells[8].textContent.trim();
-        const price = parseFloat(row.cells[9].textContent.replace('$', '') || 0);
-
-        return {
+        memoCartItems.push({
           design_no: chk.dataset.design,
-          job_no: jobNo,
-          metal_type: metal,
-          metal_quality: quality,
-          metal_color: color,
-          diamond_quality: diamondQuality,
-          diamond_color: diamondColor,
-          gwt: gwt,
-          size: size,
-          requested_at: new Date().toISOString(),
-          price: price,
-          type: "memo"
-        };
+          job_no: chk.dataset.job_no,
+          metal_type: row.cells[2].textContent.trim(),
+          metal_quality: row.cells[3].textContent.trim(),
+          metal_color: row.cells[4].textContent.trim(),
+          diamond_quality: row.cells[5].textContent.trim(),
+          diamond_color: row.cells[6].textContent.trim(),
+          gwt: row.cells[7].textContent.trim(),
+          nwt: "", // Not available
+          dwt: "", // Not available
+          pcs: 1,
+          size: row.cells[8].textContent.trim(),
+          totamt: parseFloat(row.cells[9].textContent.replace('$', '') || 0),
+          item_type: "memo",
+          custom_remark: ""
+        });
       });
-    }
 
-    // Process custom order items
-    if (customRows.length > 0) {
-      // Validate required fields before processing
-      const validRows = [];
-      let hasInvalidRows = false;
-
+      // Gather CUSTOM order rows
+      const customRows = modal.querySelectorAll(`#customOrderTable-${modalId} tbody tr`);
+      let customOrderItems = [];
       customRows.forEach(row => {
         const size = row.querySelector("[name='size']")?.value;
         const qty = row.querySelector("[name='qty']")?.value;
+        if (!size || !qty) return; // Ignore incomplete custom rows
 
-        if (!size || !qty) {
-          hasInvalidRows = true;
-          // Highlight invalid fields
-          if (!size) row.querySelector("[name='size']").classList.add('is-invalid');
-          if (!qty) row.querySelector("[name='qty']").classList.add('is-invalid');
-        } else {
-          // Clear any previous validation errors
-          row.querySelectorAll('.is-invalid').forEach(field => field.classList.remove('is-invalid'));
-          validRows.push(row);
-        }
-      });
-
-      if (hasInvalidRows) {
-        showToast("<i class='bi bi-exclamation-triangle'></i> Please fill in all required fields (Size and Quantity).", "warning");
-        return;
-      }
-
-      // Process valid rows
-      if (validRows.length > 0) {
-        hasCustomItems = true;
-
-        customOrderItems = validRows.map(row => ({
-          order_id: generateOrderId(),
+        customOrderItems.push({
           design_no: designNo,
+          job_no: "", // Not available for custom
           metal_type: row.querySelector("[name='metal_type']")?.value || "Gold",
           metal_quality: row.querySelector("[name='metal_quality']")?.value || "14k",
           metal_color: row.querySelector("[name='metal_color']")?.value || "W",
           diamond_quality: row.querySelector("[name='diamond_quality']")?.value || "VVS",
           diamond_color: row.querySelector("[name='diamond_color']")?.value || "D",
-          size: row.querySelector("[name='size']")?.value,
-          qty: parseInt(row.querySelector("[name='qty']")?.value || 1, 10),
-          remarks: row.querySelector("[name='remarks']")?.value || "",
-          price: 0, // To be calculated by server
-          added_at: new Date().toISOString(),
-          status: "pending" // Initial status for custom orders
-        }));
+          gwt: "", // Not available for custom
+          nwt: "",
+          dwt: "",
+          pcs: qty,
+          size: size,
+          totamt: 0,
+          item_type: "custom",
+          custom_remark: row.querySelector("[name='remarks']")?.value || "",
+        });
+      });
+
+      // Final check
+      if (!stockCartItems.length && !memoCartItems.length && !customOrderItems.length) {
+        showToast("Please select at least one item.", "warning");
+        return;
       }
+
+      // Merge all items for backend API
+      const allItems = [...stockCartItems, ...memoCartItems, ...customOrderItems];
+
+      // Format the data before sending
+      const formattedItems = allItems.map(item => ({
+        ...item,
+        gwt: parseFloat(item.gwt) || 0,
+        nwt: parseFloat(item.nwt) || 0,
+        dwt: parseFloat(item.dwt) || 0,
+        pcs: parseInt(item.pcs) || 1,
+        totamt: parseFloat(item.totamt) || 0
+      }));
+
+      fetch('/api/cart/add/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(formattedItems)
+      })
+        .then(r => r.json())
+        .then(data => {
+          if (data.success) {
+            showToast("✅ Added to cart!", "success");
+            updateCartCounter();
+          } else {
+            showToast(data.error || "Error adding to cart.", "danger");
+          }
+        })
+        .catch(e => {
+          showToast("Server error.", "danger");
+          console.error(e);
+        });
+
+      // Optionally close the modal
+      const modalInstance = bootstrap.Modal.getInstance(modal);
+      if (modalInstance) modalInstance.hide();
     }
 
-    if (!hasStockItems && !hasMemoItems && !hasCustomItems) {
-      showToast("<i class='bi bi-exclamation-triangle'></i> Please select at least one item or add a custom order.", "warning");
-      return;
+    // Show toast message
+    function showToast(message, type = "success") {
+      const toastEl = document.getElementById("cartToast");
+      const toastBody = toastEl.querySelector(".toast-body");
+
+      // Update toast content and styling
+      toastBody.innerHTML = message;
+
+      // Update Bootstrap classes for different toast types
+      toastEl.className = `toast align-items-center border-0 text-bg-${type}`;
+
+      const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
+      toast.show();
     }
 
-    // Handle regular stock items in cart
-    if (hasStockItems) {
-      const cartKey = "cart_customer";
-      let existing = [];
+    // Update cart counter in navbar
+    function updateCartCounter() {
+      const cartCounter = document.querySelector(".cart-counter");
+      if (!cartCounter) return;
+
       try {
-        existing = JSON.parse(localStorage.getItem(cartKey) || "[]");
-      } catch (e) {
-        console.error("Error parsing cart:", e);
-      }
+        // Count all types of items in the cart
+        const stockItems = JSON.parse(localStorage.getItem("cart_customer") || "[]");
+        const memoItems = JSON.parse(localStorage.getItem("memoRequests") || "[]");
+        const customItems = JSON.parse(localStorage.getItem("custom_orders") || "[]");
 
-      // Merge cart items, avoiding duplicates
-      stockCartItems.forEach(item => {
-        if (!existing.some(e => e.job_no === item.job_no && e.design_no === item.design_no)) {
-          existing.push(item);
+        const count = stockItems.length + memoItems.length + customItems.length;
+
+        cartCounter.textContent = count > 0 ? count : '';
+        cartCounter.style.display = count > 0 ? 'inline-block' : 'none';
+      } catch (e) {
+        console.error("Error reading cart:", e);
+      }
+    }
+
+    // Memo Request Handler
+    document.addEventListener("DOMContentLoaded", function () {
+      let selectedMemoJobs = [];
+
+      // Handle memo request button
+      document.querySelectorAll(".request-selected-memo-btn").forEach(button => {
+        button.addEventListener("click", () => {
+          const modal = button.closest(".modal");
+          const checkboxes = modal.querySelectorAll(".memo-checkbox:checked");
+
+          if (checkboxes.length === 0) {
+            showToast("<i class='bi bi-exclamation-triangle'></i> Please select at least one memo item.", "warning");
+            return;
+          }
+
+          // Collect selected jobs
+          selectedMemoJobs = Array.from(checkboxes).map(chk => ({
+            design_no: chk.dataset.design,
+            job_no: chk.dataset.job_no
+          }));
+
+          // Render job list in confirmation modal
+          const jobList = document.getElementById("memoJobList");
+          jobList.innerHTML = selectedMemoJobs.map(j =>
+            `<li class="list-group-item">${j.design_no} – Job ${j.job_no}</li>`
+          ).join("");
+
+          // Show the modal
+          const confirmModal = new bootstrap.Modal(document.getElementById("memoConfirmModal"));
+          confirmModal.show();
+        });
+      });
+
+      // Proceed button saves to localStorage
+      document.getElementById("proceedMemoItemsBtn")?.addEventListener("click", () => {
+        let memoRequests = [];
+        try {
+          memoRequests = JSON.parse(localStorage.getItem("memoRequests") || "[]");
+        } catch (e) {
+          console.error("Error parsing memo requests:", e);
+        }
+
+        selectedMemoJobs.forEach(job => {
+          if (!memoRequests.some(j => j.job_no === job.job_no && j.design_no === job.design_no)) {
+            memoRequests.push({
+              ...job,
+              requested_at: new Date().toISOString()
+            });
+          }
+        });
+
+        try {
+          localStorage.setItem("memoRequests", JSON.stringify(memoRequests));
+          showToast("<i class='bi bi-check-circle-fill'></i> Memo requests saved successfully.", "success");
+          // Update the cart counter
+          updateCartCounter();
+        } catch (e) {
+          console.error("Error saving memo requests:", e);
+          showToast("<i class='bi bi-exclamation-triangle'></i> Could not save memo requests. Please try again.", "warning");
         }
       });
 
-      localStorage.setItem(cartKey, JSON.stringify(existing));
-    }
-
-    // Handle memo items
-    if (hasMemoItems) {
-      let memoRequests = [];
-      try {
-        memoRequests = JSON.parse(localStorage.getItem("memoRequests") || "[]");
-      } catch (e) {
-        console.error("Error parsing memo requests:", e);
-      }
-
-      // Add to memo requests, avoiding duplicates
-      memoCartItems.forEach(item => {
-        if (!memoRequests.some(r => r.job_no === item.job_no && r.design_no === item.design_no)) {
-          memoRequests.push(item);
-        }
-      });
-
-      localStorage.setItem("memoRequests", JSON.stringify(memoRequests));
-    }
-
-    // Handle custom order items
-    if (hasCustomItems) {
-      const customOrdersKey = "custom_orders";
-      let existingOrders = [];
-      try {
-        existingOrders = JSON.parse(localStorage.getItem(customOrdersKey) || "[]");
-      } catch (e) {
-        console.error("Error parsing custom orders:", e);
-      }
-
-      // Add all custom orders (they all have unique IDs)
-      existingOrders.push(...customOrderItems);
-
-      localStorage.setItem(customOrdersKey, JSON.stringify(existingOrders));
-    }
-
-    // Calculate totals for the toast message
-    const stockItemsQty = stockCartItems.reduce((sum, item) => sum + (parseInt(item.qty) || 1), 0);
-    const memoItemsQty = memoCartItems.length;
-    const customItemsQty = customOrderItems.reduce((sum, item) => sum + (parseInt(item.qty) || 1), 0);
-    const totalItems = stockItemsQty + memoItemsQty + customItemsQty;
-
-    // Prepare a more detailed toast message
-    let toastMessage = '';
-    if (totalItems > 0) {
-      toastMessage = `<i class='bi bi-check-circle-fill'></i> ${totalItems} item(s) added to cart. <a href="{% url 'inventory:cart' %}" class="alert-link text-white">View Cart</a>`;
-    }
-
-    showToast(toastMessage, "success");
-
-    // Close the modal after adding to cart
-    const modalInstance = bootstrap.Modal.getInstance(modal);
-    if (modalInstance) modalInstance.hide();
-
-    // Update cart counter in the header
-    updateCartCounter();
-  }
-
-  // Show toast message
-  function showToast(message, type = "success") {
-    const toastEl = document.getElementById("cartToast");
-    const toastBody = toastEl.querySelector(".toast-body");
-
-    // Update toast content and styling
-    toastBody.innerHTML = message;
-
-    // Update Bootstrap classes for different toast types
-    toastEl.className = `toast align-items-center border-0 text-bg-${type}`;
-
-    const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
-    toast.show();
-  }
-
-  // Update cart counter in navbar
-  function updateCartCounter() {
-    const cartCounter = document.querySelector(".cart-counter");
-    if (!cartCounter) return;
-
-    try {
-      // Count all types of items in the cart
-      const stockItems = JSON.parse(localStorage.getItem("cart_customer") || "[]");
-      const memoItems = JSON.parse(localStorage.getItem("memoRequests") || "[]");
-      const customItems = JSON.parse(localStorage.getItem("custom_orders") || "[]");
-
-      const count = stockItems.length + memoItems.length + customItems.length;
-
-      cartCounter.textContent = count > 0 ? count : '';
-      cartCounter.style.display = count > 0 ? 'inline-block' : 'none';
-    } catch (e) {
-      console.error("Error reading cart:", e);
-    }
-  }
-
-  // Memo Request Handler
-  document.addEventListener("DOMContentLoaded", function () {
-    let selectedMemoJobs = [];
-
-    // Handle memo request button
-    document.querySelectorAll(".request-selected-memo-btn").forEach(button => {
-      button.addEventListener("click", () => {
-        const modal = button.closest(".modal");
-        const checkboxes = modal.querySelectorAll(".memo-checkbox:checked");
-
-        if (checkboxes.length === 0) {
-          showToast("<i class='bi bi-exclamation-triangle'></i> Please select at least one memo item.", "warning");
-          return;
-        }
-
-        // Collect selected jobs
-        selectedMemoJobs = Array.from(checkboxes).map(chk => ({
-          design_no: chk.dataset.design,
-          job_no: chk.dataset.job_no
-        }));
-
-        // Render job list in confirmation modal
-        const jobList = document.getElementById("memoJobList");
-        jobList.innerHTML = selectedMemoJobs.map(j =>
-          `<li class="list-group-item">${j.design_no} – Job ${j.job_no}</li>`
-        ).join("");
-
-        // Show the modal
-        const confirmModal = new bootstrap.Modal(document.getElementById("memoConfirmModal"));
-        confirmModal.show();
-      });
+      // Initialize cart counter if present
+      updateCartCounter();
+      initializeWishlistButtons();
     });
+  </script>
 
-    // Proceed button saves to localStorage
-    document.getElementById("proceedMemoItemsBtn")?.addEventListener("click", () => {
-      let memoRequests = [];
-      try {
-        memoRequests = JSON.parse(localStorage.getItem("memoRequests") || "[]");
-      } catch (e) {
-        console.error("Error parsing memo requests:", e);
+  <!-- Scroll to Top Button Functionality -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const scrollToTopBtn = document.getElementById('scrollToTopBtn');
+
+      if (!scrollToTopBtn) {
+        console.error('Scroll to top button not found');
+        return;
       }
 
-      selectedMemoJobs.forEach(job => {
-        if (!memoRequests.some(j => j.job_no === job.job_no && j.design_no === job.design_no)) {
-          memoRequests.push({
-            ...job,
-            requested_at: new Date().toISOString()
-          });
-        }
-      });
-
-      try {
-        localStorage.setItem("memoRequests", JSON.stringify(memoRequests));
-        showToast("<i class='bi bi-check-circle-fill'></i> Memo requests saved successfully.", "success");
-        // Update the cart counter
-        updateCartCounter();
-      } catch (e) {
-        console.error("Error saving memo requests:", e);
-        showToast("<i class='bi bi-exclamation-triangle'></i> Could not save memo requests. Please try again.", "warning");
-      }
-    });
-
-    // Initialize cart counter if present
-    updateCartCounter();
-    initializeWishlistButtons();
-  });
-</script>
-
-<!-- Scroll to Top Button Functionality -->
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    const scrollToTopBtn = document.getElementById('scrollToTopBtn');
-
-    if (!scrollToTopBtn) {
-      console.error('Scroll to top button not found');
-      return;
-    }
-
-    // Create progress ring (optional enhancement)
-    const progressRing = document.createElement('svg');
-    progressRing.innerHTML = `
+      // Create progress ring (optional enhancement)
+      const progressRing = document.createElement('svg');
+      progressRing.innerHTML = `
       <circle cx="25" cy="25" r="20" 
               stroke="#ffffff" 
               stroke-width="3" 
@@ -2438,87 +2343,87 @@
               style="transform: rotate(-90deg); transform-origin: center;">
       </circle>
     `;
-    progressRing.style.cssText = 'position: absolute; width: 50px; height: 50px; pointer-events: none;';
-    scrollToTopBtn.appendChild(progressRing);
+      progressRing.style.cssText = 'position: absolute; width: 50px; height: 50px; pointer-events: none;';
+      scrollToTopBtn.appendChild(progressRing);
 
-    const circle = progressRing.querySelector('circle');
-    const circumference = 2 * Math.PI * 20;
+      const circle = progressRing.querySelector('circle');
+      const circumference = 2 * Math.PI * 20;
 
-    // Calculate scroll progress and update button
-    function updateScrollProgress() {
-      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-      const docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-      const scrollPercent = (scrollTop / docHeight) * 100;
+      // Calculate scroll progress and update button
+      function updateScrollProgress() {
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        const docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+        const scrollPercent = (scrollTop / docHeight) * 100;
 
-      // Show/hide button
-      if (scrollTop > 300) {
-        scrollToTopBtn.classList.add('show');
-      } else {
-        scrollToTopBtn.classList.remove('show');
-      }
+        // Show/hide button
+        if (scrollTop > 300) {
+          scrollToTopBtn.classList.add('show');
+        } else {
+          scrollToTopBtn.classList.remove('show');
+        }
 
-      // Update progress ring
-      if (circle) {
-        const offset = circumference - (scrollPercent / 100 * circumference);
-        circle.style.strokeDashoffset = offset;
-      }
-    }
-
-    // Smooth scroll to top with easing
-    function scrollToTop() {
-      const startPosition = window.pageYOffset;
-      const duration = 600; // milliseconds
-      let startTime = null;
-
-      function easeInOutCubic(t) {
-        return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-      }
-
-      function animation(currentTime) {
-        if (startTime === null) startTime = currentTime;
-        const timeElapsed = currentTime - startTime;
-        const progress = Math.min(timeElapsed / duration, 1);
-
-        window.scrollTo(0, startPosition * (1 - easeInOutCubic(progress)));
-
-        if (timeElapsed < duration) {
-          requestAnimationFrame(animation);
+        // Update progress ring
+        if (circle) {
+          const offset = circumference - (scrollPercent / 100 * circumference);
+          circle.style.strokeDashoffset = offset;
         }
       }
 
-      requestAnimationFrame(animation);
-    }
+      // Smooth scroll to top with easing
+      function scrollToTop() {
+        const startPosition = window.pageYOffset;
+        const duration = 600; // milliseconds
+        let startTime = null;
 
-    // Throttle for better performance
-    function throttle(func, limit) {
-      let inThrottle;
-      return function () {
-        const args = arguments;
-        const context = this;
-        if (!inThrottle) {
-          func.apply(context, args);
-          inThrottle = true;
-          setTimeout(() => inThrottle = false, limit);
+        function easeInOutCubic(t) {
+          return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        }
+
+        function animation(currentTime) {
+          if (startTime === null) startTime = currentTime;
+          const timeElapsed = currentTime - startTime;
+          const progress = Math.min(timeElapsed / duration, 1);
+
+          window.scrollTo(0, startPosition * (1 - easeInOutCubic(progress)));
+
+          if (timeElapsed < duration) {
+            requestAnimationFrame(animation);
+          }
+        }
+
+        requestAnimationFrame(animation);
+      }
+
+      // Throttle for better performance
+      function throttle(func, limit) {
+        let inThrottle;
+        return function () {
+          const args = arguments;
+          const context = this;
+          if (!inThrottle) {
+            func.apply(context, args);
+            inThrottle = true;
+            setTimeout(() => inThrottle = false, limit);
+          }
         }
       }
-    }
 
-    // Event listeners
-    window.addEventListener('scroll', throttle(updateScrollProgress, 50));
-    scrollToTopBtn.addEventListener('click', scrollToTop);
+      // Event listeners
+      window.addEventListener('scroll', throttle(updateScrollProgress, 50));
+      scrollToTopBtn.addEventListener('click', scrollToTop);
 
-    // Keyboard accessibility
-    scrollToTopBtn.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        scrollToTop();
-      }
+      // Keyboard accessibility
+      scrollToTopBtn.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          scrollToTop();
+        }
+      });
+
+      // Initial check
+      updateScrollProgress();
     });
-
-    // Initial check
-    updateScrollProgress();
-  });
-</script>
+  </script>
 </body>
 
 </html>

@@ -26,8 +26,9 @@ from .models import Wishlist, Design, InventoryItem, Category, UserProfile, Cart
 from orders.models import Order, OrderItem, Customer
 from orders.utils import get_next_order_number
 order_number = get_next_order_number()
-
-
+from django.utils.decorators import method_decorator
+from orders.utils import get_next_custom_job_no  # Adjust import if needed
+from inventory.models import CartItem  # adjust import as needed
 # Initialize logger
 logger = logging.getLogger('inventory')
 
@@ -473,55 +474,117 @@ def inventory_list(request):
         logger.info(f"Initial products: {len(filtered_products)}, has_more: {has_more}")
         logger.info(f"User wishlist items: {len(wishlist_design_nos)}")
         
-        return render(request, 'inventory/inventory.html', {
+        context = {
             'products': filtered_products,
             'has_more': has_more,
             'total_count': total_count,
-            'wishlist_design_nos': wishlist_design_nos,  # Pass wishlist data
-            'user_authenticated': request.user.is_authenticated,  # Pass auth status
-        })
+            'wishlist_design_nos': wishlist_design_nos or [],  # Ensure it's never None
+            'user_authenticated': request.user.is_authenticated,
+        }
+        
+        return render(request, 'inventory/inventory.html', context)
     except Exception as e:
         logger.error(f"Error rendering inventory: {str(e)}", exc_info=True)
         return render(request, 'inventory/error.html', {
             'error': str(e)
         })
 
+@login_required
 def cart_view(request):
-    """
-    Renders the unified cart view that includes stock items, 
-    memo requests, and custom orders.
-    """
     try:
-        # We only need products data for reference in the cart
-        products = fetch_products()
+        # Get user's cart
+        cart = Cart.objects.filter(user=request.user).first()
+        cart_items = CartItem.objects.filter(cart=cart) if cart else []
         
-        # Create a map of job_no -> product info for easier lookup
-        inventory_data = {}
-        for product in products:
-            for job in product.get('in_stock_jobs', []):
-                inventory_data[job.get('job_no')] = {
-                    'design_no': product.get('design_no'),
-                    'category': product.get('category'),
-                    'available': True,
-                    'price': job.get('discounted_price')
+        # Calculate totals
+        subtotal = sum(float(item.totamt) for item in cart_items)
+        tax_rate = 8.875  # New York tax rate
+        tax_amount = (subtotal * tax_rate) / 100
+        total = subtotal + tax_amount
+        
+        # Group items by date and calculate sums
+        grouped_items = {}
+        for item in cart_items:
+            date = item.added_at.strftime('%Y-%m-%d')
+            if date not in grouped_items:
+                grouped_items[date] = {
+                    'stock': [],
+                    'memo': [],
+                    'custom': [],
+                    'stock_total': 0,
+                    'memo_total': 0,
+                    'custom_total': 0
                 }
-            for job in product.get('memo_jobs', []):
-                inventory_data[job.get('job_no')] = {
-                    'design_no': product.get('design_no'),
-                    'category': product.get('category'),
-                    'available': False,
-                    'price': job.get('discounted_price')
-                }
-                
-        return render(request, 'inventory/cart.html', {
-            'inventory_data': json.dumps(inventory_data)
-        })
+            
+            # Add item to appropriate list
+            if item.item_type == 'stock':
+                grouped_items[date]['stock'].append(item)
+                grouped_items[date]['stock_total'] += float(item.totamt)
+            elif item.item_type == 'memo':
+                grouped_items[date]['memo'].append(item)
+                grouped_items[date]['memo_total'] += float(item.totamt)
+            elif item.item_type == 'custom':
+                grouped_items[date]['custom'].append(item)
+                grouped_items[date]['custom_total'] += float(item.totamt)
+        
+        context = {
+            'cart_items': cart_items,
+            'grouped_items': grouped_items,
+            'subtotal': subtotal,
+            'tax_rate': tax_rate,
+            'tax_amount': tax_amount,
+            'total': total,
+            'today': datetime.now().strftime('%Y-%m-%d')
+        }
+        
+        return render(request, 'inventory/cart.html', context)
     except Exception as e:
-        logger.error(f"Error rendering cart: {str(e)}")
-        return render(request, 'inventory/error.html', {
-            'error': str(e)
-        })
+        logger.error(f"Error in cart view: {str(e)}")
+        messages.error(request, 'An error occurred while loading your cart.')
+        return render(request, 'inventory/cart.html', {'cart_items': []})
 
+@login_required
+@csrf_exempt 
+def checkout_view(request):
+    try:
+        cart = Cart.objects.filter(user=request.user).first()
+        if not cart:
+            messages.warning(request, 'Your cart is empty.')
+            return redirect('inventory:cart')
+
+        if request.method == "POST":
+            data = json.loads(request.body)
+            item_ids = data.get('item_ids', [])
+            if not item_ids:
+                messages.warning(request, "No items selected for checkout.")
+                return redirect('inventory:cart')
+            # Filter CartItems to just those selected
+            cart_items = CartItem.objects.filter(cart=cart, id__in=item_ids)
+        else:
+            # Default fallback: show all items (GET request)
+            cart_items = CartItem.objects.filter(cart=cart)
+
+        if not cart_items.exists():
+            messages.warning(request, 'No items selected for checkout.')
+            return redirect('inventory:cart')
+
+        subtotal = sum(float(item.totamt) for item in cart_items)
+        tax_rate = 8.875
+        tax_amount = (subtotal * tax_rate) / 100
+        total = subtotal + tax_amount
+
+        context = {
+            'cart_items': cart_items,
+            'subtotal': subtotal,
+            'tax_rate': tax_rate,
+            'tax_amount': tax_amount,
+            'total': total
+        }
+        return render(request, 'inventory/checkout.html', context)
+    except Exception as e:
+        logger.error(f"Error in checkout view: {str(e)}")
+        messages.error(request, 'An error occurred during checkout.')
+        return redirect('inventory:cart')
 
 @login_required
 def wishlist_view(request):
@@ -751,87 +814,53 @@ def create_order(request):
         )
 
         # -- 3. ORDER ITEMS with complete field mapping --
-        for section in ['stock', 'memo', 'custom']:
-            for item in data.get('order_items', {}).get(section, []):
-                # Prepare common fields
-                order_item_data = {
-                    'order': order,
-                    'product_id': 0,  # Default value as required by DB
-                    'product_name': item.get('design_no', ''),
-                    'product_sku': item.get('job_no', ''),
-                    'design_no': item.get('design_no', ''),
-                    'job_no': item.get('job_no', ''),
-                    'item_type': section,
-                    'item_status': 'pending',
-                    'status_updated_at': timezone.now(),
-                    'quantity': 1,  # Default quantity
-                    'unit_price': 0,  # Default price
-                    'discount_amount': 0,
-                    'total': 0,
-                    # Required string fields with defaults
-                    'metal_type': '',
-                    'metal_quality': '',
-                    'metal_color': '',
-                    'diamond_quality': '',
-                    'diamond_color': '',
-                    'size': '',
-                    'custom_remarks': '',
-                }
-                
-                # Update fields based on item type
-                if section == 'stock':
-                    # Stock items have complete information
-                    order_item_data.update({
-                        'metal_type': item.get('metal_type', ''),
-                        'metal_quality': item.get('metal_quality', ''),
-                        'metal_color': item.get('metal_color', ''),
-                        'diamond_quality': item.get('diamond_quality', ''),
-                        'diamond_color': item.get('diamond_color', ''),
-                        'size': item.get('size', ''),
-                        'unit_price': float(item.get('price', 0)),
-                        'gwt': float(item.get('gwt')) if item.get('gwt') else None,
-                        'dwt': float(item.get('dwt')) if item.get('dwt') else None,
-                    })
-                
-                elif section == 'memo':
-                    # Memo items
-                    order_item_data.update({
-                        'metal_type': item.get('metal_type', ''),
-                        'metal_quality': item.get('metal_quality', ''),
-                        'metal_color': item.get('metal_color', ''),
-                        'diamond_quality': item.get('diamond_quality', ''),
-                        'diamond_color': item.get('diamond_color', ''),
-                        'size': item.get('size', ''),
-                        'unit_price': 0,  # Price pending for memo items
-                        'memo_requested_at': item.get('requested_at', timezone.now()),
-                        'gwt': float(item.get('gwt')) if item.get('gwt') else None,
-                        'dwt': float(item.get('dwt')) if item.get('dwt') else None,
-                    })
-                
-                elif section == 'custom':
-                    # Assign a global unique job number to custom orders
-                    order_item_data['job_no'] = get_next_custom_job_no()
-                    order_item_data.update({
-                        'metal_type': item.get('metal_type', ''),
-                        'metal_quality': item.get('metal_quality', ''),
-                        'metal_color': item.get('metal_color', ''),
-                        'diamond_quality': item.get('diamond_quality', ''),
-                        'diamond_color': item.get('diamond_color', ''),
-                        'size': item.get('size', ''),
-                        'quantity': int(item.get('qty', 1)),
-                        'unit_price': 0,
-                        'custom_remarks': item.get('remarks', ''),
-                    })
+        # -- 3. ORDER ITEMS --
+        selected_items = data.get('selected_items', [])
+        for item_info in selected_items:
+            item_id = item_info.get('id')
+            item_type = item_info.get('type') or 'stock'
+            try:
+                cart_item = CartItem.objects.get(id=item_id, cart__user=user)
+            except CartItem.DoesNotExist:
+                continue
+            
+            # If it's a custom order, generate a unique global job_no
+            job_no = cart_item.job_no
+            if item_type == "custom":
+                job_no = get_next_custom_job_no()
 
-                
-                # Calculate total
-                unit_price = float(order_item_data['unit_price'])
-                quantity = int(order_item_data['quantity'])
-                discount = float(order_item_data['discount_amount'])
-                order_item_data['total'] = (unit_price * quantity) - discount
-                
-                # Create the order item
-                OrderItem.objects.create(**order_item_data)
+            OrderItem.objects.create(
+                order=order,
+                product_id=cart_item.id,
+                product_name=cart_item.design_no,
+                product_sku=cart_item.job_no,
+                design_no=cart_item.design_no,
+                job_no=job_no,
+                item_type=item_type,
+                item_status='pending',
+                status_updated_at=timezone.now(),
+                quantity=1,
+                unit_price=float(cart_item.totamt or 0),
+                discount_amount=0,
+                total=float(cart_item.totamt or 0),
+                metal_type=cart_item.metal_type or '',
+                metal_quality=cart_item.metal_quality or '',
+                metal_color=cart_item.metal_color or '',
+                diamond_quality=cart_item.diamond_quality or '',
+                diamond_color=cart_item.diamond_color or '',
+                size=cart_item.size or '',
+                custom_remarks=getattr(cart_item, 'custom_remark', ''),
+                gwt=float(cart_item.gwt) if cart_item.gwt else None,
+                dwt=float(cart_item.dwt) if cart_item.dwt else None,
+                nwt=float(cart_item.nwt) if cart_item.nwt else None,
+            )
+
+        
+        selected_item_ids = [
+            int(item_info.get('id')) for item_info in selected_items
+            if str(item_info.get('id')).isdigit()
+        ]
+        CartItem.objects.filter(id__in=selected_item_ids, cart__user=user).delete()
 
         logger.info(f"Order {order.order_number} created successfully with items")
         
@@ -1166,190 +1195,114 @@ def get_order_details(request, order_id):
             'error': str(e)
         }, status=500)
 
-@csrf_exempt
+@login_required
 @require_POST
 def add_to_cart(request):
-    """
-    API endpoint to add items to cart.
-    
-    Expected JSON format:
-    {
-        "item_type": "stock|memo|custom",
-        "item_data": {...}
-    }
-    
-    For localStorage-based implementation, this just validates the data
-    and returns success. In a real application, this would add to a 
-    server-side cart.
-    
-    Returns:
-        JsonResponse: Success status and cart item count
-    """
     try:
-        # Parse request body
         data = json.loads(request.body)
+        cart, _ = Cart.objects.get_or_create(user=request.user)
         
-        # Validate required fields
-        if 'item_type' not in data:
-            return JsonResponse({
-                'success': False,
-                'error': 'Missing required field: item_type'
-            }, status=400)
-            
-        if 'item_data' not in data:
-            return JsonResponse({
-                'success': False,
-                'error': 'Missing required field: item_data'
-            }, status=400)
-            
-        item_type = data['item_type']
+        # Handle both single item and array of items
+        items = data if isinstance(data, list) else [data]
         
-        # Validate item type
-        valid_types = ['stock', 'memo', 'custom']
-        if item_type not in valid_types:
-            return JsonResponse({
-                'success': False,
-                'error': f'Invalid item_type. Must be one of: {", ".join(valid_types)}'
-            }, status=400)
-            
-        # In a real application, add to database
-        # For localStorage-based implementation, just return success
-        logger.info(f"Added item of type {item_type} to cart")
-        
-        return JsonResponse({
-            'success': True,
-            'message': 'Item added to cart successfully',
-            'item_type': item_type
-        })
-    except json.JSONDecodeError:
-        return JsonResponse({
-            'success': False,
-            'error': 'Invalid JSON in request body'
-        }, status=400)
-    except Exception as e:
-        logger.error(f"Error adding item to cart: {str(e)}")
-        return JsonResponse({
-            'success': False,
-            'error': str(e)
-        }, status=500)
+        for item in items:
+            # Convert string values to appropriate types
+            gwt = float(item.get('gwt', 0)) if item.get('gwt') else 0
+            nwt = float(item.get('nwt', 0)) if item.get('nwt') else 0
+            dwt = float(item.get('dwt', 0)) if item.get('dwt') else 0
+            pcs = int(item.get('pcs', 1)) if item.get('pcs') else 1
+            totamt = float(item.get('totamt', 0)) if item.get('totamt') else 0
 
-@csrf_exempt
-@require_POST
-def remove_from_cart(request):
-    """
-    API endpoint to remove items from cart.
-    
-    Expected JSON format:
-    {
-        "item_type": "stock|memo|custom",
-        "item_id": "..."
-    }
-    
-    For localStorage-based implementation, this just validates the data
-    and returns success. In a real application, this would remove from 
-    a server-side cart.
-    
-    Returns:
-        JsonResponse: Success status
-    """
-    try:
-        # Parse request body
-        data = json.loads(request.body)
-        
-        # Validate required fields
-        if 'item_type' not in data:
-            return JsonResponse({
-                'success': False,
-                'error': 'Missing required field: item_type'
-            }, status=400)
-            
-        if 'item_id' not in data:
-            return JsonResponse({
-                'success': False,
-                'error': 'Missing required field: item_id'
-            }, status=400)
-            
-        item_type = data['item_type']
-        item_id = data['item_id']
-        
-        # Validate item type
-        valid_types = ['stock', 'memo', 'custom']
-        if item_type not in valid_types:
-            return JsonResponse({
-                'success': False,
-                'error': f'Invalid item_type. Must be one of: {", ".join(valid_types)}'
-            }, status=400)
-            
-        # In a real application, remove from database
-        # For localStorage-based implementation, just return success
-        logger.info(f"Removed item of type {item_type} with ID {item_id} from cart")
-        
-        return JsonResponse({
-            'success': True,
-            'message': 'Item removed from cart successfully'
-        })
+            CartItem.objects.create(
+                cart=cart,
+                design_no=item.get('design_no', ''),
+                job_no=item.get('job_no', ''),
+                metal_type=item.get('metal_type', ''),
+                metal_quality=item.get('metal_quality', ''),
+                metal_color=item.get('metal_color', ''),
+                gwt=gwt,
+                nwt=nwt,
+                dwt=dwt,
+                pcs=pcs,
+                size=item.get('size', ''),
+                totamt=totamt,
+                diamond_quality=item.get('diamond_quality', ''),
+                diamond_color=item.get('diamond_color', ''),
+                item_type=item.get('item_type', 'stock'),
+                custom_remark=item.get('custom_remark', '')
+            )
+        return JsonResponse({'success': True})
     except json.JSONDecodeError:
-        return JsonResponse({
-            'success': False,
-            'error': 'Invalid JSON in request body'
-        }, status=400)
+        return JsonResponse({'success': False, 'error': 'Invalid JSON data'}, status=400)
     except Exception as e:
-        logger.error(f"Error removing item from cart: {str(e)}")
-        return JsonResponse({
-            'success': False,
-            'error': str(e)
-        }, status=500)
-        
-        
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
 @require_POST
 @login_required
+def remove_from_cart(request):
+    try:
+        data = json.loads(request.body)
+        item_id = data.get('item_id')
+        cart = Cart.objects.filter(user=request.user).first()
+        if not cart:
+            return JsonResponse({'success': False, 'error': 'No cart found'})
+        item = CartItem.objects.filter(cart=cart, id=item_id).first()
+        if not item:
+            return JsonResponse({'success': False, 'error': 'Item not found'})
+        item.delete()
+        return JsonResponse({'success': True})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+        
+        
+@csrf_exempt
+@login_required
+@require_POST
 def save_cart(request):
     try:
         data = json.loads(request.body)
-        cart, created = Cart.objects.get_or_create(user=request.user)
-        cart.items.all().delete()  # Clear existing items
-        
-        for item in data.get('items', []):
+        items = data.get('items', [])
+
+        # Get or create Cart for user
+        cart, _ = Cart.objects.get_or_create(user=request.user)
+        cart_items_qs = CartItem.objects.filter(cart=cart)
+        cart_items_qs.delete()  # Remove previous items to "overwrite" the cart
+
+        # Add each item to the cart
+        for item in items:
             CartItem.objects.create(
                 cart=cart,
-                design_no=item.get('design_no'),
+                design_no=item.get('design_no', ''),
+                job_no=item.get('job_no', ''),
+                metal_type=item.get('metal_type', ''),
+                metal_quality=item.get('metal_quality', ''),
+                metal_color=item.get('metal_color', ''),
+                diamond_quality=item.get('diamond_quality', ''),
+                diamond_color=item.get('diamond_color', ''),
+                gwt=item.get('gwt', 0) or 0,
+                nwt=item.get('nwt', 0) or 0,
+                dwt=item.get('dwt', 0) or 0,
+                pcs=item.get('pcs', 1),
+                size=item.get('size', ''),
+                totamt=item.get('totamt', 0) or 0,
                 item_type=item.get('item_type', 'stock'),
-                job_no=item.get('job_no'),
-                price=item.get('price', 0),
-                quantity=item.get('quantity', 1),
-                subtotal=item.get('subtotal', 0),
-                custom_remarks=item.get('custom_remark', ''),
-                gwt=item.get('gwt', ''),
-                nwt=item.get('nwt', ''),
-                dwt=item.get('dwt', ''),
-                dpcs=item.get('dpcs', ''),
-                metal=item.get('metal', ''),
-                clarity=item.get('diamond_quality', ''),
-                color=item.get('diamond_color', ''),
-                in_stock=item.get('in_stock', 1),
-                on_memo=item.get('on_memo', 0),
-                custom_order=item.get('custom_order', 0)
+                custom_remark=item.get('custom_remark', ''),
+                # added_at is auto-set
             )
-        return JsonResponse({'success': True, 'message': 'Cart saved successfully!'})
+        return JsonResponse({'success': True})
     except Exception as e:
-        logger.error(f"Error saving cart: {str(e)}")
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
-
-# views.py
-
-@require_GET
 @login_required
 def get_cart(request):
-    """
-    API endpoint to get all items in the user's cart.
-    """
+    user = request.user
     try:
-        cart = Cart.objects.get(user=request.user)
-        items = cart.items.all()
-        data = []
+        cart = Cart.objects.get(user=user)
+        items = CartItem.objects.filter(cart=cart)
+        cart_items = []
         for item in items:
-            data.append({
+            cart_items.append({
                 'design_no': item.design_no,
                 'job_no': item.job_no,
                 'metal_type': item.metal_type,
@@ -1357,24 +1310,19 @@ def get_cart(request):
                 'metal_color': item.metal_color,
                 'diamond_quality': item.diamond_quality,
                 'diamond_color': item.diamond_color,
-                'gwt': float(item.gwt),
-                'nwt': float(item.nwt),
-                'dwt': float(item.dwt),
+                'gwt': str(item.gwt),
+                'nwt': str(item.nwt),
+                'dwt': str(item.dwt),
                 'pcs': item.pcs,
                 'size': item.size,
-                'totamt': float(item.totamt),
+                'totamt': str(item.totamt),
                 'item_type': item.item_type,
-                'custom_remark': item.custom_remark or "",
-                'added_at': item.added_at.isoformat()
+                'custom_remark': item.custom_remark,
+                'added_at': item.added_at.strftime("%Y-%m-%dT%H:%M:%S"),
             })
-        return JsonResponse({'success': True, 'items': data})
+        return JsonResponse({"success": True, "items": cart_items})
     except Cart.DoesNotExist:
-        return JsonResponse({'success': True, 'items': []})
-    except Exception as e:
-        logger.error(f"Error fetching cart: {str(e)}", exc_info=True)
-        return JsonResponse({'success': False, 'error': str(e)}, status=500)
-   
-
+        return JsonResponse({"success": True, "items": []})   
 
 @login_required
 def admin_orders_view(request):
