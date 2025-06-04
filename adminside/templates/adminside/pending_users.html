@@ -1,7 +1,9 @@
 <html>
+
 <head>
     <title>Pending Users</title>
 </head>
+
 <body>
     <h1>Pending User Approvals</h1>
     <table>
@@ -15,21 +17,22 @@
             <td>{{ user.id }}</td>
             <td>{{ user.email }}</td>
             <td>
-                <form action="{% url 'approve_user' user.id %}" method="post">
+                <form method="post" action="{% url 'adminside:approve_user' user.id %}">
                     {% csrf_token %}
-                    <button type="submit">Approve</button>
+                    <button type="submit" class="btn btn-success btn-sm">Approve</button>
                 </form>
             </td>
         </tr>
         {% endfor %}
     </table>
 </body>
+
 </html>
 {% if pending|length == 0 %}
-    <p>No pending users.</p>
+<p>No pending users.</p>
 {% endif %}
 {% if user.is_authenticated %}
-    <p>Welcome, {{ user.username }}!</p>
+<p>Welcome, {{ user.username }}!</p>
 {% else %}
-    <p>Please <a href="{% url 'login' %}">log in</a>.</p>
+<p>Please <a href="{% url 'login' %}">log in</a>.</p>
 {% endif %}

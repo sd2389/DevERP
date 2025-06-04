@@ -135,11 +135,11 @@ def fetch_products():
                 Design.objects.filter(design_no=design_no).update(
                     category=api_design.get('category', ''),
                     subcategory=api_design.get('subcategory', ''),
-                    description=api_design.get('description', ''),
+                    # description=api_design.get('description', ''),
                     # Add new fields if they exist in API
                     gender=api_design.get('gender', ''),
                     collection=api_design.get('collection', ''),
-                    product_type=api_design.get('product_type', ''),
+                    # product_type=api_design.get('product_type', ''),
                     image_base_path=api_design.get('image_base_path', f"https://dev-jewels.s3.us-east-2.amazonaws.com/products/{design_no}")
                 )
         
@@ -174,10 +174,10 @@ def fetch_products():
                 metadata = {
                     'category': api_design.get('category', design.category or 'Unknown'),
                     'subcategory': api_design.get('subcategory', design.subcategory or ''),
-                    'description': api_design.get('description', design.description or ''),
+                    # 'description': api_design.get('description', design.description or ''),
                     'gender': api_design.get('gender', getattr(design, 'gender', '')),
                     'collection': api_design.get('collection', getattr(design, 'collection', '')),
-                    'product_type': api_design.get('product_type', getattr(design, 'product_type', '')),
+                    # 'product_type': api_design.get('product_type', getattr(design, 'product_type', '')),  
                     'image_base_path': api_design.get('image_base_path', design.image_base_path)
                 }
             else:
@@ -2007,3 +2007,53 @@ def get_order_details_api(request, order_id):
             'success': False,
             'error': 'Internal server error'
         }, status=500)
+
+def design_list(request):
+    # Get filter parameters
+    category = request.GET.get('category')
+    subcategory = request.GET.get('subcategory')
+    gender = request.GET.get('gender')
+    collection = request.GET.get('collection')
+    
+    # Start with all designs
+    designs = Design.objects.all()
+    
+    # Apply filters
+    if category:
+        designs = designs.filter(category=category)
+    if subcategory:
+        designs = designs.filter(subcategory=subcategory)
+    if gender:
+        designs = designs.filter(gender=gender)
+    if collection:
+        designs = designs.filter(collection=collection)
+    
+    # Get unique values for filter dropdowns
+    categories = Category.objects.all()
+    subcategories = Design.objects.exclude(subcategory='').values_list('subcategory', flat=True).distinct()
+    collections = Design.objects.exclude(collection='').values_list('collection', flat=True).distinct()
+    
+    # Pagination
+    paginator = Paginator(designs, 12)  # Show 12 designs per page
+    page_number = request.GET.get('page')
+    designs = paginator.get_page(page_number)
+    
+    context = {
+        'designs': designs,
+        'categories': categories,
+        'subcategories': subcategories,
+        'collections': collections,
+    }
+    
+    return render(request, 'inventory/design_list.html', context)
+
+def design_detail(request, design_no):
+    design = get_object_or_404(Design, design_no=design_no)
+    return render(request, 'inventory/design_detail.html', {'design': design})
+
+def get_subcategories(request):
+    category = request.GET.get('category')
+    if category:
+        subcategories = Design.objects.filter(category=category).exclude(subcategory='').values_list('subcategory', flat=True).distinct()
+        return JsonResponse(list(subcategories), safe=False)
+    return JsonResponse([], safe=False)

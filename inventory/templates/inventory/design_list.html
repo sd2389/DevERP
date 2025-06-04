@@ -1,0 +1,180 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Designs - DevERP{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Designs</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item active">Designs</li>
+    </ol>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-filter me-1"></i>
+            Filters
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label for="category" class="form-label">Category</label>
+                    <select name="category" id="category" class="form-select">
+                        <option value="">All Categories</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat.name }}" {% if request.GET.category==cat.name %}selected{% endif %}>
+                            {{ cat.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="subcategory" class="form-label">Subcategory</label>
+                    <select name="subcategory" id="subcategory" class="form-select">
+                        <option value="">All Subcategories</option>
+                        {% for subcat in subcategories %}
+                        <option value="{{ subcat }}" {% if request.GET.subcategory==subcat %}selected{% endif %}>
+                            {{ subcat }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="gender" class="form-label">Gender</label>
+                    <select name="gender" id="gender" class="form-select">
+                        <option value="">All</option>
+                        <option value="Men" {% if request.GET.gender=='Men' %}selected{% endif %}>Men</option>
+                        <option value="Women" {% if request.GET.gender=='Women' %}selected{% endif %}>Women</option>
+                        <option value="Unisex" {% if request.GET.gender=='Unisex' %}selected{% endif %}>Unisex</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="collection" class="form-label">Collection</label>
+                    <select name="collection" id="collection" class="form-select">
+                        <option value="">All Collections</option>
+                        {% for coll in collections %}
+                        <option value="{{ coll }}" {% if request.GET.collection==coll %}selected{% endif %}>
+                            {{ coll }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">Apply Filters</button>
+                    <a href="{% url 'design_list' %}" class="btn btn-secondary">Clear Filters</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Designs Grid -->
+    <div class="row">
+        {% for design in designs %}
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="card-title mb-0">{{ design.design_no }}</h5>
+                        <span class="badge {% if design.isNew %}bg-success{% else %}bg-secondary{% endif %}">
+                            {% if design.isNew %}New{% else %}Existing{% endif %}
+                        </span>
+                    </div>
+                    <p class="card-text">
+                        <strong>Category:</strong> {{ design.category }}<br>
+                        <strong>Subcategory:</strong> {{ design.subcategory }}<br>
+                        <strong>Gender:</strong> {{ design.gender }}<br>
+                        <strong>Collection:</strong> {{ design.collection }}
+                    </p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <a href="{% url 'design_detail' design.design_no %}" class="btn btn-primary btn-sm">View
+                            Details</a>
+                        <small class="text-muted">Last synced: {{ design.last_synced|date:"M d, Y" }}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info">
+                No designs found matching your criteria.
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if designs.has_other_pages %}
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if designs.has_previous %}
+            <li class="page-item">
+                <a class="page-link"
+                    href="?page={{ designs.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+                    aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+            {% endif %}
+
+            {% for num in designs.paginator.page_range %}
+            {% if designs.number == num %}
+            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+            {% else %}
+            <li class="page-item">
+                <a class="page-link"
+                    href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{
+                    num }}</a>
+            </li>
+            {% endif %}
+            {% endfor %}
+
+            {% if designs.has_next %}
+            <li class="page-item">
+                <a class="page-link"
+                    href="?page={{ designs.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+                    aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Update subcategories when category changes
+        const categorySelect = document.getElementById('category');
+        const subcategorySelect = document.getElementById('subcategory');
+
+        categorySelect.addEventListener('change', function () {
+            const category = this.value;
+            if (category) {
+                // Clear current options
+                subcategorySelect.innerHTML = '<option value="">All Subcategories</option>';
+
+                // Fetch subcategories for selected category
+                fetch(`/api/subcategories/?category=${encodeURIComponent(category)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        data.forEach(subcat => {
+                            const option = document.createElement('option');
+                            option.value = subcat;
+                            option.textContent = subcat;
+                            subcategorySelect.appendChild(option);
+                        });
+                    })
+                    .catch(error => console.error('Error fetching subcategories:', error));
+            } else {
+                // Clear subcategories if no category selected
+                subcategorySelect.innerHTML = '<option value="">All Subcategories</option>';
+            }
+        });
+    });
+</script>
+{% endblock %}

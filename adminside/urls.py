@@ -11,13 +11,22 @@ urlpatterns = [
 
     
     path('activity-log/', views.activity_log, name='activity_log'),
+    
+    
+    path('designs/toggle/<int:design_id>/', views.toggle_design, name='toggle_design'), 
+    path('designs/bulk-toggle/', views.bulk_toggle_designs, name='bulk_toggle_designs'),
+    path('designs/export/', views.design_export_csv, name='design_export_csv'),
+    path('designs/detail/<int:design_id>/', views.design_detail_ajax, name='design_detail_ajax'),
+    
+    # Legacy support for your existing toggle_design URL
+    path('toggle-design/<int:pk>/', views.toggle_design, name='toggle_design_legacy'),
 
 
     # Dashboard
     path('', views.dashboard, name='dashboard'),
     path('designs/', views.design_list, name='design_list'),
     path('designs/<int:pk>/toggle/', views.toggle_design, name='toggle_design'),
-    
+
     # Customer management - Complete URLs
     path('customers/', views.customer_list, name='customers'),
     path('customers/<int:customer_id>/', views.customer_detail, name='customer_detail'),
@@ -25,7 +34,8 @@ urlpatterns = [
     path('customers/bulk-action/', views.bulk_customer_action, name='bulk_customer_action'),
     path('customers/export/', views.customer_export, name='customer_export'),
     path('customers/<int:customer_id>/notes/', views.customer_notes, name='customer_notes'),
-    
+    path('inventory/<int:item_id>/toggle/', views.toggle_inventory_status, name='toggle_inventory_status'),
+
     # Password reset requests
     path('password-reset-requests/', views.password_reset_requests, name='password_reset_requests'),
     path('password-reset-requests/approve/<int:req_id>/', views.approve_password_reset, name='approve_password_reset'),

@@ -518,7 +518,7 @@
                 <div class="metric-card">
                     <div class="metric-value">
                         {% if profile.total_orders > 0 %}
-                            ${{ profile.total_spent|default:0|floatformat:2|div:profile.total_orders|floatformat:2 }}
+                            ${{ average_order_value|floatformat:2 }}
                         {% else %}
                             $0.00
                         {% endif %}

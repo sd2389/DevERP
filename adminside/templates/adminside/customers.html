@@ -1,6 +1,7 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <title>DevERP Admin - Customer Management</title>
@@ -298,7 +299,7 @@
       <div class="px-3 mb-3">
         <h5 class="text-primary"><i class="bi bi-gem me-2"></i>DevERP Admin</h5>
       </div>
-      
+
       <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
         <span>Management</span>
       </h6>
@@ -372,14 +373,14 @@
 
     <!-- Flash Messages -->
     {% if messages %}
-      <div class="alert-container mb-3">
-        {% for message in messages %}
-          <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-          </div>
-        {% endfor %}
+    <div class="alert-container mb-3">
+      {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
       </div>
+      {% endfor %}
+    </div>
     {% endif %}
 
     <!-- Statistics Cards -->
@@ -401,7 +402,7 @@
           <div class="stats-value">{{ active_customers|default:"0" }}</div>
           <div class="stats-label">Active Customers</div>
           {% if total_customers > 0 %}
-            <small class="text-muted">{{ active_percentage }}% of total</small>
+          <small class="text-muted">{{ active_percentage }}% of total</small>
           {% endif %}
         </div>
       </div>
@@ -435,8 +436,8 @@
           <div class="row g-3">
             <div class="col-md-4">
               <label for="search" class="form-label">Search</label>
-              <input type="text" class="form-control" id="search" name="search" 
-                     placeholder="Name, email, phone, company..." value="{{ search_query }}">
+              <input type="text" class="form-control" id="search" name="search"
+                placeholder="Name, email, phone, company..." value="{{ search_query }}">
             </div>
             <div class="col-md-3">
               <label for="status" class="form-label">Status</label>
@@ -465,11 +466,11 @@
             </div>
           </div>
           {% if search_query or status_filter %}
-            <div class="mt-3">
-              <a href="{% url 'adminside:customers' %}" class="btn btn-sm btn-outline-secondary">
-                <i class="bi bi-x-circle me-1"></i> Clear Filters
-              </a>
-            </div>
+          <div class="mt-3">
+            <a href="{% url 'adminside:customers' %}" class="btn btn-sm btn-outline-secondary">
+              <i class="bi bi-x-circle me-1"></i> Clear Filters
+            </a>
+          </div>
           {% endif %}
         </form>
       </div>
@@ -480,13 +481,28 @@
       <div class="card-header py-3 d-flex justify-content-between align-items-center">
         <h5 class="mb-0"><i class="bi bi-list me-2"></i>Customers List</h5>
         {% if customers.paginator.count > 0 %}
-          <div class="small text-muted">
-            Showing {{ customers.start_index }}-{{ customers.end_index }} of {{ customers.paginator.count }}
-          </div>
+        <div class="small text-muted">
+          Showing {{ customers.start_index }}-{{ customers.end_index }} of {{ customers.paginator.count }}
+        </div>
         {% endif %}
       </div>
       <div class="card-body p-0">
         <div class="table-responsive">
+          <form method="post" action="{% url 'adminside:bulk_customer_action' %}">
+            {% csrf_token %}
+            <select name="bulk_action">
+              <option value="">Select Bulk Action</option>
+              <option value="activate">Activate</option>
+              <option value="deactivate">Deactivate</option>
+              <option value="delete">Delete</option>
+            </select>
+            <input type="text" name="bulk_reason" placeholder="Reason (optional)">
+            <!-- Add checkboxes for each customer row: -->
+            {% for customer in customers %}
+            <input type="checkbox" name="customer_ids[]" value="{{ customer.id }}"> {{ customer.email }}
+            {% endfor %}
+            <button type="submit" class="btn btn-secondary">Apply to Selected</button>
+          </form>
           <table class="table table-hover mb-0">
             <thead>
               <tr>
@@ -507,25 +523,25 @@
               {% for customer in customers %}
               <tr>
                 <td>
-                  <input type="checkbox" class="form-check-input customer-checkbox" 
-                         value="{{ customer.id }}" data-status="{{ customer.customer_profile.account_status }}">
+                  <input type="checkbox" class="form-check-input customer-checkbox" value="{{ customer.id }}"
+                    data-status="{{ customer.customer_profile.account_status }}">
                 </td>
                 <td>{{ forloop.counter|add:customers.start_index|add:-1 }}</td>
                 <td>
                   <div class="d-flex align-items-center">
                     <div class="customer-avatar me-2">
                       {% if customer.first_name %}
-                        {{ customer.first_name|slice:":1"|upper }}{{ customer.last_name|slice:":1"|upper }}
+                      {{ customer.first_name|slice:":1"|upper }}{{ customer.last_name|slice:":1"|upper }}
                       {% else %}
-                        {{ customer.username|slice:":2"|upper }}
+                      {{ customer.username|slice:":2"|upper }}
                       {% endif %}
                     </div>
                     <div>
                       <div class="fw-semibold">
                         {% if customer.get_full_name %}
-                          {{ customer.get_full_name }}
+                        {{ customer.get_full_name }}
                         {% else %}
-                          {{ customer.username }}
+                        {{ customer.username }}
                         {% endif %}
                       </div>
                       <small class="text-muted">Joined {{ customer.date_joined|date:"M d, Y" }}</small>
@@ -535,7 +551,7 @@
                 <td>
                   <div>{{ customer.email }}</div>
                   {% if customer.customer_profile.phone %}
-                    <small class="text-muted">{{ customer.customer_profile.phone }}</small>
+                  <small class="text-muted">{{ customer.customer_profile.phone }}</small>
                   {% endif %}
                 </td>
                 <td>{{ customer.customer_profile.company|default:"-" }}</td>
@@ -544,24 +560,34 @@
                 </td>
                 <td>${{ customer.customer_profile.total_spent|default:"0.00"|floatformat:2 }}</td>
                 <td>
-                  {% if customer.is_active and customer.customer_profile.account_status == 'active' %}
-                    <span class="badge status-badge status-active">Active</span>
-                  {% elif customer.customer_profile.account_status == 'suspended' %}
-                    <span class="badge status-badge status-suspended">Suspended</span>
-                  {% elif customer.customer_profile.account_status == 'pending' %}
-                    <span class="badge status-badge status-pending">Pending</span>
-                  {% else %}
-                    <span class="badge status-badge status-inactive">Inactive</span>
-                  {% endif %}
+                  <form method="post" action="{% url 'adminside:toggle_customer_status' customer.id %}"
+                    style="display:inline;">
+                    {% csrf_token %}
+                    {% if customer.is_active %}
+                    <input type="hidden" name="action" value="deactivate">
+                    <button type="submit" class="btn btn-danger btn-sm">Deactivate</button>
+                    {% else %}
+                    <input type="hidden" name="action" value="activate">
+                    <button type="submit" class="btn btn-success btn-sm">Activate</button>
+                    {% endif %}
+                  </form>
+                  <form method="post" action="{% url 'adminside:toggle_customer_status' customer.id %}"
+                    style="display:inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="suspend">
+                    <button type="submit" class="btn btn-warning btn-sm">Suspend</button>
+                  </form>
+                  <a href="{% url 'adminside:customer_detail' customer.id %}" class="btn btn-primary btn-sm">Details</a>
                 </td>
+
                 <td class="action-buttons">
-                  <a href="{% url 'adminside:customer_detail' customer.id %}" 
-                     class="btn btn-sm btn-outline-primary" title="View Details" data-bs-toggle="tooltip">
+                  <a href="{% url 'adminside:customer_detail' customer.id %}" class="btn btn-sm btn-outline-primary"
+                    title="View Details" data-bs-toggle="tooltip">
                     <i class="bi bi-eye"></i>
                   </a>
                   <div class="btn-group">
-                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
-                            type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
+                      data-bs-toggle="dropdown" aria-expanded="false">
                       <i class="bi bi-three-dots"></i>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end">
@@ -580,28 +606,33 @@
                           <i class="bi bi-envelope me-2"></i> Send Email
                         </a>
                       </li>
-                      <li><hr class="dropdown-divider"></li>
+                      <li>
+                        <hr class="dropdown-divider">
+                      </li>
                       {% if customer.is_active and customer.customer_profile.account_status == 'active' %}
-                        <li>
-                          <button class="dropdown-item text-warning" onclick="showDeactivateModal({{ customer.id }}, '{{ customer.email }}')">
-                            <i class="bi bi-pause-circle me-2"></i> Deactivate
-                          </button>
-                        </li>
-                        <li>
-                          <button class="dropdown-item text-danger" onclick="showSuspendModal({{ customer.id }}, '{{ customer.email }}')">
-                            <i class="bi bi-exclamation-triangle me-2"></i> Suspend
-                          </button>
-                        </li>
+                      <li>
+                        <button class="dropdown-item text-warning"
+                          onclick="showDeactivateModal({{ customer.id }}, '{{ customer.email }}')">
+                          <i class="bi bi-pause-circle me-2"></i> Deactivate
+                        </button>
+                      </li>
+                      <li>
+                        <button class="dropdown-item text-danger"
+                          onclick="showSuspendModal({{ customer.id }}, '{{ customer.email }}')">
+                          <i class="bi bi-exclamation-triangle me-2"></i> Suspend
+                        </button>
+                      </li>
                       {% else %}
-                        <li>
-                          <form method="post" action="{% url 'adminside:toggle_customer_status' customer.id %}" class="d-inline">
-                            {% csrf_token %}
-                            <input type="hidden" name="action" value="activate">
-                            <button type="submit" class="dropdown-item text-success">
-                              <i class="bi bi-play-circle me-2"></i> Activate
-                            </button>
-                          </form>
-                        </li>
+                      <li>
+                        <form method="post" action="{% url 'adminside:toggle_customer_status' customer.id %}"
+                          class="d-inline">
+                          {% csrf_token %}
+                          <input type="hidden" name="action" value="activate">
+                          <button type="submit" class="dropdown-item text-success">
+                            <i class="bi bi-play-circle me-2"></i> Activate
+                          </button>
+                        </form>
+                      </li>
                       {% endif %}
                     </ul>
                   </div>
@@ -628,54 +659,59 @@
           <nav aria-label="Customers pagination">
             <ul class="pagination pagination-sm mb-0">
               {% if customers.has_previous %}
-                <li class="page-item">
-                  <a class="page-link" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}">
-                    <i class="bi bi-chevron-double-left"></i>
-                  </a>
-                </li>
-                <li class="page-item">
-                  <a class="page-link" href="?page={{ customers.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}">
-                    <i class="bi bi-chevron-left"></i>
-                  </a>
-                </li>
+              <li class="page-item">
+                <a class="page-link"
+                  href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}">
+                  <i class="bi bi-chevron-double-left"></i>
+                </a>
+              </li>
+              <li class="page-item">
+                <a class="page-link"
+                  href="?page={{ customers.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}">
+                  <i class="bi bi-chevron-left"></i>
+                </a>
+              </li>
               {% else %}
-                <li class="page-item disabled">
-                  <span class="page-link"><i class="bi bi-chevron-double-left"></i></span>
-                </li>
-                <li class="page-item disabled">
-                  <span class="page-link"><i class="bi bi-chevron-left"></i></span>
-                </li>
+              <li class="page-item disabled">
+                <span class="page-link"><i class="bi bi-chevron-double-left"></i></span>
+              </li>
+              <li class="page-item disabled">
+                <span class="page-link"><i class="bi bi-chevron-left"></i></span>
+              </li>
               {% endif %}
 
               {% for num in customers.paginator.page_range %}
-                {% if customers.number == num %}
-                  <li class="page-item active"><span class="page-link">{{ num }}</span></li>
-                {% elif num > customers.number|add:'-3' and num < customers.number|add:'3' %}
-                  <li class="page-item">
-                    <a class="page-link" href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}">{{ num }}</a>
-                  </li>
+              {% if customers.number == num %}
+              <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+              {% elif num > customers.number|add:'-3' and num < customers.number|add:'3' %} <li class="page-item">
+                <a class="page-link"
+                  href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}">{{
+                  num }}</a>
+                </li>
                 {% endif %}
-              {% endfor %}
+                {% endfor %}
 
-              {% if customers.has_next %}
+                {% if customers.has_next %}
                 <li class="page-item">
-                  <a class="page-link" href="?page={{ customers.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}">
+                  <a class="page-link"
+                    href="?page={{ customers.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}">
                     <i class="bi bi-chevron-right"></i>
                   </a>
                 </li>
                 <li class="page-item">
-                  <a class="page-link" href="?page={{ customers.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}">
+                  <a class="page-link"
+                    href="?page={{ customers.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}">
                     <i class="bi bi-chevron-double-right"></i>
                   </a>
                 </li>
-              {% else %}
+                {% else %}
                 <li class="page-item disabled">
                   <span class="page-link"><i class="bi bi-chevron-right"></i></span>
                 </li>
                 <li class="page-item disabled">
                   <span class="page-link"><i class="bi bi-chevron-double-right"></i></span>
                 </li>
-              {% endif %}
+                {% endif %}
             </ul>
           </nav>
         </div>
@@ -720,14 +756,15 @@
             <div class="alert alert-warning d-flex align-items-center">
               <i class="bi bi-exclamation-triangle-fill flex-shrink-0 me-2"></i>
               <div>
-                <strong>Warning:</strong> Deactivating this customer will prevent them from logging in and placing new orders.
+                <strong>Warning:</strong> Deactivating this customer will prevent them from logging in and placing new
+                orders.
               </div>
             </div>
             <p>Are you sure you want to deactivate <strong id="deactivateCustomerEmail"></strong>?</p>
             <div class="mb-3">
               <label for="reason" class="form-label">Reason for deactivation:</label>
               <textarea class="form-control" id="reason" name="reason" rows="3" required
-                        placeholder="Please provide a reason for deactivation..."></textarea>
+                placeholder="Please provide a reason for deactivation..."></textarea>
             </div>
           </div>
           <div class="modal-footer">
@@ -763,7 +800,7 @@
             <div class="mb-3">
               <label for="suspend_reason" class="form-label">Reason for suspension:</label>
               <textarea class="form-control" id="suspend_reason" name="reason" rows="3" required
-                        placeholder="Please provide a detailed reason for suspension..."></textarea>
+                placeholder="Please provide a detailed reason for suspension..."></textarea>
             </div>
           </div>
           <div class="modal-footer">
@@ -799,7 +836,7 @@
             <div class="mb-3">
               <label for="bulk_reason" class="form-label">Reason for bulk deactivation:</label>
               <textarea class="form-control" id="bulk_reason" name="bulk_reason" rows="3" required
-                        placeholder="Please provide a reason for deactivation..."></textarea>
+                placeholder="Please provide a reason for deactivation..."></textarea>
             </div>
           </div>
           <div class="modal-footer">
@@ -837,22 +874,22 @@
     });
 
     // Mobile sidebar toggle
-    document.getElementById('sidebarToggle').addEventListener('click', function() {
+    document.getElementById('sidebarToggle').addEventListener('click', function () {
       document.getElementById('sidebar').classList.toggle('show');
     });
 
     // Close sidebar when clicking outside on mobile
-    document.addEventListener('click', function(event) {
+    document.addEventListener('click', function (event) {
       const sidebar = document.getElementById('sidebar');
       const toggle = document.getElementById('sidebarToggle');
-      
+
       if (!sidebar.contains(event.target) && !toggle.contains(event.target)) {
         sidebar.classList.remove('show');
       }
     });
 
     // Select all checkbox functionality
-    document.getElementById('selectAll').addEventListener('change', function() {
+    document.getElementById('selectAll').addEventListener('change', function () {
       const checkboxes = document.querySelectorAll('.customer-checkbox');
       checkboxes.forEach(checkbox => {
         checkbox.checked = this.checked;
@@ -870,11 +907,11 @@
       const checkedBoxes = document.querySelectorAll('.customer-checkbox:checked');
       const bulkActionBar = document.getElementById('bulkActionBar');
       const selectedCount = document.getElementById('selectedCount');
-      
+
       if (checkedBoxes.length > 0) {
         bulkActionBar.classList.add('show');
         selectedCount.textContent = checkedBoxes.length;
-        
+
         // Update select all checkbox state
         const totalBoxes = document.querySelectorAll('.customer-checkbox').length;
         const selectAll = document.getElementById('selectAll');
@@ -901,7 +938,7 @@
       const form = document.getElementById('deactivateForm');
       form.action = `/adminside/customers/${customerId}/toggle/`;
       document.getElementById('deactivateCustomerEmail').textContent = customerEmail;
-      
+
       const modal = new bootstrap.Modal(document.getElementById('deactivateModal'));
       modal.show();
     }
@@ -911,7 +948,7 @@
       const form = document.getElementById('suspendForm');
       form.action = `/adminside/customers/${customerId}/toggle/`;
       document.getElementById('suspendCustomerEmail').textContent = customerEmail;
-      
+
       const modal = new bootstrap.Modal(document.getElementById('suspendModal'));
       modal.show();
     }
@@ -921,10 +958,10 @@
       const checkedBoxes = document.querySelectorAll('.customer-checkbox:checked');
       const bulkCustomerIds = document.getElementById('bulkCustomerIds');
       const bulkCount = document.getElementById('bulkCount');
-      
+
       // Clear previous inputs
       bulkCustomerIds.innerHTML = '';
-      
+
       // Add hidden inputs for each selected customer
       checkedBoxes.forEach(checkbox => {
         const input = document.createElement('input');
@@ -933,9 +970,9 @@
         input.value = checkbox.value;
         bulkCustomerIds.appendChild(input);
       });
-      
+
       bulkCount.textContent = checkedBoxes.length;
-      
+
       const modal = new bootstrap.Modal(document.getElementById('bulkDeactivateModal'));
       modal.show();
     }
@@ -947,7 +984,7 @@
           const form = document.createElement('form');
           form.method = 'POST';
           form.action = '{% url "adminside:bulk_customer_action" %}';
-          
+
           // Add CSRF token
           const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
           const csrfInput = document.createElement('input');
@@ -955,14 +992,14 @@
           csrfInput.name = 'csrfmiddlewaretoken';
           csrfInput.value = csrfToken;
           form.appendChild(csrfInput);
-          
+
           // Add action
           const actionInput = document.createElement('input');
           actionInput.type = 'hidden';
           actionInput.name = 'bulk_action';
           actionInput.value = action;
           form.appendChild(actionInput);
-          
+
           // Add selected customer IDs
           const checkedBoxes = document.querySelectorAll('.customer-checkbox:checked');
           checkedBoxes.forEach(checkbox => {
@@ -972,10 +1009,10 @@
             input.value = checkbox.value;
             form.appendChild(input);
           });
-          
+
           // Show loading overlay
           document.getElementById('loadingOverlay').classList.add('show');
-          
+
           document.body.appendChild(form);
           form.submit();
         }
@@ -986,14 +1023,14 @@
     function showToast(message, type = 'success') {
       const toast = document.getElementById('customerToast');
       const toastMessage = document.getElementById('toastMessage');
-      
+
       // Set message
       toastMessage.textContent = message;
-      
+
       // Set toast type/color
       toast.className = 'toast align-items-center text-white';
-      
-      switch(type) {
+
+      switch (type) {
         case 'success':
           toast.classList.add('bg-success');
           toastMessage.innerHTML = '<i class="bi bi-check-circle-fill me-2"></i>' + message;
@@ -1010,7 +1047,7 @@
           toast.classList.add('bg-info');
           toastMessage.innerHTML = '<i class="bi bi-info-circle-fill me-2"></i>' + message;
       }
-      
+
       // Show toast
       const bsToast = new bootstrap.Toast(toast);
       bsToast.show();
@@ -1018,7 +1055,7 @@
 
     // Handle form submission with loading
     document.querySelectorAll('form').forEach(form => {
-      form.addEventListener('submit', function() {
+      form.addEventListener('submit', function () {
         // Don't show loading for search forms
         if (!this.classList.contains('filter-form')) {
           document.getElementById('loadingOverlay').classList.add('show');
@@ -1027,7 +1064,7 @@
     });
 
     // Auto-dismiss alerts after 5 seconds
-    setTimeout(function() {
+    setTimeout(function () {
       const alerts = document.querySelectorAll('.alert-dismissible');
       alerts.forEach(alert => {
         const bsAlert = new bootstrap.Alert(alert);
@@ -1036,4 +1073,5 @@
     }, 5000);
   </script>
 </body>
+
 </html>

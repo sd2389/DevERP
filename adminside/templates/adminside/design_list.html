@@ -1,0 +1,524 @@
+{% extends 'adminside/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+  <!-- Header Section -->
+  <div
+    class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
+    <h4 class="mb-0">
+      <i class="fas fa-paint-brush me-2 text-primary"></i> Design Management
+    </h4>
+    <div class="d-flex flex-wrap gap-2">
+      <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#importDesignsModal">
+        <i class="fas fa-file-import me-1"></i> Import
+      </button>
+      <a href="{% url 'adminside:design_export_csv' %}?{{ request.GET.urlencode }}"
+        class="btn btn-outline-success btn-sm">
+        <i class="fas fa-download me-1"></i> Export CSV
+      </a>
+      <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addDesignModal">
+        <i class="fas fa-plus me-1"></i> Add Design
+      </button>
+    </div>
+  </div>
+
+  <!-- Enhanced Filter & Search Card -->
+  <div class="card mb-4 shadow-sm border-0">
+    <div class="card-header bg-light border-0">
+      <h6 class="mb-0">
+        <i class="fas fa-search me-2"></i> Search & Filter
+      </h6>
+    </div>
+    <div class="card-body">
+      <form method="get" id="filterForm" class="row g-3">
+        <!-- Universal Search -->
+        <div class="col-12 col-md-6 col-lg-4">
+          <label class="form-label small text-muted">Search Everything</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="fas fa-search"></i></span>
+            <input type="text" name="search" class="form-control"
+              placeholder="Design No, Category, Collection, Vendor..." value="{{ request.GET.search }}">
+          </div>
+        </div>
+
+        <!-- Category Filter -->
+        <div class="col-6 col-md-3 col-lg-2">
+          <label class="form-label small text-muted">Category</label>
+          <select name="category" class="form-select form-select-sm">
+            <option value="">All Categories</option>
+            {% for category in categories %}
+            <option value="{{ category }}" {% if request.GET.category == category %}selected{% endif %}>
+              {{ category }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Sub-Category Filter -->
+        <div class="col-6 col-md-3 col-lg-2">
+          <label class="form-label small text-muted">Sub-Category</label>
+          <select name="subcategory" class="form-select form-select-sm">
+            <option value="">All Sub-Categories</option>
+            {% for subcategory in sub_categories %}
+            <option value="{{ subcategory }}" {% if request.GET.subcategory == subcategory %}selected{% endif %}>
+              {{ subcategory }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Collection Filter -->
+        <div class="col-6 col-md-3 col-lg-2">
+          <label class="form-label small text-muted">Collection</label>
+          <select name="collection" class="form-select form-select-sm">
+            <option value="">All Collections</option>
+            {% for collection in collections %}
+            <option value="{{ collection }}" {% if request.GET.collection == collection %}selected{% endif %}>
+              {{ collection }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Status Filter -->
+        <div class="col-6 col-md-3 col-lg-2">
+          <label class="form-label small text-muted">Status</label>
+          <select name="status" class="form-select form-select-sm">
+            <option value="">All Status</option>
+            <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>Active</option>
+            <option value="inactive" {% if request.GET.status == 'inactive' %}selected{% endif %}>Inactive</option>
+          </select>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="col-12 d-flex flex-wrap gap-2 align-items-end">
+          <button type="submit" class="btn btn-primary btn-sm">
+            <i class="fas fa-filter me-1"></i> Apply Filters
+          </button>
+          <a href="{% url 'adminside:design_list' %}" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-undo me-1"></i> Clear All
+          </a>
+          <span class="text-muted small ms-auto">{{ designs.count }} result(s) found</span>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Bulk Actions Bar -->
+  <div class="card mb-3 shadow-sm border-0" id="bulkActionsBar" style="display: none;">
+    <div class="card-body py-2">
+      <div class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center gap-2">
+        <span class="text-muted small">
+          <span id="selectedCount">0</span> design(s) selected
+        </span>
+        <div class="d-flex gap-2">
+          <button type="button" class="btn btn-success btn-sm" onclick="bulkAction('activate')">
+            <i class="fas fa-check me-1"></i> Activate Selected
+          </button>
+          <button type="button" class="btn btn-warning btn-sm" onclick="bulkAction('deactivate')">
+            <i class="fas fa-times me-1"></i> Deactivate Selected
+          </button>
+          <button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearSelection()">
+            <i class="fas fa-times me-1"></i> Clear Selection
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Enhanced Responsive Table -->
+  <div class="card shadow-sm border-0">
+    <div class="card-header bg-white border-0 py-3">
+      <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2">
+        <h6 class="mb-0">Design List</h6>
+        <div class="d-flex align-items-center gap-2">
+          <label class="form-check-label small text-muted me-2">
+            <input type="checkbox" id="selectAll" class="form-check-input me-1"> Select All
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0" id="designsTable">
+        <thead class="table-light sticky-top">
+          <tr>
+            <th style="width: 50px;">
+              <input type="checkbox" id="selectAllHeader" class="form-check-input">
+            </th>
+            <th class="text-nowrap">Sr No.</th>
+            <th class="text-nowrap">Design No</th>
+            <th class="d-none d-md-table-cell">Category</th>
+            <th class="d-none d-lg-table-cell">Sub-Category</th>
+            <th class="d-none d-lg-table-cell">Collection</th>
+            <th class="d-none d-sm-table-cell">Vendor Code</th>
+            <th>Status</th>
+            <th class="text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for design in designs %}
+          <tr data-design-id="{{ design.id }}">
+            <td>
+              <input type="checkbox" class="form-check-input design-checkbox" value="{{ design.id }}"
+                data-status="{{ design.is_active|yesno:'active,inactive' }}">
+            </td>
+            <td>
+              <button class="btn btn-link text-decoration-none p-0 fw-bold text-primary" data-bs-toggle="modal"
+                data-bs-target="#viewDesignModal-{{ design.id }}">
+                {{ forloop.counter }}
+              </button>
+            </td>
+            <td>
+              <div class="fw-bold">{{ design.design_no }}</div>
+              <!-- Mobile-only additional info -->
+              <div class="d-md-none">
+                <small class="text-muted d-block">{{ design.category }}</small>
+                <small class="text-muted">{{ design.vendor_code }}</small>
+              </div>
+            </td>
+            <td class="d-none d-md-table-cell">
+              <span class="badge bg-light text-dark">{{ design.category }}</span>
+            </td>
+            <td class="d-none d-lg-table-cell">{{ design.subcategory|default:"-" }}</td>
+            <td class="d-none d-lg-table-cell">{{ design.collection|default:"-" }}</td>
+            <td class="d-none d-sm-table-cell">
+              <code class="small">{{ design.vendor_code|default:"-" }}</code>
+            </td>
+            <td>
+              {% if design.is_active %}
+              <span class="badge bg-success">
+                <i class="fas fa-check me-1"></i> Active
+              </span>
+              {% else %}
+              <span class="badge bg-secondary">
+                <i class="fas fa-pause me-1"></i> Inactive
+              </span>
+              {% endif %}
+            </td>
+            <td class="text-center">
+              <div class="btn-group btn-group-sm" role="group">
+                <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal"
+                  data-bs-target="#viewDesignModal-{{ design.id }}" title="View Details">
+                  <i class="fas fa-eye"></i>
+                </button>
+                <form method="post" action="{% url 'adminside:toggle_design' design.id %}" class="d-inline">
+                  {% csrf_token %}
+                  {% if design.is_active %}
+                  <button type="submit" class="btn btn-outline-warning btn-sm" title="Deactivate">
+                    <i class="fas fa-pause"></i>
+                  </button>
+                  {% else %}
+                  <button type="submit" class="btn btn-outline-success btn-sm" title="Activate">
+                    <i class="fas fa-play"></i>
+                  </button>
+                  {% endif %}
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="9" class="text-center py-5 text-muted">
+              <i class="fas fa-search fa-2x mb-3 d-block"></i>
+              <p class="mb-0">No designs found matching your criteria.</p>
+              <small>Try adjusting your search or filter options.</small>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if designs.has_other_pages %}
+    <div class="card-footer bg-white border-0">
+      <nav aria-label="Designs pagination">
+        <ul class="pagination pagination-sm justify-content-center mb-0">
+          {% if designs.has_previous %}
+          <li class="page-item">
+            <a class="page-link"
+              href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}{% if request.GET.status %}status={{ request.GET.status }}&{% endif %}page={{ designs.previous_page_number }}">
+              <i class="fas fa-chevron-left"></i>
+            </a>
+          </li>
+          {% endif %}
+
+          {% for num in designs.paginator.page_range %}
+          {% if designs.number == num %}
+          <li class="page-item active">
+            <span class="page-link">{{ num }}</span>
+          </li>
+          {% elif num > designs.number|add:'-3' and num < designs.number|add:'3' %} <li class="page-item">
+            <a class="page-link"
+              href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}{% if request.GET.status %}status={{ request.GET.status }}&{% endif %}page={{ num }}">{{
+              num }}</a>
+            </li>
+            {% endif %}
+            {% endfor %}
+
+            {% if designs.has_next %}
+            <li class="page-item">
+              <a class="page-link"
+                href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}{% if request.GET.status %}status={{ request.GET.status }}&{% endif %}page={{ designs.next_page_number }}">
+                <i class="fas fa-chevron-right"></i>
+              </a>
+            </li>
+            {% endif %}
+        </ul>
+      </nav>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Enhanced View Design Modals -->
+{% for design in designs %}
+<div class="modal fade" id="viewDesignModal-{{ design.id }}" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-paint-brush me-2 text-primary"></i> Design Details
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="card border-0 bg-light">
+              <div class="card-body">
+                <h6 class="card-title text-primary mb-3">
+                  <i class="fas fa-info-circle me-2"></i> Basic Information
+                </h6>
+                <div class="row mb-2">
+                  <div class="col-5 fw-bold">Design No:</div>
+                  <div class="col-7">{{ design.design_no }}</div>
+                </div>
+                <div class="row mb-2">
+                  <div class="col-5 fw-bold">Category:</div>
+                  <div class="col-7">{{ design.category|default:"-" }}</div>
+                </div>
+                <div class="row mb-2">
+                  <div class="col-5 fw-bold">Sub-Category:</div>
+                  <div class="col-7">{{ design.subcategory|default:"-" }}</div>
+                </div>
+                <div class="row mb-2">
+                  <div class="col-5 fw-bold">Collection:</div>
+                  <div class="col-7">{{ design.collection|default:"-" }}</div>
+                </div>
+                <div class="row">
+                  <div class="col-5 fw-bold">Vendor Code:</div>
+                  <div class="col-7">
+                    <code>{{ design.vendor_code|default:"-" }}</code>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card border-0 bg-light">
+              <div class="card-body">
+                <h6 class="card-title text-primary mb-3">
+                  <i class="fas fa-cog me-2"></i> Status & Actions
+                </h6>
+                <div class="row mb-3">
+                  <div class="col-5 fw-bold">Current Status:</div>
+                  <div class="col-7">
+                    {% if design.is_active %}
+                    <span class="badge bg-success">
+                      <i class="fas fa-check me-1"></i> Active
+                    </span>
+                    {% else %}
+                    <span class="badge bg-secondary">
+                      <i class="fas fa-pause me-1"></i> Inactive
+                    </span>
+                    {% endif %}
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-5 fw-bold">Created:</div>
+                  <div class="col-7">
+                    <small class="text-muted">{{ design.created_at|date:"M d, Y" }}</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <form method="POST" action="{% url 'adminside:toggle_design' design.id %}" class="d-inline">
+          {% csrf_token %}
+          {% if design.is_active %}
+          <button type="submit" class="btn btn-warning">
+            <i class="fas fa-pause me-1"></i> Deactivate
+          </button>
+          {% else %}
+          <button type="submit" class="btn btn-success">
+            <i class="fas fa-play me-1"></i> Activate
+          </button>
+          {% endif %}
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endfor %}
+
+<!-- Custom CSS -->
+<style>
+  @media (max-width: 768px) {
+    .table-responsive {
+      font-size: 0.875rem;
+    }
+
+    .btn-group-sm>.btn {
+      padding: 0.25rem 0.4rem;
+    }
+  }
+
+  .sticky-top {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: white;
+  }
+
+  .design-checkbox:checked+td {
+    background-color: rgba(13, 110, 253, 0.1);
+  }
+
+  #bulkActionsBar {
+    transition: all 0.3s ease;
+  }
+</style>
+
+<!-- JavaScript for Enhanced Functionality -->
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const selectAllCheckbox = document.getElementById('selectAll');
+    const selectAllHeaderCheckbox = document.getElementById('selectAllHeader');
+    const designCheckboxes = document.querySelectorAll('.design-checkbox');
+    const bulkActionsBar = document.getElementById('bulkActionsBar');
+    const selectedCountSpan = document.getElementById('selectedCount');
+
+    // Sync both select all checkboxes
+    function syncSelectAll() {
+      const checkedCount = document.querySelectorAll('.design-checkbox:checked').length;
+      const totalCount = designCheckboxes.length;
+
+      selectedCountSpan.textContent = checkedCount;
+
+      if (checkedCount === 0) {
+        bulkActionsBar.style.display = 'none';
+        selectAllCheckbox.indeterminate = false;
+        selectAllCheckbox.checked = false;
+        selectAllHeaderCheckbox.indeterminate = false;
+        selectAllHeaderCheckbox.checked = false;
+      } else if (checkedCount === totalCount) {
+        bulkActionsBar.style.display = 'block';
+        selectAllCheckbox.indeterminate = false;
+        selectAllCheckbox.checked = true;
+        selectAllHeaderCheckbox.indeterminate = false;
+        selectAllHeaderCheckbox.checked = true;
+      } else {
+        bulkActionsBar.style.display = 'block';
+        selectAllCheckbox.indeterminate = true;
+        selectAllHeaderCheckbox.indeterminate = true;
+      }
+    }
+
+    // Handle select all functionality
+    function handleSelectAll(checked) {
+      designCheckboxes.forEach(checkbox => {
+        checkbox.checked = checked;
+      });
+      syncSelectAll();
+    }
+
+    selectAllCheckbox.addEventListener('change', function () {
+      handleSelectAll(this.checked);
+    });
+
+    selectAllHeaderCheckbox.addEventListener('change', function () {
+      handleSelectAll(this.checked);
+    });
+
+    // Handle individual checkbox changes
+    designCheckboxes.forEach(checkbox => {
+      checkbox.addEventListener('change', syncSelectAll);
+    });
+
+    // Initial sync
+    syncSelectAll();
+  });
+
+  // Bulk action functions
+  function bulkAction(action) {
+    const selectedIds = Array.from(document.querySelectorAll('.design-checkbox:checked'))
+      .map(cb => cb.value);
+
+    if (selectedIds.length === 0) {
+      alert('Please select at least one design.');
+      return;
+    }
+
+    const actionText = action === 'activate' ? 'activate' : 'deactivate';
+    if (confirm(`Are you sure you want to ${actionText} ${selectedIds.length} selected design(s)?`)) {
+      // Create form and submit
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = '{% url "adminside:bulk_toggle_designs" %}';
+
+      // Add CSRF token
+      const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+      const csrfInput = document.createElement('input');
+      csrfInput.type = 'hidden';
+      csrfInput.name = 'csrfmiddlewaretoken';
+      csrfInput.value = csrfToken;
+      form.appendChild(csrfInput);
+
+      // Add action
+      const actionInput = document.createElement('input');
+      actionInput.type = 'hidden';
+      actionInput.name = 'action';
+      actionInput.value = action;
+      form.appendChild(actionInput);
+
+      // Add selected IDs
+      selectedIds.forEach(id => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'design_ids';
+        input.value = id;
+        form.appendChild(input);
+      });
+
+      document.body.appendChild(form);
+      form.submit();
+    }
+  }
+
+  function clearSelection() {
+    document.querySelectorAll('.design-checkbox:checked').forEach(cb => {
+      cb.checked = false;
+    });
+    document.getElementById('selectAll').checked = false;
+    document.getElementById('selectAllHeader').checked = false;
+    document.getElementById('bulkActionsBar').style.display = 'none';
+    document.getElementById('selectedCount').textContent = '0';
+  }
+
+  // Auto-submit form on filter change (optional)
+  document.querySelectorAll('select[name="category"], select[name="subcategory"], select[name="collection"], select[name="status"]').forEach(select => {
+    select.addEventListener('change', function () {
+      // Uncomment the line below for auto-submit on filter change
+      // document.getElementById('filterForm').submit();
+    });
+  });
+</script>
+
+{% endblock %}

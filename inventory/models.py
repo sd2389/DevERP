@@ -153,35 +153,58 @@ class Product(models.Model):
 
 
 class Design(models.Model):
-    design_no = models.CharField(max_length=50, unique=True)
-    is_active = models.BooleanField(default=True)  # Admin visibility control
-    
-    # Additional fields from API
-    category = models.CharField(max_length=100, blank=True)
-    subcategory = models.CharField(max_length=100, blank=True)
-    description = models.TextField(blank=True)
+    design_id = models.CharField(max_length=50)
+    design_no = models.CharField(max_length=100, unique=True)
     image_base_path = models.CharField(max_length=255, blank=True)
-    gender = models.CharField(max_length=50, blank=True, db_index=True)
-    collection = models.CharField(max_length=100, blank=True, db_index=True)
-    product_type = models.CharField(max_length=100, blank=True, db_index=True)
-    
-    # Metadata fields
+
+    date = models.DateField()
+    brand = models.CharField(blank=True, max_length=100)
+    gender = models.CharField(max_length=20)
+    category = models.CharField(max_length=100)
+    collection = models.CharField(blank=True, max_length=100)
+    subcategory = models.CharField(blank=True, max_length=100)
+    producttype = models.CharField(max_length=100)
+    occation = models.CharField(blank=True, max_length=100)
+    gwt = models.DecimalField(max_digits=10, decimal_places=3)
+    nwt = models.DecimalField(max_digits=10, decimal_places=3)
+    dwt = models.DecimalField(max_digits=10, decimal_places=3)
+    dpcs = models.IntegerField()
+    swt = models.DecimalField(max_digits=10, decimal_places=3)
+    spcs = models.IntegerField()
+    miscwt = models.DecimalField(max_digits=10, decimal_places=3)
+    miscpcs = models.IntegerField()
+    remarks = models.TextField(blank=True)
+    titleline = models.CharField(blank=True, max_length=255)
+    isNew = models.BooleanField(default=False)
+    length = models.CharField(blank=True, max_length=50)
+    width = models.CharField(blank=True, max_length=50)
+    size = models.CharField(blank=True, max_length=50)
+    margin = models.DecimalField(max_digits=8, decimal_places=2)
+    duty = models.DecimalField(max_digits=8, decimal_places=2)
+    totamt = models.DecimalField(max_digits=12, decimal_places=2)
+    vendor_code = models.CharField(blank=True, max_length=100)
+    parent_designno = models.CharField(blank=True, max_length=100)
+    package = models.CharField(blank=True, max_length=100)
+    stock_qty = models.IntegerField(default=0)
+    is_active = models.BooleanField(default=True)
     last_synced = models.DateTimeField(auto_now=True)
     created_at = models.DateTimeField(auto_now_add=True)
     
     def __str__(self):
         return self.design_no
-    
+
     class Meta:
+        db_table = 'inventory_design'
         indexes = [
-            models.Index(fields=['design_no']),
-            models.Index(fields=['category']),
-            models.Index(fields=['is_active']),
-            models.Index(fields=['gender']),
-            models.Index(fields=['collection']),
-            models.Index(fields=['product_type']),
-            models.Index(fields=['subcategory']),
+            models.Index(fields=['design_no'], name='inventory_design_design_no_idx'),
+            models.Index(fields=['category'], name='inventory_design_category_idx'),
+            models.Index(fields=['is_active'], name='inventory_design_is_active_idx'),
+            models.Index(fields=['gender'], name='inventory_design_gender_idx'),
+            models.Index(fields=['collection'], name='inv_des_col_idx'),
+            models.Index(fields=['producttype'], name='inv_des_ptype_idx'),
+            models.Index(fields=['subcategory'], name='inv_des_subcat_idx'),
         ]
+
 
 
 ORDER_STATUS_CHOICES = [
@@ -340,7 +363,7 @@ class Wishlist(models.Model):
     class Meta:
         db_table = 'inventory_wishlist'
         unique_together = ('user', 'design_no')
-             # tells Django “the table already exists—don’t try to create or delete it”
+             # tells Django "the table already exists—don't try to create or delete it"
 
 class Cart(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='carts')

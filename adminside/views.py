@@ -1,35 +1,31 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.admin.views.decorators import staff_member_required
+from django.views.decorators.http import require_POST, require_GET
+from django.contrib.auth.forms import PasswordResetForm
+from django.contrib.auth import authenticate, login, get_user_model
 from django.contrib import messages
 from django.http import HttpResponse, JsonResponse
-from django.views.decorators.http import require_POST, require_GET
-from django.core.paginator import Paginator
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.db.models import Sum, Q, Count
+from django.utils import timezone
+
+# Local imports
+from .decorators import admin_login_required
+from .models import CustomerProfile, ActivityLog
+from accounts.models import PasswordResetRequest, User
+from orders.models import Order
+from inventory.models import Design
+
+# Python standard library
 import json
 import logging
 import csv
-from datetime import datetime
-from inventory.models import Design
-from django.contrib.auth import authenticate, login
-from .decorators import admin_login_required
-from django.contrib.auth import get_user_model
-User = get_user_model()
-
-from django.shortcuts import render
-from django.contrib.auth.decorators import login_required
-from django.db.models import Sum,Q
-from django.utils import timezone
-from .models import CustomerProfile, ActivityLog
-from accounts.models import PasswordResetRequest
-from django.contrib.auth.forms import PasswordResetForm
-from django.contrib.admin.views.decorators import staff_member_required
-from orders.models import Order
-from accounts.models import User
-from adminside.models import CustomerProfile
-
-
+from datetime import datetime, timedelta
 
 # Setup logger
 logger = logging.getLogger('adminside')
+User = get_user_model()
 
 def admin_login(request):
     """
@@ -435,17 +431,15 @@ def download_order_pdf(request, order_id):
         messages.error(request, f"Error generating PDF: {str(e)}")
         return redirect('adminside:order_detail', order_id=order_id)
 
-# @login_required
-# @user_passes_test(is_admin)
+@login_required
+@user_passes_test(is_admin)
 def inventory_list(request):
     """
     Admin view for listing all inventory items with filtering and pagination.
     """
     try:
-        # In a real app, fetch inventory from database
-        # For demo, just render the template
-        
-        return render(request, 'adminside/inventory.html')
+        items = Design.objects.all()
+        return render(request, 'adminside/inventory.html', {'items': items})
     except Exception as e:
         logger.error(f"Error rendering admin inventory list: {str(e)}")
         messages.error(request, f"Error loading inventory: {str(e)}")
@@ -513,6 +507,21 @@ def delete_inventory_item(request, item_id):
     # GET request - show confirmation page
     return render(request, 'adminside/confirm_delete.html', {'item_id': item_id})
 
+@login_required
+@user_passes_test(is_admin)
+def toggle_inventory_status(request, item_id):
+    item = get_object_or_404(Design, id=item_id)
+    item.is_active = not item.is_active
+    item.save()
+    # Optional: log this action
+    ActivityLog.objects.create(
+        user=request.user,
+        action='TOGGLE_INVENTORY_STATUS',
+        target_model='Design',
+        target_id=item.id,
+        details=f"{'Activated' if item.is_active else 'Deactivated'} inventory item: {item.design_no}"
+    )
+    return redirect('adminside:inventory')
 
 # Also update your customer_detail view:
 @login_required
@@ -1108,3 +1117,287 @@ def approve_password_reset(request, req_id):
     else:
         messages.info(request, "This request was already approved.")
     return redirect('adminside:password_reset_requests')
+
+
+@login_required
+@user_passes_test(lambda u: u.is_staff)
+def design_list(request):
+    """Enhanced design list view with comprehensive search and filtering"""
+    try:
+        designs = Design.objects.all().order_by('-id')
+        
+        # Universal search across multiple fields
+        search_query = request.GET.get('search', '').strip()
+        if search_query:
+            designs = designs.filter(
+                Q(design_no__icontains=search_query) |
+                Q(category__icontains=search_query) |
+                Q(subcategory__icontains=search_query) |
+                Q(collection__icontains=search_query) |
+                Q(vendor_code__icontains=search_query)
+            )
+        
+        # Individual filters
+        category = request.GET.get('category', '').strip()
+        if category:
+            designs = designs.filter(category__iexact=category)
+        
+        subcategory = request.GET.get('subcategory', '').strip()
+        if subcategory:
+            designs = designs.filter(subcategory__iexact=subcategory)
+        
+        collection = request.GET.get('collection', '').strip()
+        if collection:
+            designs = designs.filter(collection__iexact=collection)
+        
+        status = request.GET.get('status', '').strip()
+        if status == 'active':
+            designs = designs.filter(is_active=True)
+        elif status == 'inactive':
+            designs = designs.filter(is_active=False)
+        
+        # Get unique values for filter dropdowns
+        all_designs = Design.objects.all()
+        categories = all_designs.values_list('category', flat=True).distinct().order_by('category')
+        subcategories = all_designs.values_list('subcategory', flat=True).distinct().order_by('subcategory')
+        collections = all_designs.values_list('collection', flat=True).distinct().order_by('collection')
+        
+        # Remove None/empty values and filter
+        categories = [cat for cat in categories if cat]
+        subcategories = [sub_cat for sub_cat in subcategories if sub_cat]
+        collections = [col for col in collections if col]
+        
+        # Count totals for display
+        total_designs = designs.count()
+        active_designs = designs.filter(is_active=True).count()
+        
+        # Pagination
+        paginator = Paginator(designs, 25)  # Show 25 designs per page
+        page = request.GET.get('page', 1)
+        
+        try:
+            designs = paginator.page(page)
+        except PageNotAnInteger:
+            designs = paginator.page(1)
+        except EmptyPage:
+            designs = paginator.page(paginator.num_pages)
+        
+        # Log activity
+        ActivityLog.objects.create(
+            user=request.user,
+            action='VIEW',
+            target_model='Design',
+            details=f'Viewed design list with {total_designs} results'
+        )
+        
+        context = {
+            'designs': designs,
+            'categories': categories,
+            'subcategories': subcategories,
+            'collections': collections,
+            'search_query': search_query,
+            'total_designs': total_designs,
+            'active_designs': active_designs,
+            'page_title': 'Design Management',
+        }
+        
+        return render(request, 'adminside/design_list.html', context)
+        
+    except Exception as e:
+        logger.error(f"Error in design_list: {str(e)}")
+        messages.error(request, f"Error loading designs: {str(e)}")
+        return render(request, 'adminside/design_list.html', {
+            'designs': [],
+            'categories': [],
+            'subcategories': [],
+            'collections': [],
+            'page_title': 'Design Management',
+        })
+
+@login_required
+@user_passes_test(lambda u: u.is_staff)
+@require_POST
+def toggle_design(request, design_id):
+    """Toggle single design active status"""
+    try:
+        design = get_object_or_404(Design, id=design_id)
+        
+        # Store old status for logging
+        old_status = design.is_active
+        
+        # Toggle the status
+        design.is_active = not design.is_active
+        design.save()
+        
+        # Log the activity
+        action_text = "activated" if design.is_active else "deactivated"
+        ActivityLog.objects.create(
+            user=request.user,
+            action='UPDATE',
+            target_model='Design',
+            target_id=design.id,
+            details=f'{action_text.title()} design "{design.design_no}" (was {"active" if old_status else "inactive"})'
+        )
+        
+        messages.success(
+            request, 
+            f'Design "{design.design_no}" has been {action_text} successfully.'
+        )
+        
+    except Exception as e:
+        logger.error(f"Error toggling design {design_id}: {str(e)}")
+        messages.error(request, f'Error updating design: {str(e)}')
+    
+    return redirect('adminside:design_list')
+
+@login_required
+@user_passes_test(lambda u: u.is_staff)
+@require_POST
+def bulk_toggle_designs(request):
+    """Handle bulk activation/deactivation of designs"""
+    try:
+        action = request.POST.get('action')
+        design_ids = request.POST.getlist('design_ids')
+        
+        if not design_ids:
+            messages.error(request, 'No designs selected.')
+            return redirect('adminside:design_list')
+        
+        if action not in ['activate', 'deactivate']:
+            messages.error(request, 'Invalid action.')
+            return redirect('adminside:design_list')
+        
+        # Get designs and update status
+        designs = Design.objects.filter(id__in=design_ids)
+        is_active = action == 'activate'
+        
+        # Store design numbers for logging
+        design_numbers = list(designs.values_list('design_no', flat=True))
+        
+        updated_count = designs.update(is_active=is_active)
+        
+        # Log bulk activity
+        action_text = "activated" if is_active else "deactivated"
+        ActivityLog.objects.create(
+            user=request.user,
+            action='BULK_UPDATE',
+            target_model='Design',
+            details=f'Bulk {action_text} {updated_count} designs: {", ".join(design_numbers[:5])}{"..." if len(design_numbers) > 5 else ""}'
+        )
+        
+        messages.success(
+            request,
+            f'{updated_count} design(s) have been {action_text} successfully.'
+        )
+        
+    except Exception as e:
+        logger.error(f"Error in bulk toggle designs: {str(e)}")
+        messages.error(request, f'Error updating designs: {str(e)}')
+    
+    return redirect('adminside:design_list')
+
+@login_required
+@user_passes_test(lambda u: u.is_staff)
+def design_export_csv(request):
+    """Export filtered designs to CSV"""
+    try:
+        # Apply same filters as in design_list
+        designs = Design.objects.all().order_by('design_no')
+        
+        # Apply filters from GET parameters
+        search_query = request.GET.get('search', '').strip()
+        if search_query:
+            designs = designs.filter(
+                Q(design_no__icontains=search_query) |
+                Q(category__icontains=search_query) |
+                Q(subcategory__icontains=search_query) |
+                Q(collection__icontains=search_query) |
+                Q(vendor_code__icontains=search_query)
+            )
+        
+        category = request.GET.get('category', '').strip()
+        if category:
+            designs = designs.filter(category__iexact=category)
+        
+        subcategory = request.GET.get('subcategory', '').strip()
+        if subcategory:
+            designs = designs.filter(subcategory__iexact=subcategory)
+        
+        collection = request.GET.get('collection', '').strip()
+        if collection:
+            designs = designs.filter(collection__iexact=collection)
+        
+        status = request.GET.get('status', '').strip()
+        if status == 'active':
+            designs = designs.filter(is_active=True)
+        elif status == 'inactive':
+            designs = designs.filter(is_active=False)
+        
+        # Create CSV response
+        response = HttpResponse(content_type='text/csv')
+        timestamp = timezone.now().strftime('%Y%m%d_%H%M%S')
+        response['Content-Disposition'] = f'attachment; filename="designs_export_{timestamp}.csv"'
+        
+        writer = csv.writer(response)
+        
+        # Write header
+        writer.writerow([
+            'Design No',
+            'Category', 
+            'Sub-Category',
+            'Collection',
+            'Vendor Code',
+            'Status',
+            'Created Date'
+        ])
+        
+        # Write data
+        for design in designs:
+            writer.writerow([
+                design.design_no,
+                design.category or '',
+                design.subcategory or '',
+                design.collection or '',
+                design.vendor_code or '',
+                'Active' if design.is_active else 'Inactive',
+                design.created_at.strftime('%Y-%m-%d') if hasattr(design, 'created_at') else ''
+            ])
+        
+        # Log export activity
+        ActivityLog.objects.create(
+            user=request.user,
+            action='EXPORT',
+            target_model='Design',
+            details=f'Exported {designs.count()} designs to CSV'
+        )
+        
+        return response
+        
+    except Exception as e:
+        logger.error(f"Error exporting designs: {str(e)}")
+        messages.error(request, f'Error exporting designs: {str(e)}')
+        return redirect('adminside:design_list')
+
+@login_required
+@user_passes_test(lambda u: u.is_staff)
+def design_detail_ajax(request, design_id):
+    """AJAX endpoint for design details"""
+    try:
+        design = get_object_or_404(Design, id=design_id)
+        
+        data = {
+            'id': design.id,
+            'design_no': design.design_no,
+            'category': design.category or '',
+            'subcategory': design.subcategory or '',
+            'collection': design.collection or '',
+            'vendor_code': design.vendor_code or '',
+            'is_active': design.is_active,
+            'created_at': design.created_at.strftime('%Y-%m-%d %H:%M:%S') if hasattr(design, 'created_at') else '',
+        }
+        
+        return JsonResponse(data)
+        
+    except Exception as e:
+        logger.error(f"Error fetching design details for {design_id}: {str(e)}")
+        return JsonResponse({'error': 'Design not found'}, status=404)

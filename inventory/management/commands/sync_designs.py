@@ -77,42 +77,53 @@ class Command(BaseCommand):
                     if category_name:
                         categories.add(category_name)
                     
-                    # Get or prepare new design
-                    if design_no in existing_designs:
-                        # Update existing design
-                        d = existing_designs[design_no]
-                        
-                        # Check if update is needed
-                        need_update = (
-                            force_update or
-                            d.category != category_name or
-                            (design.get('subcategory', '') and d.subcategory != design.get('subcategory', '')) or
-                            (design.get('description', '') and d.description != design.get('description', ''))
-                        )
-                        
-                        if need_update:
-                            d.category = category_name
-                            d.subcategory = design.get('subcategory', '')
-                            d.description = design.get('description', '')
-                            d.image_base_path = f"https://dev-jewels.s3.us-east-2.amazonaws.com/products/{design_no}"
-                            d.last_synced = timezone.now()
-                            d.save()
-                            stats['updated'] += 1
-                        else:
-                            stats['skipped'] += 1
-                    else:
-                        # Create new design
-                        Design.objects.create(
-                            design_no=design_no,
-                            is_active=set_active,
-                            category=category_name,
-                            subcategory=design.get('subcategory', ''),
-                            description=design.get('titleline', ''),
-                            image_base_path=f"https://dev-jewels.s3.us-east-2.amazonaws.com/products/{design_no}",
-                            created_at=timezone.now(),
-                            last_synced=timezone.now()
-                        )
+                    # Prepare the design data
+                    design_fields = {
+                        'design_id': design.get('design_id', ''),
+                        'date': timezone.now().date(),  # Set current date if not provided
+                        'category': category_name,
+                        'subcategory': design.get('subcategory', ''),
+                        'titleline': design.get('titleline', ''),
+                        'brand': design.get('brand', ''),
+                        'gender': design.get('gender', ''),
+                        'collection': design.get('collection', ''),
+                        'producttype': design.get('producttype', ''),
+                        'occation': design.get('occation', ''),
+                        'gwt': float(design.get('gwt', 0) or 0),
+                        'nwt': float(design.get('nwt', 0) or 0),
+                        'dwt': float(design.get('dwt', 0) or 0),
+                        'dpcs': int(design.get('dpcs', 0) or 0),
+                        'swt': float(design.get('swt', 0) or 0),
+                        'spcs': int(design.get('spcs', 0) or 0),
+                        'miscwt': float(design.get('miscwt', 0) or 0),
+                        'miscpcs': int(design.get('miscpcs', 0) or 0),
+                        'remarks': design.get('remarks', ''),
+                        'isNew': bool(design.get('isNew', False)),
+                        'length': design.get('length', ''),
+                        'width': design.get('width', ''),
+                        'size': design.get('size', ''),
+                        'margin': float(design.get('margin', 0) or 0),
+                        'duty': float(design.get('duty', 0) or 0),
+                        'totamt': float(design.get('totamt', 0) or 0),
+                        'vendor_code': design.get('vendor_code', ''),
+                        'parent_designno': design.get('parent_designno', ''),
+                        'package': design.get('package', ''),
+                        'stock_qty': int(design.get('stock_qty', 0) or 0),
+                        'is_active': set_active,
+                        'image_base_path': f"https://dev-jewels.s3.us-east-2.amazonaws.com/products/{design_no}",
+                        'last_synced': timezone.now(),
+                    }
+                    
+                    # Use update_or_create to handle both new and existing designs
+                    design_obj, created = Design.objects.update_or_create(
+                        design_no=design_no,
+                        defaults=design_fields
+                    )
+                    
+                    if created:
                         stats['created'] += 1
+                    else:
+                        stats['updated'] += 1
                         
                 except Exception as e:
                     self.stdout.write(self.style.ERROR(f"Error processing design {design.get('design_no', 'unknown')}: {str(e)}"))
