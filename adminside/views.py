@@ -8,7 +8,7 @@ import json
 import logging
 import csv
 from datetime import datetime
-from inventory.models import Design
+from inventory.models import Design, OrderGroup, InStockOrder, RequestOrder, CustomOrder
 from django.contrib.auth import authenticate, login
 from .decorators import admin_login_required
 
@@ -103,6 +103,32 @@ def orders_list(request):
         logger.error(f"Error rendering admin orders list: {str(e)}")
         messages.error(request, f"Error loading orders: {str(e)}")
         return render(request, 'adminside/error.html', {'error': str(e)})
+
+
+def orders_api(request):
+    """Return orders as JSON for the admin orders page."""
+    try:
+        groups = OrderGroup.objects.select_related('customer')
+        data = []
+        for g in groups:
+            stock_count = InStockOrder.objects.filter(order_group=g).count()
+            memo_count = RequestOrder.objects.filter(order_group=g).count()
+            custom_count = CustomOrder.objects.filter(order_group=g).count()
+            data.append({
+                'order_id': g.order_id,
+                'date': g.created_at.isoformat(),
+                'status': g.status,
+                'customer': g.customer.username,
+                'counts': {
+                    'stock': stock_count,
+                    'memo': memo_count,
+                    'custom': custom_count,
+                },
+            })
+        return JsonResponse({'orders': data})
+    except Exception as e:
+        logger.error(f"Error fetching orders for API: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=500)
 
 # @login_required
 # @user_passes_test(is_admin)
