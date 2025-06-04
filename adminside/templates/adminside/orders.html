@@ -862,103 +862,86 @@ function syncCustomerOrders(adminOrders) {
 
 // Load all orders
 function loadOrders() {
-  console.log("Loading orders from localStorage...");
-  const orders = getStorageData(STORAGE_KEY_ORDERS, []);
+  console.log("Loading orders from API...");
   const tableBody = document.getElementById('ordersTableBody');
 
-  // Update order count
-  document.getElementById('orderCount').textContent = orders.length;
-  document.getElementById('totalOrders').textContent = orders.length;
+  fetch("{% url 'adminside:orders_api' %}")
+    .then(resp => resp.json())
+    .then(data => {
+      const orders = data.orders || [];
 
-  // Update current range (assuming 10 per page)
-  const end = Math.min(10, orders.length);
-  document.getElementById('currentRange').textContent = `1-${end}`;
+      document.getElementById('orderCount').textContent = orders.length;
+      document.getElementById('totalOrders').textContent = orders.length;
+      const end = Math.min(10, orders.length);
+      document.getElementById('currentRange').textContent = `1-${end}`;
 
-  // Clear table
-  tableBody.innerHTML = '';
+      tableBody.innerHTML = '';
+      if (orders.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="8" class="text-center py-4">No orders found</td></tr>';
+        return;
+      }
 
-  if (orders.length === 0) {
-    tableBody.innerHTML = '<tr><td colspan="8" class="text-center py-4">No orders found</td></tr>';
-    return;
-  }
+      let filteredOrders = [...orders];
+      const statusFilter = document.getElementById('statusFilter').value;
+      const searchTerm = document.getElementById('searchOrder').value.toLowerCase();
 
-  // Applying filters if any
-  let filteredOrders = [...orders];
-  const statusFilter = document.getElementById('statusFilter').value;
-  const searchTerm = document.getElementById('searchOrder').value.toLowerCase();
+      if (statusFilter) {
+        filteredOrders = filteredOrders.filter(order => order.status === statusFilter);
+      }
 
-  if (statusFilter) {
-    filteredOrders = filteredOrders.filter(order => order.status === statusFilter);
-  }
+      if (searchTerm) {
+        filteredOrders = filteredOrders.filter(order =>
+          order.order_id.toLowerCase().includes(searchTerm) ||
+          (order.customer && order.customer.toLowerCase().includes(searchTerm))
+        );
+      }
 
-  if (searchTerm) {
-    filteredOrders = filteredOrders.filter(order =>
-      order.order_id.toLowerCase().includes(searchTerm) ||
-      (order.customer && order.customer.name && order.customer.name.toLowerCase().includes(searchTerm))
-    );
-  }
+      filteredOrders.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-  console.log(`Found ${filteredOrders.length} orders after filtering`);
+      filteredOrders.forEach((order, index) => {
+        const stockCount = order.counts.stock || 0;
+        const memoCount = order.counts.memo || 0;
+        const customCount = order.counts.custom || 0;
 
-  // Sort orders by date (newest first)
-  filteredOrders.sort((a, b) => new Date(b.date) - new Date(a.date));
+        let itemBadgesHtml = '';
+        if (stockCount > 0) {
+          itemBadgesHtml += `<span class="item-type-badge item-stock">${stockCount} Stock</span>`;
+        }
+        if (memoCount > 0) {
+          itemBadgesHtml += `<span class="item-type-badge item-memo">${memoCount} Memo</span>`;
+        }
+        if (customCount > 0) {
+          itemBadgesHtml += `<span class="item-type-badge item-custom">${customCount} Custom</span>`;
+        }
 
-  // Create table rows
-  filteredOrders.forEach((order, index) => {
-    // Count items by type
-    const stockCount = order.items.stock?.length || 0;
-    const memoCount = order.items.memo?.length || 0;
-    const customCount = order.items.custom?.length || 0;
-    const totalItems = stockCount + memoCount + customCount;
+        const statusClass = `status-${order.status.replace(/\s+/g, '-')}`;
+        const statusBadge = `<span class="badge status-badge ${statusClass}">${order.status}</span>`;
 
-    // Create item badges HTML
-    let itemBadgesHtml = '';
-    if (stockCount > 0) {
-      itemBadgesHtml += `<span class="item-type-badge item-stock">${stockCount} Stock</span>`;
-    }
-    if (memoCount > 0) {
-      itemBadgesHtml += `<span class="item-type-badge item-memo">${memoCount} Memo</span>`;
-    }
-    if (customCount > 0) {
-      itemBadgesHtml += `<span class="item-type-badge item-custom">${customCount} Custom</span>`;
-    }
-
-    // Create status badge based on order status
-    const statusClass = `status-${order.status.replace(/\s+/g, '-')}`;
-    const statusBadge = `<span class="badge status-badge ${statusClass}">${order.status}</span>`;
-
-    // Create row HTML
-    const row = document.createElement('tr');
-    row.innerHTML = `
+        const row = document.createElement('tr');
+        row.innerHTML = `
       <td>${index + 1}</td>
       <td>${order.order_id}</td>
       <td>${formatDate(order.date)}</td>
-      <td>${order.customer?.name || 'Customer'}</td>
+      <td>${order.customer || 'Customer'}</td>
       <td>${itemBadgesHtml}</td>
-      <td>${formatCurrency(order.payment?.total || 0)}</td>
+      <td>-</td>
       <td>${statusBadge}</td>
       <td class="action-buttons">
         <button class="btn btn-sm btn-outline-primary" onclick="viewOrderDetails('${order.order_id}')">
           <i class="bi bi-eye"></i>
         </button>
-        <div class="btn-group">
-          <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-            <i class="bi bi-three-dots"></i>
-          </button>
-          <ul class="dropdown-menu dropdown-menu-end">
-            <li><button class="dropdown-item" onclick="viewOrderDetails('${order.order_id}')">View Details</button></li>
-            <li><button class="dropdown-item" onclick="printOrder('${order.order_id}')">Print</button></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><button class="dropdown-item text-danger" onclick="confirmDeleteOrder('${order.order_id}')">Delete</button></li>
-          </ul>
-        </div>
       </td>
     `;
 
-    tableBody.appendChild(row);
-  });
+        tableBody.appendChild(row);
+      });
 
-  console.log("Orders loaded successfully");
+      console.log("Orders loaded successfully");
+    })
+    .catch(err => {
+      console.error('Error loading orders:', err);
+      tableBody.innerHTML = '<tr><td colspan="8" class="text-center py-4">Failed to load orders</td></tr>';
+    });
 }
 
 // Create status dropdown HTML

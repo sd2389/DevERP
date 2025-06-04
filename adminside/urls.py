@@ -16,6 +16,7 @@ urlpatterns = [
     
     
     # Orders management
+    path('api/orders/', views.orders_api, name='orders_api'),
     path('orders/', views.orders_list, name='orders'),
     path('orders/<str:order_id>/', views.order_detail, name='order_detail'),
     path('orders/<str:order_id>/update/', views.update_order, name='update_order'),
